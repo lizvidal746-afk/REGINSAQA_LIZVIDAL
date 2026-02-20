@@ -75,7 +75,7 @@ jobs:
           --project=chromium
 
       - name: Evaluate test outcomes
-        if: always()
+        if: always() && hashFiles('test-results/results.json') != ''
         run: node scripts/evaluate-playwright-results.js
 
       - name: Upload artifacts
