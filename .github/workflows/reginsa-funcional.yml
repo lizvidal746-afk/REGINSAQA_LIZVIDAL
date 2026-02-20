@@ -18,7 +18,7 @@ on:
 
 jobs:
   functional-scale:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 120
     env:
       REGINSA_URL: ${{ secrets.REGINSA_URL }}
@@ -59,7 +59,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Reset operational run
         run: npm run iteracion:reiniciar
