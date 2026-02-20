@@ -23,6 +23,8 @@ jobs:
     env:
       REGINSA_URL: ${{ secrets.REGINSA_URL }}
       BASE_URL: ${{ secrets.REGINSA_URL }}
+      REGINSA_USER: ${{ secrets.REGINSA_USER || secrets.REGINSA_USER_1 }}
+      REGINSA_PASS: ${{ secrets.REGINSA_PASS || secrets.REGINSA_PASS_1 }}
       REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
       REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
       REGINSA_USER_2: ${{ secrets.REGINSA_USER_2 }}
@@ -66,6 +68,26 @@ jobs:
 
       - name: Prewarm data pool
         run: npm run pool:prewarm
+
+      - name: Validate credentials presence
+        shell: pwsh
+        run: |
+          $pairs = @(
+            @{ U = "$env:REGINSA_USER"; P = "$env:REGINSA_PASS"; N = "REGINSA_USER/REGINSA_PASS" },
+            @{ U = "$env:REGINSA_USER_1"; P = "$env:REGINSA_PASS_1"; N = "REGINSA_USER_1/REGINSA_PASS_1" },
+            @{ U = "$env:REGINSA_USER_2"; P = "$env:REGINSA_PASS_2"; N = "REGINSA_USER_2/REGINSA_PASS_2" },
+            @{ U = "$env:REGINSA_USER_3"; P = "$env:REGINSA_PASS_3"; N = "REGINSA_USER_3/REGINSA_PASS_3" },
+            @{ U = "$env:REGINSA_USER_4"; P = "$env:REGINSA_PASS_4"; N = "REGINSA_USER_4/REGINSA_PASS_4" },
+            @{ U = "$env:REGINSA_USER_5"; P = "$env:REGINSA_PASS_5"; N = "REGINSA_USER_5/REGINSA_PASS_5" },
+            @{ U = "$env:REGINSA_USER_6"; P = "$env:REGINSA_PASS_6"; N = "REGINSA_USER_6/REGINSA_PASS_6" }
+          )
+
+          $ok = $pairs | Where-Object { -not [string]::IsNullOrWhiteSpace($_.U) -and -not [string]::IsNullOrWhiteSpace($_.P) }
+          if (-not $ok) {
+            throw "No se detectó ningún par de credenciales en Secrets. Configure REGINSA_USER/REGINSA_PASS o REGINSA_USER_n/REGINSA_PASS_n (n=1..6)."
+          }
+
+          Write-Host "Credenciales detectadas en: $($ok[0].N)"
 
       - name: Run functional scale
         run: >-
