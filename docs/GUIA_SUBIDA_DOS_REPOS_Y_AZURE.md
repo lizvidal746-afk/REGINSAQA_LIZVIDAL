@@ -263,6 +263,16 @@ Ejemplo:
 - Push sunedu: ok
 - Actions: workflow ejecutado manualmente con `workers=6`, `repeat_each=10`, `pool_target=1200`
 
+Registro real ejecutado:
+
+- Fecha: 2026-02-20
+- Alcance: bootstrap inicial de repositorios vacíos (`REGINSAQA_LIZVIDAL` y `SUNEDU_REGINSA_QA`)
+- Validación local: `npm run test:01:fast -- --workers=5 --repeat-each=5 --project=chromium --list`
+- Commit: `3aade54` — `chore: bootstrap pipeline reginsa`
+- Push personal: ok (`main -> main`)
+- Push sunedu: ok (`main -> main`)
+- Nota: `playwrigth/` quedó fuera del commit (untracked)
+
 ---
 
 ## 12) Checklist previo al push (rápido)
