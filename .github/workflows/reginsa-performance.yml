@@ -1,0 +1,47 @@
+name: REGINSA Performance K6
+
+on:
+  workflow_dispatch:
+    inputs:
+      vus:
+        description: "k6 virtual users"
+        required: false
+        default: "10"
+      duration:
+        description: "k6 duration (e.g. 60s)"
+        required: false
+        default: "60s"
+
+jobs:
+  k6-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BASE_URL: ${{ secrets.REGINSA_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Prepare reports folder
+        run: mkdir -p reportes
+
+      - name: Run k6 smoke
+        run: >-
+          k6 run docs/plantillas/k6_smoke_reginsa.js
+          --env BASE_URL=${{ env.BASE_URL }}
+          --vus ${{ github.event.inputs.vus || vars.K6_VUS || '10' }}
+          --duration ${{ github.event.inputs.duration || vars.K6_DURATION || '60s' }}
+          --summary-export reportes/k6-summary.json
+
+      - name: Upload k6 artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-artifacts
+          path: |
+            reportes/k6-summary.json
+          if-no-files-found: warn

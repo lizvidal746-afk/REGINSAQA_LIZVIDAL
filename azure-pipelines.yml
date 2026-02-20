@@ -1,0 +1,122 @@
+trigger: none
+pr: none
+
+variables:
+  - name: PW_WORKERS
+    value: '6'
+  - name: PW_REPEAT_EACH
+    value: '30'
+  - name: POOL_TARGET
+    value: '1200'
+  - name: RUN_K6
+    value: 'false'
+  - name: K6_VUS
+    value: '10'
+  - name: K6_DURATION
+    value: '60s'
+
+stages:
+  - stage: FunctionalScale
+    displayName: Functional Scale (Playwright)
+    jobs:
+      - job: PlaywrightScale
+        pool:
+          vmImage: 'windows-latest'
+        steps:
+          - checkout: self
+
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '20.x'
+            displayName: Setup Node.js
+
+          - script: npm ci
+            displayName: Install dependencies
+
+          - script: npx playwright install chromium
+            displayName: Install Playwright browser
+
+          - powershell: |
+              npm run iteracion:reiniciar
+            displayName: Reset operational run
+
+          - powershell: |
+              $env:REGINSA_POOL_TARGET = "$(POOL_TARGET)"
+              npm run pool:prewarm
+            displayName: Prewarm data pool
+
+          - powershell: |
+              $env:REGINSA_URL = "$(REGINSA_URL)"
+              $env:BASE_URL = "$(REGINSA_URL)"
+              $env:REGINSA_USER_1 = "$(REGINSA_USER_1)"
+              $env:REGINSA_PASS_1 = "$(REGINSA_PASS_1)"
+              $env:REGINSA_USER_2 = "$(REGINSA_USER_2)"
+              $env:REGINSA_PASS_2 = "$(REGINSA_PASS_2)"
+              $env:REGINSA_USER_3 = "$(REGINSA_USER_3)"
+              $env:REGINSA_PASS_3 = "$(REGINSA_PASS_3)"
+              $env:REGINSA_USER_4 = "$(REGINSA_USER_4)"
+              $env:REGINSA_PASS_4 = "$(REGINSA_PASS_4)"
+              $env:REGINSA_USER_5 = "$(REGINSA_USER_5)"
+              $env:REGINSA_PASS_5 = "$(REGINSA_PASS_5)"
+              $env:REGINSA_USER_6 = "$(REGINSA_USER_6)"
+              $env:REGINSA_PASS_6 = "$(REGINSA_PASS_6)"
+              $env:REGINSA_POOL_TARGET = "$(POOL_TARGET)"
+              $env:REGINSA_STRICT_VERIFY = "1"
+              $env:REGINSA_SKIP_LIST_VERIFY = "1"
+              $env:REGINSA_REQUIRE_API_CREATE = "1"
+              $env:REGINSA_ALLOW_UI_EVENTUAL = "1"
+              $env:REGINSA_CONFIRMAR_API_RETRIES = "8"
+              $env:REGINSA_CONFIRMAR_API_WAIT_MS = "1500"
+              $env:REGINSA_CONFIRMAR_API_RETRIES_EXT = "20"
+              $env:REGINSA_CONFIRMAR_API_WAIT_MS_EXT = "2000"
+              npm run test:01:scale -- --workers=$(PW_WORKERS) --repeat-each=$(PW_REPEAT_EACH) --project=chromium
+            displayName: Run functional scale
+
+          - script: node scripts/evaluate-playwright-results.js
+            displayName: Evaluate test outcomes
+            condition: always()
+
+          - task: PublishBuildArtifacts@1
+            condition: always()
+            inputs:
+              PathtoPublish: 'playwright-report'
+              ArtifactName: 'playwright-report'
+
+          - task: PublishBuildArtifacts@1
+            condition: always()
+            inputs:
+              PathtoPublish: 'allure-report'
+              ArtifactName: 'allure-report'
+
+          - task: PublishBuildArtifacts@1
+            condition: always()
+            inputs:
+              PathtoPublish: 'reportes'
+              ArtifactName: 'reportes'
+
+  - stage: PerformanceK6
+    displayName: Performance k6
+    dependsOn: FunctionalScale
+    condition: and(succeededOrFailed(), eq(variables['RUN_K6'], 'true'))
+    jobs:
+      - job: K6Smoke
+        pool:
+          vmImage: 'windows-latest'
+        steps:
+          - checkout: self
+
+          - powershell: |
+              choco install k6 -y
+            displayName: Install k6
+
+          - powershell: |
+              if (-not (Test-Path 'reportes')) { New-Item -ItemType Directory -Path 'reportes' | Out-Null }
+              $env:BASE_URL = "$(REGINSA_URL)"
+              k6 run docs/plantillas/k6_smoke_reginsa.js --env BASE_URL=$env:BASE_URL --vus $(K6_VUS) --duration $(K6_DURATION) --summary-export reportes/k6-summary.json
+            displayName: Run k6 smoke
+
+          - task: PublishBuildArtifacts@1
+            condition: always()
+            inputs:
+              PathtoPublish: 'reportes'
+              ArtifactName: 'k6-reportes'

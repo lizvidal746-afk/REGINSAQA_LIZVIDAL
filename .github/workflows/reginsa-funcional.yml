@@ -1,0 +1,92 @@
+name: REGINSA Functional Scale
+
+on:
+  workflow_dispatch:
+    inputs:
+      workers:
+        description: "Playwright workers"
+        required: false
+        default: "6"
+      repeat_each:
+        description: "Playwright repeat-each"
+        required: false
+        default: "30"
+      pool_target:
+        description: "Pool target size"
+        required: false
+        default: "1200"
+
+jobs:
+  functional-scale:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      REGINSA_URL: ${{ secrets.REGINSA_URL }}
+      BASE_URL: ${{ secrets.REGINSA_URL }}
+      REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
+      REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
+      REGINSA_USER_2: ${{ secrets.REGINSA_USER_2 }}
+      REGINSA_PASS_2: ${{ secrets.REGINSA_PASS_2 }}
+      REGINSA_USER_3: ${{ secrets.REGINSA_USER_3 }}
+      REGINSA_PASS_3: ${{ secrets.REGINSA_PASS_3 }}
+      REGINSA_USER_4: ${{ secrets.REGINSA_USER_4 }}
+      REGINSA_PASS_4: ${{ secrets.REGINSA_PASS_4 }}
+      REGINSA_USER_5: ${{ secrets.REGINSA_USER_5 }}
+      REGINSA_PASS_5: ${{ secrets.REGINSA_PASS_5 }}
+      REGINSA_USER_6: ${{ secrets.REGINSA_USER_6 }}
+      REGINSA_PASS_6: ${{ secrets.REGINSA_PASS_6 }}
+      REGINSA_POOL_TARGET: ${{ github.event.inputs.pool_target || vars.POOL_TARGET || '600' }}
+      REGINSA_STRICT_VERIFY: '1'
+      REGINSA_SKIP_LIST_VERIFY: '1'
+      REGINSA_REQUIRE_API_CREATE: '1'
+      REGINSA_ALLOW_UI_EVENTUAL: '1'
+      REGINSA_CONFIRMAR_API_RETRIES: '8'
+      REGINSA_CONFIRMAR_API_WAIT_MS: '1500'
+      REGINSA_CONFIRMAR_API_RETRIES_EXT: '20'
+      REGINSA_CONFIRMAR_API_WAIT_MS_EXT: '2000'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Reset operational run
+        run: npm run iteracion:reiniciar
+
+      - name: Prewarm data pool
+        run: npm run pool:prewarm
+
+      - name: Run functional scale
+        run: >-
+          npm run test:01:scale --
+          --workers=${{ github.event.inputs.workers || vars.PW_WORKERS || '6' }}
+          --repeat-each=${{ github.event.inputs.repeat_each || vars.PW_REPEAT_EACH || '10' }}
+          --project=chromium
+
+      - name: Evaluate test outcomes
+        if: always()
+        run: node scripts/evaluate-playwright-results.js
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: functional-scale-artifacts
+          path: |
+            playwright-report
+            allure-report
+            allure-results
+            test-results
+            reportes
+          if-no-files-found: warn

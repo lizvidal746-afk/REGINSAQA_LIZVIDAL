@@ -1,0 +1,14 @@
+{
+  "usuarios": [
+    {
+      "rol": "analista_qa",
+      "username": "usuario_demo",
+      "password": "password_demo"
+    },
+    {
+      "rol": "supervisor_qa",
+      "username": "supervisor_demo",
+      "password": "password_demo"
+    }
+  ]
+}

@@ -1,0 +1,392 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "rerun-agregar-administrado-headed",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:e2e",
+				"--",
+				"tests/casos-prueba/01-agregar-administrado.spec.ts",
+				"--headed"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-npm-audit-json",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"audit",
+				"--json"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-npm-audit-text",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"audit"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-headed",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"playwright",
+				"test",
+				"tests/casos-prueba/01-agregar-administrado.spec.ts",
+				"--headed",
+				"--workers=1",
+				"--reporter=line"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-ci",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"playwright",
+				"test",
+				"tests/casos-prueba/01-agregar-administrado.spec.ts",
+				"--workers=1",
+				"--reporter=junit"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "list-caso1",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"playwright",
+				"test",
+				"tests/casos-prueba/01-agregar-administrado.spec.ts",
+				"--list"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "list-all-tests",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"playwright",
+				"test",
+				"--list"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-correct-path",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"playwright",
+				"test",
+				"casos-prueba/01-agregar-administrado.spec.ts",
+				"--workers=1",
+				"--reporter=line"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-by-grep",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"playwright",
+				"test",
+				"--project=chromium",
+				"--workers=1",
+				"--grep",
+				"01-AGREGAR ADMINISTRADO",
+				"--reporter=line"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-logfile",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npx playwright test --project=chromium --workers=1 --grep \"01-AGREGAR ADMINISTRADO\" --reporter=line > .tmp-caso1-run.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-profesional",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"playwright",
+				"test",
+				"--project=chromium",
+				"--workers=1",
+				"--grep",
+				"01-AGREGAR ADMINISTRADO",
+				"--reporter=line"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-log3",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npx playwright test --project=chromium --workers=1 --grep \"01-AGREGAR ADMINISTRADO\" --reporter=line > .tmp-caso1-run3.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-junit",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"playwright",
+				"test",
+				"--project=chromium",
+				"--workers=1",
+				"--grep",
+				"01-AGREGAR ADMINISTRADO"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-jsonlog",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npx playwright test --project=chromium --workers=1 --grep \"01-AGREGAR ADMINISTRADO\" --reporter=json > .tmp-caso1.json 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-after-fix",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npx playwright test --project=chromium --workers=1 --grep \"01-AGREGAR ADMINISTRADO\" --reporter=line > .tmp-caso1-after-fix.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-plain-task",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"set PLAYWRIGHT_FORCE_TTY=0 && set CI=1 && npx playwright test --project=chromium --workers=1 --grep \"01-AGREGAR ADMINISTRADO\" --reporter=line > .tmp-caso1-plain.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-after-fallback",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npx playwright test --project=chromium --workers=1 --grep \"01-AGREGAR ADMINISTRADO\" --reporter=line > .tmp-caso1-after-fallback.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-default-reporter",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"playwright",
+				"test",
+				"--project=chromium",
+				"--workers=1",
+				"--grep",
+				"01-AGREGAR ADMINISTRADO"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-after-enoent-fix",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npx playwright test --project=chromium --workers=1 --grep \"01-AGREGAR ADMINISTRADO\" --reporter=line > .tmp-caso1-after-enoent-fix.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-junit-file",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npx playwright test --project=chromium --workers=1 --grep \"01-AGREGAR ADMINISTRADO\" --reporter=junit > .tmp-caso1-junit.xml 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-caso1-with-reports",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:caso1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "generate-allure-report",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"report:allure:generate"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "regenerate-allure-after-case1",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"report:allure:generate"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "clean-run-validate",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"clean:run"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "clean-run-validate-2",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"clean:run"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-test01-args",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:01",
+				"--",
+				"--list"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validar-clean-run",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"clean:run"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validar-reinicio-iteracion",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"iteracion:reiniciar"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validar-test01-auto-reportes",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:01",
+				"--",
+				"--list"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check-allure-generate",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"report:allure:generate"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-allure-open-fix",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/post-test01-reportes.ps1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validar-test01-fast-list",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:01:fast",
+				"--",
+				"--workers=5",
+				"--repeat-each=5",
+				"--project=chromium",
+				"--list"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validar-test01-fast-user-cmd",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:01:fast",
+				"--",
+				"--workers=5",
+				"--repeat-each=5",
+				"--project=chromium",
+				"--list"
+			],
+			"isBackground": false
+		}
+	]
+}
