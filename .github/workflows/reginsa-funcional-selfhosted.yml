@@ -23,6 +23,18 @@ on:
         description: "Run reset + prewarm before tests (true/false)"
         required: false
         default: "false"
+      generate_reports:
+        description: "Generate post-test reports in script (true/false)"
+        required: false
+        default: "false"
+      pw_retries:
+        description: "Playwright retries for this run"
+        required: false
+        default: "0"
+      minimal_evidence:
+        description: "Use minimal evidence mode for speed (true/false)"
+        required: false
+        default: "true"
 
 jobs:
   functional-scale-selfhosted:
@@ -106,6 +118,14 @@ jobs:
           echo Credenciales detectadas en: !HAS_CREDS!
 
       - name: Run functional scale
+        env:
+          REGINSA_SKIP_PREWARM: ${{ github.event.inputs.prepare_data == 'true' && '0' || '1' }}
+          REGINSA_SKIP_POST_REPORTS: ${{ github.event.inputs.generate_reports == 'true' && '0' || '1' }}
+          REGINSA_PW_RETRIES: ${{ github.event.inputs.pw_retries || '0' }}
+          REGINSA_TRACE: ${{ github.event.inputs.minimal_evidence == 'true' && 'off' || 'on-first-retry' }}
+          REGINSA_VIDEO: ${{ github.event.inputs.minimal_evidence == 'true' && 'off' || 'retain-on-failure' }}
+          REGINSA_SCREENSHOT: ${{ github.event.inputs.minimal_evidence == 'true' && 'off' || 'only-on-failure' }}
+          REGINSA_REPORTER_MODE: ${{ github.event.inputs.minimal_evidence == 'true' && 'minimal' || 'full' }}
         run: >-
           npm run test:01:scale --
           --workers=${{ github.event.inputs.workers || vars.PW_WORKERS || '6' }}

@@ -77,6 +77,9 @@ En GitHub > `Settings` > `Actions` > `Runners`:
    - `pool_target=20`
    - `install_browser=false`
    - `prepare_data=false`
+   - `generate_reports=false`
+   - `pw_retries=0`
+   - `minimal_evidence=true`
 
 Si hay runs antiguos en cola, cancelarlos y lanzar uno nuevo.
 
@@ -84,6 +87,9 @@ Para ejecución completa/masiva:
 
 - `install_browser=true` (solo cuando toque actualizar navegador)
 - `prepare_data=true` (cuando sí quieras reset + prewarm)
+- `generate_reports=true` (si necesitas reportes completos al final)
+- `pw_retries=1` o más (más estable, menos rápido)
+- `minimal_evidence=false` (evidencia completa)
 
 ---
 

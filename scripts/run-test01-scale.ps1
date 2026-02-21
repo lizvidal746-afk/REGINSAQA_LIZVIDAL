@@ -76,14 +76,34 @@ if (-not $env:REGINSA_POOL_TARGET) {
   $env:REGINSA_POOL_TARGET = '600'
 }
 
-Write-Host "Precalentando pool (objetivo: $($env:REGINSA_POOL_TARGET))..."
-& node (Join-Path $PSScriptRoot 'prewarm-pool.js')
+if (-not $env:REGINSA_PW_RETRIES) {
+  $env:REGINSA_PW_RETRIES = '1'
+}
+
+if ($env:REGINSA_SKIP_PREWARM -eq '1') {
+  Write-Host 'Prewarm omitido por REGINSA_SKIP_PREWARM=1'
+} else {
+  Write-Host "Precalentando pool (objetivo: $($env:REGINSA_POOL_TARGET))..."
+  & node (Join-Path $PSScriptRoot 'prewarm-pool.js')
+}
+
+$retries = 1
+try {
+  $parsedRetries = [int]$env:REGINSA_PW_RETRIES
+  if ($parsedRetries -ge 0) {
+    $retries = $parsedRetries
+  }
+} catch {}
 
 Write-Host 'Ejecutando Caso 01 en modo scale...'
-& npx playwright test --grep=01-AGREGAR --retries=1 @PlaywrightArgs
+& npx playwright test --grep=01-AGREGAR --retries=$retries @PlaywrightArgs
 $testExitCode = $LASTEXITCODE
 
-Write-Host 'Generando y abriendo reportes...'
-& powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'post-test01-reportes.ps1')
+if ($env:REGINSA_SKIP_POST_REPORTS -eq '1') {
+  Write-Host 'Post reportes omitidos por REGINSA_SKIP_POST_REPORTS=1'
+} else {
+  Write-Host 'Generando y abriendo reportes...'
+  & powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'post-test01-reportes.ps1')
+}
 
 exit $testExitCode

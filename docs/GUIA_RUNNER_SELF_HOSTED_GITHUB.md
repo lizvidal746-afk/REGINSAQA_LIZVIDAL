@@ -135,6 +135,9 @@ Pasos:
     - `pool_target=20`
     - `install_browser=false`
     - `prepare_data=false`
+    - `generate_reports=false`
+    - `pw_retries=0`
+    - `minimal_evidence=true`
 5. Ejecutar.
 
 Si había un job viejo en cola desde antes del runner, cancelarlo y lanzar uno nuevo.
@@ -143,6 +146,9 @@ Para corridas completas (volumen), usar:
 
 - `install_browser=true` cuando se actualice Playwright/navegador o se reinstale runner.
 - `prepare_data=true` cuando necesites reset/prewarm antes de pruebas masivas.
+- `generate_reports=true` cuando requieras abrir/generar reportes completos al final.
+- `pw_retries=1` o más cuando priorices resiliencia sobre velocidad.
+- `minimal_evidence=false` cuando requieras HTML/JUnit/Allure completo, trace/video/screenshot.
 
 ---
 
