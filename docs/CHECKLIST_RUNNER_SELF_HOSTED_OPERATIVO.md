@@ -80,6 +80,9 @@ En GitHub > `Settings` > `Actions` > `Runners`:
    - `generate_reports=false`
    - `pw_retries=0`
    - `minimal_evidence=true`
+   - `install_dependencies=false` (si el runner ya está preparado)
+   - `evaluate_outcomes=true`
+   - `upload_artifacts=false`
 
 Si hay runs antiguos en cola, cancelarlos y lanzar uno nuevo.
 
@@ -90,6 +93,8 @@ Para ejecución completa/masiva:
 - `generate_reports=true` (si necesitas reportes completos al final)
 - `pw_retries=1` o más (más estable, menos rápido)
 - `minimal_evidence=false` (evidencia completa)
+- `install_dependencies=true` cuando cambie lockfile o en primera ejecución del runner
+- `upload_artifacts=true` cuando necesites descargar evidencia desde Actions
 
 ---
 
@@ -101,3 +106,4 @@ Para ejecución completa/masiva:
 - Runner offline: revisar/levantar servicio `actions.runner*`.
 - `PSSecurityException` en `npm ci`: usar `shell cmd` en el workflow para pasos `run`/`npm`.
 - `PSSecurityException` en validación de credenciales: evitar pasos con `pwsh/powershell`; usar validación en `cmd`.
+- `tar.exe ... exit code 2` en `Post Setup Node.js`: warning de caché npm; no bloquea si el run quedó en `Success`.

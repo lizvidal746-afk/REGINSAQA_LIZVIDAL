@@ -35,6 +35,18 @@ on:
         description: "Use minimal evidence mode for speed (true/false)"
         required: false
         default: "true"
+      install_dependencies:
+        description: "Run npm ci in this run (true/false)"
+        required: false
+        default: "true"
+      evaluate_outcomes:
+        description: "Evaluate Playwright results gate (true/false)"
+        required: false
+        default: "true"
+      upload_artifacts:
+        description: "Upload workflow artifacts (true/false)"
+        required: false
+        default: "false"
 
 jobs:
   functional-scale-selfhosted:
@@ -73,14 +85,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install dependencies
+        if: ${{ github.event.inputs.install_dependencies == 'true' }}
         run: npm ci
 
       - name: Install Playwright browser
@@ -133,11 +148,11 @@ jobs:
           --project=chromium
 
       - name: Evaluate test outcomes
-        if: always() && hashFiles('test-results/results.json') != ''
+        if: always() && github.event.inputs.evaluate_outcomes == 'true' && hashFiles('test-results/results.json') != ''
         run: node scripts/evaluate-playwright-results.js
 
       - name: Upload artifacts
-        if: always()
+        if: always() && github.event.inputs.upload_artifacts == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: functional-scale-artifacts-selfhosted

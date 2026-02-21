@@ -138,6 +138,9 @@ Pasos:
     - `generate_reports=false`
     - `pw_retries=0`
     - `minimal_evidence=true`
+    - `install_dependencies=false` (solo si ya instalaste dependencias previamente en ese runner)
+    - `evaluate_outcomes=true`
+    - `upload_artifacts=false`
 5. Ejecutar.
 
 Si había un job viejo en cola desde antes del runner, cancelarlo y lanzar uno nuevo.
@@ -149,6 +152,8 @@ Para corridas completas (volumen), usar:
 - `generate_reports=true` cuando requieras abrir/generar reportes completos al final.
 - `pw_retries=1` o más cuando priorices resiliencia sobre velocidad.
 - `minimal_evidence=false` cuando requieras HTML/JUnit/Allure completo, trace/video/screenshot.
+- `install_dependencies=true` en primera corrida del runner o cuando cambie `package-lock.json`.
+- `upload_artifacts=true` cuando necesites descargar evidencias desde GitHub.
 
 ---
 
@@ -183,6 +188,9 @@ Opcional:
 - Causa: política de ejecución de PowerShell del host bloquea scripts temporales.
 - Solución aplicada en este repo: en el workflow self-hosted se usa `cmd` por defecto para pasos `run` y la validación de credenciales también está implementada en `cmd` (sin `pwsh`/`powershell`).
 - Si persiste en otro workflow, configurar `defaults.run.shell: cmd` o fijar `shell: cmd` en los pasos `npm`.
+- Advertencia `tar.exe failed with exit code 2` en `Post Setup Node.js`
+- Significa fallo al guardar caché npm en runner Windows; no invalida la corrida si el run termina en `Success`.
+- En este workflow se desactivó `cache: npm` de `setup-node` para evitar esa advertencia y reducir sobrecosto en corridas rápidas.
 
 ---
 
