@@ -73,24 +73,26 @@ jobs:
         run: npm run pool:prewarm
 
       - name: Validate credentials presence
-        shell: powershell
         run: |
-          $pairs = @(
-            @{ U = "$env:REGINSA_USER"; P = "$env:REGINSA_PASS"; N = "REGINSA_USER/REGINSA_PASS" },
-            @{ U = "$env:REGINSA_USER_1"; P = "$env:REGINSA_PASS_1"; N = "REGINSA_USER_1/REGINSA_PASS_1" },
-            @{ U = "$env:REGINSA_USER_2"; P = "$env:REGINSA_PASS_2"; N = "REGINSA_USER_2/REGINSA_PASS_2" },
-            @{ U = "$env:REGINSA_USER_3"; P = "$env:REGINSA_PASS_3"; N = "REGINSA_USER_3/REGINSA_PASS_3" },
-            @{ U = "$env:REGINSA_USER_4"; P = "$env:REGINSA_PASS_4"; N = "REGINSA_USER_4/REGINSA_PASS_4" },
-            @{ U = "$env:REGINSA_USER_5"; P = "$env:REGINSA_PASS_5"; N = "REGINSA_USER_5/REGINSA_PASS_5" },
-            @{ U = "$env:REGINSA_USER_6"; P = "$env:REGINSA_PASS_6"; N = "REGINSA_USER_6/REGINSA_PASS_6" }
+          @echo off
+          setlocal enabledelayedexpansion
+
+          set HAS_CREDS=
+
+          if not "%REGINSA_USER%"=="" if not "%REGINSA_PASS%"=="" set HAS_CREDS=REGINSA_USER/REGINSA_PASS
+          if not defined HAS_CREDS if not "%REGINSA_USER_1%"=="" if not "%REGINSA_PASS_1%"=="" set HAS_CREDS=REGINSA_USER_1/REGINSA_PASS_1
+          if not defined HAS_CREDS if not "%REGINSA_USER_2%"=="" if not "%REGINSA_PASS_2%"=="" set HAS_CREDS=REGINSA_USER_2/REGINSA_PASS_2
+          if not defined HAS_CREDS if not "%REGINSA_USER_3%"=="" if not "%REGINSA_PASS_3%"=="" set HAS_CREDS=REGINSA_USER_3/REGINSA_PASS_3
+          if not defined HAS_CREDS if not "%REGINSA_USER_4%"=="" if not "%REGINSA_PASS_4%"=="" set HAS_CREDS=REGINSA_USER_4/REGINSA_PASS_4
+          if not defined HAS_CREDS if not "%REGINSA_USER_5%"=="" if not "%REGINSA_PASS_5%"=="" set HAS_CREDS=REGINSA_USER_5/REGINSA_PASS_5
+          if not defined HAS_CREDS if not "%REGINSA_USER_6%"=="" if not "%REGINSA_PASS_6%"=="" set HAS_CREDS=REGINSA_USER_6/REGINSA_PASS_6
+
+          if not defined HAS_CREDS (
+            echo ERROR: No se detecto ningun par de credenciales en Secrets. Configure REGINSA_USER/REGINSA_PASS o REGINSA_USER_n/REGINSA_PASS_n ^(n=1..6^).
+            exit /b 1
           )
 
-          $ok = $pairs | Where-Object { -not [string]::IsNullOrWhiteSpace($_.U) -and -not [string]::IsNullOrWhiteSpace($_.P) }
-          if (-not $ok) {
-            throw "No se detectó ningún par de credenciales en Secrets. Configure REGINSA_USER/REGINSA_PASS o REGINSA_USER_n/REGINSA_PASS_n (n=1..6)."
-          }
-
-          Write-Host "Credenciales detectadas en: $($ok[0].N)"
+          echo Credenciales detectadas en: !HAS_CREDS!
 
       - name: Run functional scale
         run: >-

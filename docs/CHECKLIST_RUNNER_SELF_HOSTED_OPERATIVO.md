@@ -87,3 +87,4 @@ Si hay runs antiguos en cola, cancelarlos y lanzar uno nuevo.
 - `Label ' sunedu' is not valid`: quitar espacios, usar `reginsa,sunedu`.
 - Runner offline: revisar/levantar servicio `actions.runner*`.
 - `PSSecurityException` en `npm ci`: usar `shell cmd` en el workflow para pasos `run`/`npm`.
+- `PSSecurityException` en validación de credenciales: evitar pasos con `pwsh/powershell`; usar validación en `cmd`.

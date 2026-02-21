@@ -168,7 +168,7 @@ Opcional:
 - Revisar servicio con `Get-Service actions.runner*` y levantarlo.
 - Error en `Install dependencies` con `PSSecurityException` / `UnauthorizedAccess`
 - Causa: política de ejecución de PowerShell del host bloquea scripts temporales.
-- Solución aplicada en este repo: en el workflow self-hosted se usa `cmd` por defecto para pasos `run`.
+- Solución aplicada en este repo: en el workflow self-hosted se usa `cmd` por defecto para pasos `run` y la validación de credenciales también está implementada en `cmd` (sin `pwsh`/`powershell`).
 - Si persiste en otro workflow, configurar `defaults.run.shell: cmd` o fijar `shell: cmd` en los pasos `npm`.
 
 ---
