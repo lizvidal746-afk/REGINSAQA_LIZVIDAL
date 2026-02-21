@@ -73,7 +73,7 @@ jobs:
         run: npm run pool:prewarm
 
       - name: Validate credentials presence
-        shell: pwsh
+        shell: powershell
         run: |
           $pairs = @(
             @{ U = "$env:REGINSA_USER"; P = "$env:REGINSA_PASS"; N = "REGINSA_USER/REGINSA_PASS" },
