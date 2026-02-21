@@ -176,8 +176,8 @@ Ejemplos prácticos:
 En **Settings > Secrets and variables > Actions**, configura en ambos repos:
 
 - `REGINSA_URL`
-- `REGINSA_USER_1` ... `REGINSA_USER_6`
-- `REGINSA_PASS_1` ... `REGINSA_PASS_6`
+- `REGINSA_USER_1` ... `REGINSA_USER_8`
+- `REGINSA_PASS_1` ... `REGINSA_PASS_8`
 
 Si falta alguno, el workflow fallará al ejecutar pruebas.
 

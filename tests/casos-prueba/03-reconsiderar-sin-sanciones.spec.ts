@@ -1,5 +1,4 @@
 import { test } from '@playwright/test';
-import path from 'path';
 import {
   iniciarSesionYNavegar,
   obtenerCredencial,
@@ -9,6 +8,7 @@ import {
   capturarToastExito,
   parseFechaTexto,
   calcularFechaReconsideracion,
+  resolverDocumentoPrueba,
 } from 'tests/utilidades/reginsa-actions';
 import { getTestContext } from 'helpers/test-context';
 
@@ -183,7 +183,7 @@ test.describe('03-RECONSIDERAR SIN SANCIONES', () => {
       // Reutiliza `completarCabeceraReconsideracion`
       // ═══════════════════════════════════════════════════════════════════
       console.log('📋 PASO 4-8: Editando cabecera y completando datos...');
-      const rutaArchivo = path.resolve(__dirname, '../../test-files/GENERAL N° 00001-2026-SUNEDU-SG-OTI.pdf');
+      const rutaArchivo = resolverDocumentoPrueba();
       console.log(`   Ruta: ${rutaArchivo}`);
       const fechaReconsideracion = calcularFechaReconsideracion(fechaResolucionSeleccionada);
 

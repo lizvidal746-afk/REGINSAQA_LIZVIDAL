@@ -6,7 +6,8 @@ import {
   capturarPantallaMejorada,
   capturarFormularioLleno,
   capturarToastExito,
-  generarFechaPonderada
+  generarFechaPonderada,
+  resolverDocumentoPrueba
 } from 'tests/utilidades/reginsa-actions';
 
 /**
@@ -170,7 +171,7 @@ test('02-REGISTRAR SANCIÓN: 8 sanciones para 1 administrado', async ({ page }, 
   console.log('📁 PASO 5: SUBIENDO PDF');
   console.log('═'.repeat(90));
 
-  const pdfPath = 'test-files/GENERAL N° 00001-2026-SUNEDU-SG-OTI.pdf';
+  const pdfPath = resolverDocumentoPrueba();
   const fileInput = page.locator('input[type="file"]').first();
   await fileInput.setInputFiles(pdfPath);
   await page.waitForTimeout(5000);

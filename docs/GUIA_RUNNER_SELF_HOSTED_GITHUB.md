@@ -162,8 +162,8 @@ Para corridas completas (volumen), usar:
 En **Settings** > **Secrets and variables** > **Actions**, definir:
 
 - `REGINSA_URL`
-- `REGINSA_USER_1` ... `REGINSA_USER_6`
-- `REGINSA_PASS_1` ... `REGINSA_PASS_6`
+- `REGINSA_USER_1` ... `REGINSA_USER_8`
+- `REGINSA_PASS_1` ... `REGINSA_PASS_8`
 
 Opcional:
 

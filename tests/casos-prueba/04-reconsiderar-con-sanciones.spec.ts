@@ -6,7 +6,8 @@ import {
   capturarFormularioLleno,
   capturarToastExito,
   parseFechaTexto,
-  calcularFechaReconsideracion
+  calcularFechaReconsideracion,
+  resolverDocumentoPrueba
 } from 'tests/utilidades/reginsa-actions';
 
 /**
@@ -174,7 +175,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
       // Reutiliza `completarCabeceraReconsideracion`
       // ═══════════════════════════════════════════════════════════════════
       console.log('📋 PASO 4-10: Rellenando datos de cabecera...');
-      const rutaArchivo = path.resolve(__dirname, '../../test-files/GENERAL N° 00001-2026-SUNEDU-SG-OTI.pdf');
+      const rutaArchivo = resolverDocumentoPrueba();
       const fechaReconsideracion = calcularFechaReconsideracion(fechaResolucionSeleccionada);
 
       const numeroReconsideracion = await completarCabeceraReconsideracion(page, rutaArchivo, fechaReconsideracion);

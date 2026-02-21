@@ -37,6 +37,10 @@ jobs:
       REGINSA_PASS_5: ${{ secrets.REGINSA_PASS_5 }}
       REGINSA_USER_6: ${{ secrets.REGINSA_USER_6 }}
       REGINSA_PASS_6: ${{ secrets.REGINSA_PASS_6 }}
+      REGINSA_USER_7: ${{ secrets.REGINSA_USER_7 }}
+      REGINSA_PASS_7: ${{ secrets.REGINSA_PASS_7 }}
+      REGINSA_USER_8: ${{ secrets.REGINSA_USER_8 }}
+      REGINSA_PASS_8: ${{ secrets.REGINSA_PASS_8 }}
       REGINSA_POOL_TARGET: ${{ github.event.inputs.pool_target || vars.POOL_TARGET || '600' }}
       REGINSA_STRICT_VERIFY: '1'
       REGINSA_SKIP_LIST_VERIFY: '1'
@@ -79,12 +83,14 @@ jobs:
             @{ U = "$env:REGINSA_USER_3"; P = "$env:REGINSA_PASS_3"; N = "REGINSA_USER_3/REGINSA_PASS_3" },
             @{ U = "$env:REGINSA_USER_4"; P = "$env:REGINSA_PASS_4"; N = "REGINSA_USER_4/REGINSA_PASS_4" },
             @{ U = "$env:REGINSA_USER_5"; P = "$env:REGINSA_PASS_5"; N = "REGINSA_USER_5/REGINSA_PASS_5" },
-            @{ U = "$env:REGINSA_USER_6"; P = "$env:REGINSA_PASS_6"; N = "REGINSA_USER_6/REGINSA_PASS_6" }
+            @{ U = "$env:REGINSA_USER_6"; P = "$env:REGINSA_PASS_6"; N = "REGINSA_USER_6/REGINSA_PASS_6" },
+            @{ U = "$env:REGINSA_USER_7"; P = "$env:REGINSA_PASS_7"; N = "REGINSA_USER_7/REGINSA_PASS_7" },
+            @{ U = "$env:REGINSA_USER_8"; P = "$env:REGINSA_PASS_8"; N = "REGINSA_USER_8/REGINSA_PASS_8" }
           )
 
           $ok = $pairs | Where-Object { -not [string]::IsNullOrWhiteSpace($_.U) -and -not [string]::IsNullOrWhiteSpace($_.P) }
           if (-not $ok) {
-            throw "No se detectó ningún par de credenciales en Secrets. Configure REGINSA_USER/REGINSA_PASS o REGINSA_USER_n/REGINSA_PASS_n (n=1..6)."
+            throw "No se detectó ningún par de credenciales en Secrets. Configure REGINSA_USER/REGINSA_PASS o REGINSA_USER_n/REGINSA_PASS_n (n=1..8)."
           }
 
           Write-Host "Credenciales detectadas en: $($ok[0].N)"

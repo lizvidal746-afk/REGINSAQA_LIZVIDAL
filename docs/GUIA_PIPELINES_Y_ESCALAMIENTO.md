@@ -93,8 +93,8 @@ En el repositorio, crear:
 Configurar:
 
 - `REGINSA_URL`
-- `REGINSA_USER_1` ... `REGINSA_USER_6`
-- `REGINSA_PASS_1` ... `REGINSA_PASS_6`
+- `REGINSA_USER_1` ... `REGINSA_USER_8`
+- `REGINSA_PASS_1` ... `REGINSA_PASS_8`
 
 Variables no secretas sugeridas:
 

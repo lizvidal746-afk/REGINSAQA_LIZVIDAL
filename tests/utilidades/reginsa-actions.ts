@@ -1,5 +1,6 @@
 import { Page, expect, type Locator } from '@playwright/test';
 import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * Funciones Reutilizables - REGINSA SUNEDU
@@ -12,19 +13,42 @@ import * as fs from 'fs';
 // - Variables usadas: REGINSA_USER/REGINSA_PASS (usuario único)
 // - Para paralelismo: REGINSA_USER_1..N y REGINSA_PASS_1..N
 // Este archivo SOLO lee esas variables; no guardar claves en código.
+const construirPoolCredenciales = () => {
+  const pool: Array<{ usuario: string; contraseña: string }> = [];
+  for (let i = 1; i <= 8; i++) {
+    const usuario = process.env[`REGINSA_USER_${i}`] || '';
+    const contraseña = process.env[`REGINSA_PASS_${i}`] || '';
+    if (usuario && contraseña) {
+      pool.push({ usuario, contraseña });
+    }
+  }
+  return pool;
+};
+
 const CREDENCIALES = {
   url: process.env.REGINSA_URL || process.env.BASE_URL || 'https://example-reginsa.local/#/home',
   usuario: process.env.REGINSA_USER || process.env.REGINSA_USER_1 || '',
   contraseña: process.env.REGINSA_PASS || process.env.REGINSA_PASS_1 || '',
-  usuarios: [
-    { usuario: process.env.REGINSA_USER_1 || '', contraseña: process.env.REGINSA_PASS_1 || '' },
-    { usuario: process.env.REGINSA_USER_2 || '', contraseña: process.env.REGINSA_PASS_2 || '' },
-    { usuario: process.env.REGINSA_USER_3 || '', contraseña: process.env.REGINSA_PASS_3 || '' },
-    { usuario: process.env.REGINSA_USER_4 || '', contraseña: process.env.REGINSA_PASS_4 || '' },
-    { usuario: process.env.REGINSA_USER_5 || '', contraseña: process.env.REGINSA_PASS_5 || '' },
-    { usuario: process.env.REGINSA_USER_6 || '', contraseña: process.env.REGINSA_PASS_6 || '' }
-  ].filter((credencial) => credencial.usuario && credencial.contraseña)
+  usuarios: construirPoolCredenciales()
 };
+
+export function resolverDocumentoPrueba(nombreArchivo = 'GENERAL N° 00001-2026-SUNEDU-SG-OTI.pdf'): string {
+  const candidatos = [
+    path.resolve(process.cwd(), 'test-files', nombreArchivo),
+    path.resolve(process.cwd(), 'playwrigth', 'test-files', nombreArchivo),
+    path.resolve(process.cwd(), 'files', nombreArchivo)
+  ];
+
+  const encontrado = candidatos.find((ruta) => fs.existsSync(ruta));
+  if (encontrado) {
+    return encontrado;
+  }
+
+  throw new Error(
+    `No se encontró el archivo de prueba "${nombreArchivo}". ` +
+    `Buscado en: ${candidatos.join(' | ')}`
+  );
+}
 
 const usuarioEnv = process.env.REGINSA_USER;
 const contraseñaEnv = process.env.REGINSA_PASS;
