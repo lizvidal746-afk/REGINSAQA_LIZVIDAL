@@ -26,6 +26,7 @@ Los parámetros de cantidad se cambian aquí (workflow_dispatch):
 Guía visual paso a paso:
 
 - `docs/GUIA_EJECUCION_PIPELINES_PASO_A_PASO.md`
+- `docs/GUIA_RUNNER_SELF_HOSTED_GITHUB.md` (si la URL es interna SUNEDU)
 
 ---
 

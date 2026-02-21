@@ -84,3 +84,13 @@ Regla usada:
 
 - Si no llenas valores en GitHub, se usan defaults del workflow o variables del repo.
 - Si no cambias variables en Azure al ejecutar, se usan los valores guardados en el pipeline.
+
+## 6) Caso URL interna SUNEDU
+
+Si tu URL solo resuelve en red interna/VPN SUNEDU, usa workflow self-hosted:
+
+- `REGINSA Functional Scale (Self-hosted)`
+
+Guía de instalación y operación:
+
+- `docs/GUIA_RUNNER_SELF_HOSTED_GITHUB.md`
