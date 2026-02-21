@@ -19,6 +19,7 @@ Nota operativa:
 - Guía de subida a 2 repos y ejecución CI: [GUIA_SUBIDA_DOS_REPOS_Y_AZURE.md](GUIA_SUBIDA_DOS_REPOS_Y_AZURE.md)
 - Guía rápida de ejecución de pipelines: [GUIA_EJECUCION_PIPELINES_PASO_A_PASO.md](GUIA_EJECUCION_PIPELINES_PASO_A_PASO.md)
 - Guía de runner self-hosted en GitHub: [GUIA_RUNNER_SELF_HOSTED_GITHUB.md](GUIA_RUNNER_SELF_HOSTED_GITHUB.md)
+- Checklist operativo runner self-hosted: [CHECKLIST_RUNNER_SELF_HOSTED_OPERATIVO.md](CHECKLIST_RUNNER_SELF_HOSTED_OPERATIVO.md)
 - Plan de migración Casos 02/03/04: [PLAN_MIGRACION_CASOS_02_03_04.md](PLAN_MIGRACION_CASOS_02_03_04.md)
 - Prompt operativo del agente: [prompts/AGENTE_QA_DEVSECOPS_REGINSA.md](prompts/AGENTE_QA_DEVSECOPS_REGINSA.md)
 - Pipeline Azure plantilla: [plantillas/azure-pipelines.qa-devsecops.yml](plantillas/azure-pipelines.qa-devsecops.yml)

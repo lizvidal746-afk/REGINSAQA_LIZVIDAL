@@ -20,6 +20,9 @@ jobs:
   functional-scale-selfhosted:
     runs-on: [self-hosted, windows]
     timeout-minutes: 180
+    defaults:
+      run:
+        shell: cmd
     env:
       REGINSA_URL: ${{ secrets.REGINSA_URL }}
       BASE_URL: ${{ secrets.REGINSA_URL }}

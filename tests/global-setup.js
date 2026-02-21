@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { chromium } = require('@playwright/test');
+const dns = require('dns').promises;
 
 const CREDENCIALES = {
   url: process.env.REGINSA_URL || process.env.BASE_URL || 'https://example-reginsa.local/#/home'
@@ -25,10 +26,32 @@ module.exports = async () => {
 
   console.log(`[global-setup] Credencial activa detectada desde ${credencialActiva.origen}`);
 
+  const urlNormalizada = String(CREDENCIALES.url || '').trim();
+  if (!urlNormalizada) {
+    throw new Error('REGINSA_URL/BASE_URL está vacío. Define una URL válida en Secrets.');
+  }
+
+  const urlConProtocolo = /^https?:\/\//i.test(urlNormalizada)
+    ? urlNormalizada
+    : `https://${urlNormalizada}`;
+
+  let hostname;
+  try {
+    hostname = new URL(urlConProtocolo).hostname;
+  } catch {
+    throw new Error(`URL inválida en REGINSA_URL: "${urlNormalizada}"`);
+  }
+
+  try {
+    await dns.lookup(hostname);
+  } catch {
+    throw new Error(`No se pudo resolver el dominio "${hostname}" desde el runner. Verifica REGINSA_URL o usa un runner self-hosted con acceso a red/VPN institucional.`);
+  }
+
   const browser = await chromium.launch();
   const page = await browser.newPage();
 
-  await page.goto(CREDENCIALES.url);
+  await page.goto(urlConProtocolo);
   const btnAcceder = page.getByRole('button', { name: 'Acceder Ahora' });
   await btnAcceder.click();
 

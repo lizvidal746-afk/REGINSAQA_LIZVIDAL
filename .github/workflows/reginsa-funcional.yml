@@ -89,6 +89,30 @@ jobs:
 
           Write-Host "Credenciales detectadas en: $($ok[0].N)"
 
+      - name: Validate REGINSA_URL DNS
+        shell: pwsh
+        run: |
+          $rawUrl = "$env:REGINSA_URL"
+          if ([string]::IsNullOrWhiteSpace($rawUrl)) {
+            throw "REGINSA_URL no está definido en Secrets."
+          }
+
+          $url = $rawUrl.Trim()
+          if ($url -notmatch '^https?://') { $url = "https://$url" }
+
+          try {
+            $uri = [System.Uri]$url
+          } catch {
+            throw "REGINSA_URL no es válida: $rawUrl"
+          }
+
+          try {
+            Resolve-DnsName -Name $uri.Host -ErrorAction Stop | Out-Null
+            Write-Host "Dominio resolvible: $($uri.Host)"
+          } catch {
+            throw "No se pudo resolver el dominio '$($uri.Host)' desde GitHub runner. Si es red interna/VPN, use runner self-hosted con acceso institucional."
+          }
+
       - name: Run functional scale
         run: >-
           npm run test:01:scale --
