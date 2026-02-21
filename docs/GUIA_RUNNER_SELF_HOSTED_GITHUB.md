@@ -133,9 +133,16 @@ Pasos:
     - `workers=2`
     - `repeat_each=2`
     - `pool_target=20`
+    - `install_browser=false`
+    - `prepare_data=false`
 5. Ejecutar.
 
 Si había un job viejo en cola desde antes del runner, cancelarlo y lanzar uno nuevo.
+
+Para corridas completas (volumen), usar:
+
+- `install_browser=true` cuando se actualice Playwright/navegador o se reinstale runner.
+- `prepare_data=true` cuando necesites reset/prewarm antes de pruebas masivas.
 
 ---
 

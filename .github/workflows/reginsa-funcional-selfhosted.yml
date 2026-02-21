@@ -15,6 +15,14 @@ on:
         description: "Pool target size"
         required: false
         default: "1200"
+      install_browser:
+        description: "Install Playwright browser in this run (true/false)"
+        required: false
+        default: "false"
+      prepare_data:
+        description: "Run reset + prewarm before tests (true/false)"
+        required: false
+        default: "false"
 
 jobs:
   functional-scale-selfhosted:
@@ -64,12 +72,15 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browser
+        if: ${{ github.event.inputs.install_browser == 'true' }}
         run: npx playwright install chromium
 
       - name: Reset operational run
+        if: ${{ github.event.inputs.prepare_data == 'true' }}
         run: npm run iteracion:reiniciar
 
       - name: Prewarm data pool
+        if: ${{ github.event.inputs.prepare_data == 'true' }}
         run: npm run pool:prewarm
 
       - name: Validate credentials presence
