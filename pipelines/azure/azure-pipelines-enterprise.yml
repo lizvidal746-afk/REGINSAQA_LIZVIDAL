@@ -1,0 +1,61 @@
+trigger: none
+pr: none
+
+parameters:
+  - name: testType
+    type: string
+    default: smoke
+    values:
+      - smoke
+      - functional
+      - regression
+      - performance
+      - security
+  - name: workers
+    type: string
+    default: '4'
+  - name: repeatEach
+    type: string
+    default: '1'
+  - name: registros
+    type: string
+    default: '10'
+  - name: headless
+    type: string
+    default: '1'
+  - name: environment
+    type: string
+    default: qa
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  REGINSA_WORKERS: ${{ parameters.workers }}
+  REGINSA_HEADLESS: ${{ parameters.headless }}
+  REGINSA_TARGET_REGISTROS: ${{ parameters.registros }}
+  REGINSA_ENVIRONMENT: ${{ parameters.environment }}
+
+stages:
+  - stage: QA
+    jobs:
+      - job: Execute
+        steps:
+          - checkout: self
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '20.x'
+          - script: npm ci
+            displayName: Install dependencies
+          - script: |
+              if [ "${{ parameters.testType }}" = "smoke" ]; then npm run test:smoke; fi
+              if [ "${{ parameters.testType }}" = "functional" ]; then npm run test:functional:suite -- --workers=${{ parameters.workers }} --repeat-each=${{ parameters.repeatEach }}; fi
+              if [ "${{ parameters.testType }}" = "regression" ]; then npm run test:regression; fi
+              if [ "${{ parameters.testType }}" = "performance" ]; then npm run test:performance; fi
+              if [ "${{ parameters.testType }}" = "security" ]; then npm run test:security; fi
+            displayName: Run selected suite
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: 'playwright-report'
+              ArtifactName: 'playwright-report'
+              publishLocation: 'Container'

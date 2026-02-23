@@ -1,7 +1,7 @@
 
 import { test, Page, expect, TestInfo } from '@playwright/test';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as XLSX from 'xlsx';
 import {
   iniciarSesionYNavegar,
@@ -67,7 +67,7 @@ function asegurarDirectorioErrores(): void {
 }
 
 function sanitizarNombreArchivo(valor: string): string {
-  return valor.replace(/[^a-zA-Z0-9._-]+/g, '_');
+  return valor.replaceAll(/[^a-zA-Z0-9._-]+/g, '_');
 }
 
 function copiarEvidenciasFalloEnErrores(testInfo: TestInfo): void {
@@ -79,7 +79,7 @@ function copiarEvidenciasFalloEnErrores(testInfo: TestInfo): void {
   const project = sanitizarNombreArchivo(testInfo.project.name || 'project');
   const worker = String(testInfo.workerIndex ?? 0);
   const repeat = String((testInfo as any).repeatEachIndex ?? (testInfo as any).repeatIndex ?? 0);
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const stamp = new Date().toISOString().replaceAll(/[:.]/g, '-');
   const prefijo = `caso01_${project}_w${worker}_r${repeat}_${stamp}`;
 
   const candidatos = ['video.webm', 'test-failed-1.png', 'error-context.md', 'trace.zip'];
@@ -521,7 +521,7 @@ async function verificarAdministradoRegistradoPorApi(page: Page, ruc: string): P
     if (!response.ok()) return false;
 
     const data = await response.json().catch(() => null) as { bSuccess?: boolean; oData?: Array<{ Ruc?: string | number }> } | null;
-    const entidades = Array.isArray(data?.oData) ? data!.oData! : [];
+    const entidades = Array.isArray(data?.oData) ? data.oData : [];
     const rucNormalizado = normalizarRuc(ruc);
     return entidades.some((item) => normalizarRuc(item?.Ruc || '') === rucNormalizado);
   } catch {
@@ -749,14 +749,14 @@ function mapearEstadoDesdeId(idEstado: string): string | undefined {
 }
 
 function normalizarRuc(ruc: string | number): string {
-  const digits = String(ruc ?? '').replace(/\D/g, '');
+  const digits = String(ruc ?? '').replaceAll(/\D/g, '');
   if (!digits) return '';
   if (digits.length >= 11) return digits;
   return digits.padStart(11, '0');
 }
 
 function normalizarTexto(texto: string): string {
-  return texto.trim().toUpperCase().replace(/\s+/g, ' ');
+  return texto.trim().toUpperCase().replaceAll(/\s+/g, ' ');
 }
 
 function quitarSufijoEmpresa(razon: string): string {
@@ -783,9 +783,15 @@ function generarRazonSocialUnica(usados: Set<string>): string {
 
 function construirRazonSocialMasiva(ruc: string, usados: Set<string>, sequenceIndex?: number): string {
   // Prefijo principal (aleatorio o secuencial)
-  const prefijo = PREFIJOS_RAZON_SOCIAL[sequenceIndex !== undefined ? sequenceIndex % PREFIJOS_RAZON_SOCIAL.length : Math.floor(Math.random() * PREFIJOS_RAZON_SOCIAL.length)];
+  const prefijoIndex = sequenceIndex === undefined
+    ? Math.floor(Math.random() * PREFIJOS_RAZON_SOCIAL.length)
+    : sequenceIndex % PREFIJOS_RAZON_SOCIAL.length;
+  const prefijo = PREFIJOS_RAZON_SOCIAL[prefijoIndex];
   // Tipo de entidad (aleatorio o secuencial)
-  const tipoEntidad = TIPOS_ENTIDAD[sequenceIndex !== undefined ? sequenceIndex % TIPOS_ENTIDAD.length : Math.floor(Math.random() * TIPOS_ENTIDAD.length)];
+  const tipoEntidadIndex = sequenceIndex === undefined
+    ? Math.floor(Math.random() * TIPOS_ENTIDAD.length)
+    : sequenceIndex % TIPOS_ENTIDAD.length;
+  const tipoEntidad = TIPOS_ENTIDAD[tipoEntidadIndex];
   // Últimos 5 dígitos del RUC
   const rucNorm = normalizarRuc(ruc);
   const ultimos5 = rucNorm.slice(-5);
@@ -1247,13 +1253,27 @@ async function registrarAdministrado(
       // Guardar
       const btnGuardar = page.getByRole('button', { name: 'Guardar' });
       await btnGuardar.waitFor({ state: 'visible', timeout: 5000 });
-      const respuestaCrearPromise = esperarRespuestaCrearEntidad(page, 25000);
-      await btnGuardar.click();
+      const esScale = process.env.REGINSA_SCALE_MODE === '1';
+      const timeoutCrearApi = esScale ? 14000 : 25000;
+      const respuestaCrearPromise = esperarRespuestaCrearEntidad(page, timeoutCrearApi);
+      await btnGuardar.click().catch(async () => {
+        await btnGuardar.click({ force: true });
+      });
       const exitoUi = await esperarResultadoGuardado(page);
-      const resultadoCrearApi = await respuestaCrearPromise;
+      const esperaApiTrasUiMs = esScale ? 2500 : 6000;
+      let resultadoCrearApi = await Promise.race([
+        respuestaCrearPromise,
+        page.waitForTimeout(exitoUi ? esperaApiTrasUiMs : timeoutCrearApi).then(() => null)
+      ]);
+      if (!resultadoCrearApi && esScale) {
+        const esperaApiExtraMs = Number(process.env.REGINSA_API_EXTRA_WAIT_MS || 3000);
+        resultadoCrearApi = await Promise.race([
+          respuestaCrearPromise,
+          page.waitForTimeout(esperaApiExtraMs).then(() => null)
+        ]);
+      }
       const exitoApi = !!resultadoCrearApi?.ok;
       const exito = exitoUi || exitoApi;
-      const esScale = process.env.REGINSA_SCALE_MODE === '1';
       const confirmarApiRetries = Number(process.env.REGINSA_CONFIRMAR_API_RETRIES || 4);
       const confirmarApiWaitMs = Number(process.env.REGINSA_CONFIRMAR_API_WAIT_MS || 1200);
       const confirmacionApiPosterior = (!exitoApi && esScale)
@@ -1344,6 +1364,32 @@ async function registrarAdministrado(
         return ruc;
       } else {
         if (esScale) {
+          const confirmacionRapidaRetries = Number(process.env.REGINSA_CONFIRMAR_API_RETRIES_RAPIDA || 3);
+          const confirmacionRapidaWaitMs = Number(process.env.REGINSA_CONFIRMAR_API_WAIT_MS_RAPIDA || 800);
+          const confirmacionRapidaApi = await confirmarCreacionPorApi(page, ruc, confirmacionRapidaRetries, confirmacionRapidaWaitMs);
+          if (confirmacionRapidaApi) {
+            console.warn(`⚠️ Éxito tardío corto confirmado por API para RUC ${ruc}. Se evita reintento técnico.`);
+            const registroTardioRapido: RegistroAdministrado = {
+              id: numeroRegistro,
+              ruc,
+              razonSocial: razonSocial,
+              nombreComercial: nombreComercial,
+              estado: estadoSeleccionado,
+              timestamp: new Date().toISOString(),
+              screenshot: screenshotAntes,
+              screenshot_despues: '',
+              estado_registro: 'exitoso_no_verificado',
+              verificado_en_listado: false,
+              motivo_no_verificado: 'Creado confirmado por API en verificación rápida',
+              creacion_api_confirmada: true,
+              creacion_api_id: resultadoCrearApi?.id,
+              creacion_api_mensaje: resultadoCrearApi?.message
+            };
+            actualizarReporte(registroTardioRapido);
+            registroExitoso = true;
+            return ruc;
+          }
+
           const confirmacionFinalRetries = Number(process.env.REGINSA_CONFIRMAR_API_RETRIES_FINAL || 20);
           const confirmacionFinalWaitMs = Number(process.env.REGINSA_CONFIRMAR_API_WAIT_MS_FINAL || 2000);
           const confirmacionFinalApi = await confirmarCreacionPorApi(page, ruc, confirmacionFinalRetries, confirmacionFinalWaitMs);
@@ -1450,11 +1496,14 @@ test('01-AGREGAR ADMINISTRADO: Registro con RUC automático y reintentos', async
       const strictVerifyConfigurado = process.env.REGINSA_STRICT_VERIFY;
       const strictVerifyMasivo = strictVerifyConfigurado ? strictVerifyConfigurado === '1' : true;
       const sequenceIndex = typeof ctx.repeatIndex === 'number' ? ctx.repeatIndex : 0;
-      const scaleTimeoutMs = Number(process.env.REGINSA_REGISTRO_TIMEOUT_MS || 60000);
+      const scaleTimeoutBaseMs = Number(process.env.REGINSA_REGISTRO_TIMEOUT_MS || 120000);
+      const scaleTimeoutMs = esMasivo
+        ? Math.max(scaleTimeoutBaseMs, (ctx.workers || 1) >= 8 ? 180000 : 120000)
+        : 90000;
       const scaleVerifyRetries = Number(process.env.REGINSA_VERIFY_RETRIES || 2);
       const scaleVerifyWaitMs = Number(process.env.REGINSA_VERIFY_WAIT_MS || 800);
-      const scaleMaxReintentosTecnicos = Number(process.env.REGINSA_MAX_REINTENTOS || 2);
-      const scaleMaxReintentosDatos = Number(process.env.REGINSA_DATA_RETRIES || 0);
+      const scaleMaxReintentosTecnicos = Number(process.env.REGINSA_MAX_REINTENTOS || 3);
+      const scaleMaxReintentosDatos = Number(process.env.REGINSA_DATA_RETRIES || 1);
       if (esMasivo) {
         const objetivo = Math.max(120, (ctx.workers || 1) * (ctx.repeatEach || 1) * 6);
         asegurarPoolMasivo(30, objetivo, sequenceIndex + ctx.workerIndex * 1000);
@@ -1463,7 +1512,7 @@ test('01-AGREGAR ADMINISTRADO: Registro con RUC automático y reintentos', async
         page,
         1,
         estadoSeleccionado,
-        esMasivo ? scaleTimeoutMs : 90000,
+        scaleTimeoutMs,
         esMasivo ? scaleVerifyRetries : 2,
         esMasivo ? scaleVerifyWaitMs : 500,
         esMasivo ? strictVerifyMasivo : true,

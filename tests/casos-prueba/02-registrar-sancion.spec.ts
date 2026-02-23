@@ -233,134 +233,174 @@ test('02-REGISTRAR SANCIÓN: 8 sanciones para 1 administrado', async ({ page }, 
   ];
 
   let exitosas = 0;
+  const esScale = process.env.REGINSA_SCALE_MODE === '1';
+  const strictVerify = process.env.REGINSA_STRICT_VERIFY !== '0';
+  const requireFinalApiConfirm = process.env.REGINSA_REQUIRE_FINAL_API_CONFIRM === '1';
+  const minSancionesScale = Number(process.env.REGINSA_MIN_SANCIONES_SCALE || 5);
   // En este flujo: casos 1, 4 y 5 son SOLES; casos 6, 7 y 8 son UIT.
 
-  const capturarToastCaso = async (etiqueta: string) => {
-    await capturarToastExito(page, '02-REGISTRAR_SANCION', etiqueta, admin, '', 'DETALLE_SANCION');
+  const esperarRespuestaApiGuardado = async (timeoutMs: number): Promise<boolean> => {
+    try {
+      const response = await page.waitForResponse((res) => {
+        const method = res.request().method().toUpperCase();
+        if (!['POST', 'PUT', 'PATCH'].includes(method)) return false;
+
+        const url = res.url().toLowerCase();
+        if (!url.includes('/api/')) return false;
+        if (!/(sanci|infractor|resoluci|detalle)/i.test(url)) return false;
+
+        const status = res.status();
+        return status >= 200 && status < 300;
+      }, { timeout: timeoutMs });
+
+      return !!response;
+    } catch {
+      return false;
+    }
+  };
+
+  const contarFilasDetalle = async (): Promise<number> => {
+    const candidatos = [
+      page.locator('.p-tabview-panel[aria-hidden="false"] table tbody tr'),
+      page.locator('table tbody tr')
+    ];
+
+    let max = 0;
+    for (const locator of candidatos) {
+      const total = await locator.count().catch(() => 0);
+      if (total > max) {
+        max = total;
+      }
+    }
+    return max;
   };
 
   for (const sancion of sanciones) {
     console.log(`\n  ┌─ SANCIÓN ${sancion.numero}/${sanciones.length}: ${sancion.nombre}`);
 
     try {
+      const filasAntes = await contarFilasDetalle();
+
       // PASO 8A: ABRIR MODAL
-      const btnAgregarSancion = page.locator('button[label="Agregar sanción"][icon="pi pi-plus"]');
+      const btnAgregarSancionCandidatos = [
+        page.locator('button[label="Agregar sanción"][icon="pi pi-plus"]').first(),
+        page.locator('.p-tabview-panel[aria-hidden="false"] button[label="Agregar sanción"]').first(),
+        page.getByRole('button', { name: /^Agregar\s*sanci[oó]n$/i }).first(),
+        page.locator('button.p-button-success:has-text("Agregar sanción")').first()
+      ];
+      const dialog = page.locator('.p-dialog:visible', { hasText: /Agregar\s*Sanci[oó]n/i }).first();
+
       for (let intento = 0; intento < 8; intento++) {
-        const isEnabled = await btnAgregarSancion.isEnabled({ timeout: 1000 }).catch(() => false);
-        if (isEnabled) {
-          await btnAgregarSancion.click({ force: true });
-          // Espera mínima, solo lo necesario para el modal
-          await page.locator('[role="dialog"]').first().waitFor({ state: 'visible', timeout: 3000 });
+        let clicado = false;
+        for (const boton of btnAgregarSancionCandidatos) {
+          const isEnabled = await boton.isEnabled({ timeout: 1000 }).catch(() => false);
+          const isVisible = await boton.isVisible({ timeout: 1000 }).catch(() => false);
+          if (!isEnabled || !isVisible) continue;
+
+          await boton.scrollIntoViewIfNeeded().catch(() => {});
+          await boton.click({ force: true });
+          clicado = true;
           break;
         }
+
+        if (clicado) {
+          const modalVisible = await dialog.isVisible({ timeout: 3500 }).catch(() => false);
+          if (modalVisible) break;
+        }
+
         await page.waitForTimeout(200); // Menor espera entre intentos
       }
 
-      const dialog = page.locator('[role="dialog"]').first();
       await dialog.waitFor({ state: 'visible', timeout: 10000 });
 
       console.log(`  │  ✓ Modal abierto`);
-
-      const seleccionarAleatorioPorLabel = async (
-        labelRegex: RegExp,
-        label: string,
-        fallbackIndex: number
-      ) => {
-        let combobox = dialog.getByRole('combobox', { name: labelRegex }).first();
-
-        if (!(await combobox.isVisible({ timeout: 1500 }).catch(() => false))) {
-          const labelLocator = dialog.locator('label', { hasText: labelRegex }).first();
-          if (await labelLocator.isVisible({ timeout: 1500 }).catch(() => false)) {
-            const field = labelLocator.locator('..');
-            combobox = field.locator('p-dropdown, .p-dropdown, [role="combobox"]').first();
-          } else {
-            combobox = dialog.locator('[role="combobox"]').nth(fallbackIndex);
-          }
-        }
-
-        const visible = await combobox.isVisible({ timeout: 3000 }).catch(() => false);
-        if (!visible) {
-          console.log(`  │  ⚠️  ${label} no visible`);
-          return false;
-        }
-
-        for (let intento = 0; intento < 3; intento++) {
-          const trigger = combobox.locator('.p-dropdown-trigger, [role="button"], [role="combobox"]').first();
-          if (await trigger.isVisible({ timeout: 1000 }).catch(() => false)) {
-            await trigger.click({ force: true });
-          } else {
-            await combobox.click({ force: true });
-          }
-          await page.waitForTimeout(800);
-
-          const panel = page.locator('.p-dropdown-panel:visible, [role="listbox"]:visible').first();
-          await panel.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
-          const options = panel.locator('.p-dropdown-item, [role="option"]');
-          const count = await options.count().catch(() => 0);
-
-          if (count > 0) {
-            let index = Math.floor(Math.random() * count);
-            for (let i = 0; i < count; i++) {
-              const texto = (await options.nth(i).textContent()) || '';
-              if (!/seleccione/i.test(texto)) {
-                index = i;
-                break;
-              }
-            }
-            await options.nth(index).click();
-            await page.waitForTimeout(800);
-            console.log(`  │  ✓ ${label} seleccionado`);
-            return true;
-          }
-
-          await page.keyboard.press('Escape');
-          await page.waitForTimeout(500);
-        }
-
-        console.log(`  │  ⚠️  No se pudo seleccionar ${label}`);
-        return false;
-      };
 
       // PASO 8B: RIS (aleatorio, selector exacto)
       const risDropdown = dialog.locator('p-dropdown[name="risSeleccionado"]');
       await risDropdown.waitFor({ state: 'visible', timeout: 3000 });
       const risTrigger = risDropdown.locator('.p-dropdown-trigger');
-      await risTrigger.click({ force: true });
-      await page.waitForTimeout(300); // Espera mínima para que cargue el panel
-      const risOptions = page.locator('.p-dropdown-panel .p-dropdown-item, [role="option"]');
-      const risCount = await risOptions.count();
-      if (risCount > 0) {
-        const risIndex = Math.floor(Math.random() * risCount);
-        await risOptions.nth(risIndex).click();
-        await page.waitForTimeout(300);
-        console.log('  │  ✓ RIS aplicable seleccionado');
-      } else {
+      let risSeleccionado = false;
+      for (let intentoRis = 1; intentoRis <= 5 && !risSeleccionado; intentoRis++) {
+        await risTrigger.click({ force: true });
+        await page.waitForTimeout(260);
+
+        const panelRis = page.locator('.p-dropdown-panel:visible').last();
+        await panelRis.waitFor({ state: 'visible', timeout: 2000 }).catch(() => {});
+        const risOptions = panelRis.locator('.p-dropdown-item, [role="option"]');
+        const risCount = await risOptions.count().catch(() => 0);
+
+        const indicesValidos: number[] = [];
+        for (let idx = 0; idx < risCount; idx++) {
+          const texto = ((await risOptions.nth(idx).textContent()) || '').trim();
+          if (!texto || /seleccione/i.test(texto)) continue;
+          indicesValidos.push(idx);
+        }
+
+        if (indicesValidos.length > 0) {
+          const risIndex = indicesValidos[Math.floor(Math.random() * indicesValidos.length)];
+          await risOptions.nth(risIndex).click();
+          await page.waitForTimeout(220);
+          risSeleccionado = true;
+          console.log('  │  ✓ RIS aplicable seleccionado');
+          break;
+        }
+
+        await page.keyboard.press('Escape').catch(() => {});
+        await page.waitForTimeout(280);
+      }
+
+      if (!risSeleccionado) {
         throw new Error('No se encontraron opciones RIS aplicable');
       }
 
       // PASO 8C: TIPO INFRACCIÓN (aleatorio, rápido y variable)
-      await page.waitForTimeout(200); // Espera mínima tras RIS
-      // Selector robusto para el segundo dropdown de tipo infractor
-      const tipoDropdown = dialog.locator('p-dropdown[formcontrolname="idTipoInfractor"], p-dropdown[optionlabel="DescripcionTipoInfractor"], p-dropdown').nth(1);
-      await tipoDropdown.waitFor({ state: 'visible', timeout: 2000 });
-      const tipoTrigger = tipoDropdown.locator('.p-dropdown-trigger');
-      await tipoTrigger.click({ force: true });
-      await page.waitForTimeout(150); // Espera mínima para panel
-      // Opciones visibles en el panel abierto
-      const tipoOptions = page.locator('.dropdown-panel-wrap--tipo .p-dropdown-item, [role="option"]');
-      const tipoCount = await tipoOptions.count();
-      if (tipoCount > 1) {
-        // Evita seleccionar la primera opción si es solo título/categoría
-        let tipoIndex = Math.floor(Math.random() * tipoCount);
-        // Si la opción elegida es solo título (sin número), elige la siguiente
-        let texto = (await tipoOptions.nth(tipoIndex).textContent()) || '';
-        if (/^\s*\d+\s*-/.test(texto) && tipoIndex + 1 < tipoCount) {
-          tipoIndex++;
+      await page.waitForTimeout(200);
+      const tipoDropdown = dialog.locator('p-dropdown[name="infraccionSeleccionada"], p-dropdown[formcontrolname="idTipoInfractor"], p-dropdown[optionlabel*="Infractor" i]').first();
+      await tipoDropdown.waitFor({ state: 'visible', timeout: 4000 });
+
+      let tipoSeleccionado = false;
+      for (let intentoTipo = 1; intentoTipo <= 4 && !tipoSeleccionado; intentoTipo++) {
+        const tipoRoot = tipoDropdown.locator('.p-dropdown').first();
+        const disabledAttr = await tipoRoot.getAttribute('aria-disabled').catch(() => null);
+        const clase = (await tipoRoot.getAttribute('class').catch(() => '')) || '';
+        const deshabilitado = disabledAttr === 'true' || /\bp-disabled\b/i.test(clase);
+
+        if (deshabilitado) {
+          await page.waitForTimeout(300);
+          continue;
         }
-        await tipoOptions.nth(tipoIndex).click();
-        await page.waitForTimeout(150);
-        console.log('  │  ✓ Tipo Infractor seleccionado');
-      } else {
+
+        const tipoTrigger = tipoDropdown.locator('.p-dropdown-trigger').first();
+        await tipoTrigger.click({ force: true });
+        await page.waitForTimeout(220);
+
+        const panelTipo = page.locator('.dropdown-panel-wrap--tipo:visible, .p-dropdown-panel:visible').last();
+        await panelTipo.waitFor({ state: 'visible', timeout: 2500 }).catch(() => {});
+
+        const tipoOptions = panelTipo.locator('.p-dropdown-item, [role="option"]');
+        const tipoCount = await tipoOptions.count().catch(() => 0);
+
+        const indicesValidos: number[] = [];
+        for (let idx = 0; idx < tipoCount; idx++) {
+          const texto = ((await tipoOptions.nth(idx).textContent()) || '').trim();
+          if (!texto || /seleccione/i.test(texto)) continue;
+          indicesValidos.push(idx);
+        }
+
+        if (indicesValidos.length > 0) {
+          const elegido = indicesValidos[Math.floor(Math.random() * indicesValidos.length)];
+          await tipoOptions.nth(elegido).click();
+          await page.waitForTimeout(180);
+          tipoSeleccionado = true;
+          console.log('  │  ✓ Tipo Infractor seleccionado');
+          break;
+        }
+
+        await page.keyboard.press('Escape').catch(() => {});
+        await page.waitForTimeout(280);
+      }
+
+      if (!tipoSeleccionado) {
         throw new Error('No se encontraron opciones de Tipo Infractor');
       }
 
@@ -410,7 +450,7 @@ test('02-REGISTRAR SANCIÓN: 8 sanciones para 1 administrado', async ({ page }, 
       // PASO 8F: MULTA - MONTO
       if (sancion.multa) {
         const forceUIT = (sancion as { forceUIT?: boolean }).forceUIT === true;
-        const usarUIT = forceUIT ? true : false;
+        const usarUIT = forceUIT;
         const cantidad = usarUIT
           ? (Math.floor(Math.random() * 10) + 1).toString()
           : (Math.floor(Math.random() * 200000) + 1).toString();
@@ -457,7 +497,7 @@ test('02-REGISTRAR SANCIÓN: 8 sanciones para 1 administrado', async ({ page }, 
 
         await tiempoButton.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
-        let tipoSeleccionado: 'Año' | 'Mes' | 'Día' = 'Año';
+        let tipoSeleccionado: 'Año' | 'Mes' | 'Día' | null = null;
         const opcionesTiempo = page.getByRole('option').filter({ hasText: /Año|Mes|Día/i });
 
         for (let intento = 0; intento < 3; intento++) {
@@ -482,9 +522,10 @@ test('02-REGISTRAR SANCIÓN: 8 sanciones para 1 administrado', async ({ page }, 
           await page.waitForTimeout(500);
         }
 
+        const tipoFinal = tipoSeleccionado ?? 'Año';
         let cantidad = 1;
-        if (tipoSeleccionado === 'Año') cantidad = Math.floor(Math.random() * 5) + 1;
-        else if (tipoSeleccionado === 'Mes') cantidad = Math.floor(Math.random() * 11) + 1;
+        if (tipoFinal === 'Año') cantidad = Math.floor(Math.random() * 5) + 1;
+        else if (tipoFinal === 'Mes') cantidad = Math.floor(Math.random() * 11) + 1;
         else cantidad = Math.floor(Math.random() * 29) + 1;
 
         const cantidadInput = dialog.getByPlaceholder('Cantidad');
@@ -492,34 +533,48 @@ test('02-REGISTRAR SANCIÓN: 8 sanciones para 1 administrado', async ({ page }, 
           await cantidadInput.click();
           await cantidadInput.fill(cantidad.toString());
           await page.waitForTimeout(600);
-          console.log(`  │    ✓ Tiempo: ${tipoSeleccionado} (${cantidad})`);
+          console.log(`  │    ✓ Tiempo: ${tipoFinal} (${cantidad})`);
         }
       }
 
       // PASO 8H: GUARDAR DETALLE
       const btnGuardarDetalle = page.locator('button[label="Guardar detalle"][icon="pi pi-save"]');
       await btnGuardarDetalle.waitFor({ state: 'visible', timeout: 5000 });
+
+      const apiDetalleOkPromise = esperarRespuestaApiGuardado(esScale ? 6500 : 9000);
       await btnGuardarDetalle.click({ force: true });
+
       // Validar que el detalle fue guardado correctamente
       let guardado = false;
-      for (let intento = 0; intento < 3; intento++) {
-        // Espera a que desaparezca el modal o aparezca un toast de éxito
-        const modalVisible = await page.locator('[role="dialog"]').first().isVisible().catch(() => false);
-        const toastExito = await page.locator('.p-toast-message-success, .p-toast-message[aria-label*="Éxito"], .p-toast-message[style*="green"]').first();
-        if (!modalVisible || await toastExito.isVisible().catch(() => false)) {
+      const maxIntentosGuardado = esScale ? 4 : 3;
+      const esperaGuardadoMs = esScale ? 450 : 1000;
+      let toastDetalleVisible = false;
+      let filasIncrementaron = false;
+
+      for (let intento = 0; intento < maxIntentosGuardado; intento++) {
+        const toastExito = page.locator('.p-toast-message-success, .p-toast-message[aria-label*="Éxito"], .p-toast-message[style*="green"]').first();
+        toastDetalleVisible = await toastExito.isVisible().catch(() => false);
+        const filasDespues = await contarFilasDetalle();
+        filasIncrementaron = filasDespues > filasAntes;
+
+        if (toastDetalleVisible || filasIncrementaron) {
           guardado = true;
           break;
         }
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(esperaGuardadoMs);
       }
+
+      const apiDetalleOk = await apiDetalleOkPromise;
+      guardado = guardado || apiDetalleOk;
+
       if (!guardado) {
-        throw new Error('No se confirmó el guardado del detalle de sanción');
+        throw new Error(`No se confirmó el guardado del detalle de sanción (toast=${toastDetalleVisible}, filasIncrementaron=${filasIncrementaron}, api=${apiDetalleOk})`);
       }
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(esScale ? 120 : 1000);
       exitosas++;
       console.log(`  │  ✅ GUARDADA (Detalle agregado ${exitosas}/${sanciones.length})`);
 
-      if (sancion.numero === 5 || sancion.numero === sanciones.length) {
+      if (!esScale && (sancion.numero === 5 || sancion.numero === sanciones.length)) {
         // Espera a que el toast de éxito esté visible
         const toast = page.locator('.p-toast-message-success, .p-toast-message[aria-label*="Éxito"], .p-toast-message[style*="green"]');
         await toast.waitFor({ state: 'visible', timeout: 4000 });
@@ -532,7 +587,7 @@ test('02-REGISTRAR SANCIÓN: 8 sanciones para 1 administrado', async ({ page }, 
 
       // PASO 8I: CERRAR MODAL
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(1500);
+      await page.waitForTimeout(esScale ? 120 : 1500);
 
     } catch (error) {
       const msg = error instanceof Error ? error.message.substring(0, 35) : 'Error';
@@ -553,36 +608,71 @@ test('02-REGISTRAR SANCIÓN: 8 sanciones para 1 administrado', async ({ page }, 
 
   // Captura formulario lleno antes de guardar
   // Reutiliza `capturarFormularioLleno`
-  await capturarFormularioLleno(page, '02-REGISTRAR_SANCION', admin, '', 'REGISTRAR_SANCION', '09_FORMULARIO_FINAL');
+  if (!esScale) {
+    await capturarFormularioLleno(page, '02-REGISTRAR_SANCION', admin, '', 'REGISTRAR_SANCION', '09_FORMULARIO_FINAL');
+  }
 
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(esScale ? 200 : 2000);
   const btnGuardarFinal = page.locator('button[label="Guardar"][icon="pi pi-save"]');
   await btnGuardarFinal.waitFor({ state: 'visible', timeout: 5000 });
+
+  const apiFinalOkPromise = esperarRespuestaApiGuardado(esScale ? 6500 : 10000);
   await btnGuardarFinal.click({ force: true });
-  await page.waitForTimeout(4000);
+
+  await page.waitForTimeout(esScale ? 900 : 4000);
+  const toastFinal = page.locator('.p-toast-message-success, .p-toast-message[aria-label*="Éxito"], .p-toast-message[style*="green"]').first();
+  const toastVisible = await toastFinal.isVisible({ timeout: esScale ? 3000 : 5000 }).catch(() => false);
+  const apiFinalOk = await apiFinalOkPromise;
+
+  if (strictVerify) {
+    if (!toastVisible && !apiFinalOk) {
+      throw new Error('No se confirmó el guardado final del formulario (sin toast ni confirmación API).');
+    }
+    if (requireFinalApiConfirm && !apiFinalOk) {
+      throw new Error('No se confirmó el guardado final del formulario por API.');
+    }
+  }
+
   console.log('  ✅ Formulario guardado');
 
-  // Captura pantalla completa de éxito final
-  const toastFinal = page.locator('.p-toast-message-success, .p-toast-message[aria-label*="Éxito"], .p-toast-message[style*="green"]');
-  await toastFinal.waitFor({ state: 'visible', timeout: 4000 });
-  await page.waitForTimeout(300);
-  await page.screenshot({
-    path: 'screenshots/02-REGISTRAR_SANCION_EXITO_FINAL.png',
-    fullPage: true
-  });
+  if (!esScale) {
+    // Captura pantalla completa de éxito final
+    const toastVisible = await toastFinal.isVisible({ timeout: 4000 }).catch(() => false);
+    if (toastVisible) {
+      await page.waitForTimeout(300);
+    } else {
+      console.warn('  ⚠️ Toast final no visible dentro del timeout. Se continúa por validación de guardado ya completada.');
+    }
+    await page.screenshot({
+      path: 'screenshots/02-REGISTRAR_SANCION_EXITO_FINAL.png',
+      fullPage: true
+    });
 
-  // Reutiliza `capturarToastExito`
-  await capturarToastExito(page, '02-REGISTRAR_SANCION', '10_EXITO_GUARDAR_GENERAL', admin, '', 'REGISTRAR_SANCION');
+    // Reutiliza `capturarToastExito`
+    await capturarToastExito(page, '02-REGISTRAR_SANCION', '10_EXITO_GUARDAR_GENERAL', admin, '', 'REGISTRAR_SANCION', 2500);
 
-  try {
-    // Reutiliza `capturarPantallaMejorada`
-    await capturarPantallaMejorada(page, '02-REGISTRAR_SANCION', '11_FINAL', 'Éxito', 'Final');
-  } catch (e) {}
+    try {
+      // Reutiliza `capturarPantallaMejorada`
+      await capturarPantallaMejorada(page, '02-REGISTRAR_SANCION', '11_FINAL', 'Éxito', 'Final');
+    } catch (e) {
+      const detalle = e instanceof Error ? e.message : String(e);
+      console.warn(`  ⚠️ No se pudo capturar pantalla final mejorada: ${detalle}`);
+    }
+  }
   console.log(`\n  ✅ TEST COMPLETADO - Sanciones: ${exitosas}/${sanciones.length}\n`);
 
-  if (exitosas >= 3) {
-    console.log('  ✅ EXITOSO: Al menos 3 sanciones registradas');
+  let minSancionesRequeridas = 3;
+  if (strictVerify) {
+    minSancionesRequeridas = esScale
+      ? Math.max(1, Math.min(sanciones.length, minSancionesScale))
+      : sanciones.length;
+  }
+  if (exitosas >= minSancionesRequeridas) {
+    console.log(`  ✅ EXITOSO: ${exitosas}/${sanciones.length} sanciones registradas`);
+    if (strictVerify && esScale && exitosas < sanciones.length) {
+      console.warn(`  ⚠️ Modo scale: sanciones parciales ${exitosas}/${sanciones.length} (umbral=${minSancionesRequeridas}).`);
+    }
   } else {
-    throw new Error(`Solo ${exitosas} sanciones registradas (se requieren al menos 3)`);
+    throw new Error(`Solo ${exitosas} sanciones registradas (se requieren al menos ${minSancionesRequeridas})`);
   }
 });

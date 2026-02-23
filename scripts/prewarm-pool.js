@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const reportesDir = path.join(root, 'reportes');
@@ -16,9 +16,12 @@ const targetArg = args.find((arg) => /^--target=\d+$/i.test(arg));
 
 const targetFromArg = targetArg ? Number(targetArg.split('=')[1]) : 0;
 const targetFromEnv = Number(process.env.REGINSA_POOL_TARGET || 0);
-const target = Number.isFinite(targetFromArg) && targetFromArg > 0
-  ? targetFromArg
-  : (Number.isFinite(targetFromEnv) && targetFromEnv > 0 ? targetFromEnv : 600);
+let target = 600;
+if (Number.isFinite(targetFromArg) && targetFromArg > 0) {
+  target = targetFromArg;
+} else if (Number.isFinite(targetFromEnv) && targetFromEnv > 0) {
+  target = targetFromEnv;
+}
 
 const prefijosRazon = [
   'EMPRESA', 'CONSORCIO', 'UNIVERSIDAD', 'INDUSTRIA', 'CORPORACION', 'COMERCIO',
@@ -47,14 +50,14 @@ function ensureDir(dirPath) {
 function normalizeText(value) {
   return String(value || '')
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replaceAll(/[\u0300-\u036f]/g, '')
     .toUpperCase()
-    .replace(/\s+/g, ' ')
+    .replaceAll(/\s+/g, ' ')
     .trim();
 }
 
 function normalizeRuc(value) {
-  return String(value || '').replace(/\D/g, '').slice(0, 11);
+  return String(value || '').replaceAll(/\D/g, '').slice(0, 11);
 }
 
 function readJson(filePath, fallback = []) {
@@ -132,7 +135,7 @@ function randomInt(min, max) {
 
 function buildCandidate(iteration) {
   const prefix = String(randomInt(10, 19));
-  const body = String(Date.now() + iteration).replace(/\D/g, '').slice(-9).padStart(9, '0');
+  const body = String(Date.now() + iteration).replaceAll(/\D/g, '').slice(-9).padStart(9, '0');
   const ruc = `${prefix}${body}`;
 
   const p = prefijosRazon[iteration % prefijosRazon.length];

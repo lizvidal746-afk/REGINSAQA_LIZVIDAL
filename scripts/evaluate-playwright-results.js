@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const reportPath = path.join(root, 'test-results', 'results.json');
@@ -12,72 +12,133 @@ function readJson(filePath) {
   return JSON.parse(raw);
 }
 
-function walkSuites(suites, acc) {
-  if (!Array.isArray(suites)) return;
+function asArray(value) {
+  return Array.isArray(value) ? value : [];
+}
 
-  for (const suite of suites) {
-    if (Array.isArray(suite.suites)) {
-      walkSuites(suite.suites, acc);
+function collectTests(suites) {
+  const tests = [];
+  const stack = [...asArray(suites)];
+
+  while (stack.length > 0) {
+    const suite = stack.pop();
+    if (!suite) continue;
+
+    const nestedSuites = asArray(suite.suites);
+    if (nestedSuites.length > 0) {
+      stack.push(...nestedSuites);
     }
 
-    if (!Array.isArray(suite.specs)) continue;
-
-    for (const spec of suite.specs) {
-      if (!Array.isArray(spec.tests)) continue;
-
-      for (const test of spec.tests) {
-        const outcome = String(test.outcome || '').toLowerCase();
-        const results = Array.isArray(test.results) ? test.results : [];
-        const lastStatus = results.length ? String(results[results.length - 1].status || '').toLowerCase() : '';
-
-        if (outcome === 'flaky') {
-          acc.flaky += 1;
-          acc.passed += 1;
-          continue;
-        }
-
-        if (outcome === 'expected' || lastStatus === 'passed') {
-          acc.passed += 1;
-          continue;
-        }
-
-        if (outcome === 'skipped' || lastStatus === 'skipped') {
-          acc.skipped += 1;
-          continue;
-        }
-
-        if (outcome === 'unexpected' || outcome === 'failed' || lastStatus === 'failed' || lastStatus === 'timedout' || lastStatus === 'interrupted') {
-          acc.failed += 1;
-          continue;
-        }
-
-        if (results.some((r) => String(r.status || '').toLowerCase() === 'passed')) {
-          acc.flaky += 1;
-          acc.passed += 1;
-        } else {
-          acc.failed += 1;
-        }
+    for (const spec of asArray(suite.specs)) {
+      const specTests = asArray(spec?.tests);
+      if (specTests.length > 0) {
+        tests.push(...specTests);
       }
     }
   }
+
+  return tests;
+}
+
+function computeRetryMetrics(tests) {
+  const metrics = {
+    totalAttempts: 0,
+    totalRetries: 0,
+    flakyRetries: 0
+  };
+
+  for (const test of tests) {
+    const outcome = String(test?.outcome || '').toLowerCase();
+    const results = asArray(test?.results);
+    const attempts = results.length;
+    const retriesUsed = Math.max(0, attempts - 1);
+
+    metrics.totalAttempts += attempts;
+    metrics.totalRetries += retriesUsed;
+    if (outcome === 'flaky') {
+      metrics.flakyRetries += retriesUsed;
+    }
+  }
+
+  return metrics;
+}
+
+function computeOutcomeCounts(tests) {
+  const counts = {
+    passed: 0,
+    failed: 0,
+    flaky: 0,
+    skipped: 0
+  };
+
+  for (const test of tests) {
+    const outcome = String(test?.outcome || '').toLowerCase();
+    const results = asArray(test?.results);
+    const lastStatus = results.length
+      ? String(results[results.length - 1]?.status || '').toLowerCase()
+      : '';
+
+    if (outcome === 'flaky') {
+      counts.flaky += 1;
+      counts.passed += 1;
+      continue;
+    }
+
+    if (outcome === 'expected' || lastStatus === 'passed') {
+      counts.passed += 1;
+      continue;
+    }
+
+    if (outcome === 'skipped' || lastStatus === 'skipped') {
+      counts.skipped += 1;
+      continue;
+    }
+
+    if (outcome === 'unexpected' || outcome === 'failed' || lastStatus === 'failed' || lastStatus === 'timedout' || lastStatus === 'interrupted') {
+      counts.failed += 1;
+      continue;
+    }
+
+    const hasPassedAttempt = results.some((result) => String(result?.status || '').toLowerCase() === 'passed');
+    if (hasPassedAttempt) {
+      counts.flaky += 1;
+      counts.passed += 1;
+    } else {
+      counts.failed += 1;
+    }
+  }
+
+  return counts;
 }
 
 function summarize(report) {
   const stats = report?.stats || {};
   const hasStats = typeof stats.expected === 'number' || typeof stats.unexpected === 'number' || typeof stats.flaky === 'number';
+  const tests = collectTests(report?.suites || []);
+  const retryMetrics = computeRetryMetrics(tests);
 
   if (hasStats) {
     return {
       passed: Number(stats.expected || 0),
       failed: Number(stats.unexpected || 0),
       flaky: Number(stats.flaky || 0),
-      skipped: Number(stats.skipped || 0)
+      skipped: Number(stats.skipped || 0),
+      flakyRetries: retryMetrics.flakyRetries,
+      totalRetries: retryMetrics.totalRetries,
+      totalAttempts: retryMetrics.totalAttempts
     };
   }
 
-  const acc = { passed: 0, failed: 0, flaky: 0, skipped: 0 };
-  walkSuites(report?.suites || [], acc);
-  return acc;
+  const outcomeCounts = computeOutcomeCounts(tests);
+  return {
+    passed: outcomeCounts.passed,
+    failed: outcomeCounts.failed,
+    flaky: outcomeCounts.flaky,
+    skipped: outcomeCounts.skipped,
+    flakyRetries: retryMetrics.flakyRetries,
+    totalRetries: retryMetrics.totalRetries,
+    totalAttempts: retryMetrics.totalAttempts
+  };
 }
 
 function logWarning(message) {
@@ -103,16 +164,29 @@ function logError(message) {
 function run() {
   const report = readJson(reportPath);
   const summary = summarize(report);
+  const gateMode = String(process.env.REGINSA_GATE_MODE || 'strict').toLowerCase();
+  const maxFailedAllowedRaw = Number(process.env.REGINSA_MAX_FAILED_ALLOWED || 0);
+  const maxFailedAllowed = Number.isFinite(maxFailedAllowedRaw) && maxFailedAllowedRaw >= 0 ? Math.floor(maxFailedAllowedRaw) : 0;
 
-  console.log(`[pw-summary] passed=${summary.passed} flaky=${summary.flaky} failed=${summary.failed} skipped=${summary.skipped}`);
+  // passed = casos que terminaron exitosos (incluye flaky recuperados)
+  // flaky = cantidad de casos que necesitaron reintento y luego pasaron
+  // flakyRetries = cantidad de reintentos realmente ejecutados en esos flaky
+  // failed = casos que terminaron sin pasar
+  console.log(
+    `[pw-summary] passed=${summary.passed} flaky=${summary.flaky} flakyRetries=${summary.flakyRetries} totalRetries=${summary.totalRetries} failed=${summary.failed} skipped=${summary.skipped}`
+  );
 
   if (summary.flaky > 0) {
     logWarning(`Se detectaron ${summary.flaky} tests flaky (reintentados).`);
   }
 
-  if (summary.failed > 0) {
+  if (summary.failed > maxFailedAllowed) {
     logError(`Se detectaron ${summary.failed} tests fallidos.`);
     process.exit(1);
+  }
+
+  if (summary.failed > 0 && gateMode === 'tolerant') {
+    logWarning(`Modo tolerante activo: ${summary.failed} fallos dentro del umbral permitido (${maxFailedAllowed}).`);
   }
 }
 

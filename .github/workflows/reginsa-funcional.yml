@@ -3,6 +3,16 @@ name: REGINSA Functional Scale
 on:
   workflow_dispatch:
     inputs:
+      caso:
+        description: "Caso funcional (01|02|03|04)"
+        type: choice
+        options:
+          - "01"
+          - "02"
+          - "03"
+          - "04"
+        required: false
+        default: "01"
       workers:
         description: "Playwright workers"
         required: false
@@ -23,8 +33,6 @@ jobs:
     env:
       REGINSA_URL: ${{ secrets.REGINSA_URL }}
       BASE_URL: ${{ secrets.REGINSA_URL }}
-      REGINSA_USER: ${{ secrets.REGINSA_USER || secrets.REGINSA_USER_1 }}
-      REGINSA_PASS: ${{ secrets.REGINSA_PASS || secrets.REGINSA_PASS_1 }}
       REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
       REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
       REGINSA_USER_2: ${{ secrets.REGINSA_USER_2 }}
@@ -41,7 +49,7 @@ jobs:
       REGINSA_PASS_7: ${{ secrets.REGINSA_PASS_7 }}
       REGINSA_USER_8: ${{ secrets.REGINSA_USER_8 }}
       REGINSA_PASS_8: ${{ secrets.REGINSA_PASS_8 }}
-      REGINSA_POOL_TARGET: ${{ github.event.inputs.pool_target || vars.POOL_TARGET || '600' }}
+      REGINSA_POOL_TARGET: ${{ github.event.inputs.pool_target || '600' }}
       REGINSA_STRICT_VERIFY: '1'
       REGINSA_SKIP_LIST_VERIFY: '1'
       REGINSA_REQUIRE_API_CREATE: '1'
@@ -95,6 +103,27 @@ jobs:
 
           Write-Host "Credenciales detectadas en: $($ok[0].N)"
 
+      - name: Validate parallel credential slots for workers>=7
+        shell: pwsh
+        run: |
+          $runWorkers = [int]("${{ github.event.inputs.workers || '6' }}")
+          if ($runWorkers -lt 7) {
+            Write-Host "workers=$runWorkers no requiere validación de slots 7 y 8."
+            exit 0
+          }
+
+          $missing = @()
+          if ([string]::IsNullOrWhiteSpace("$env:REGINSA_USER_7")) { $missing += 'REGINSA_USER_7' }
+          if ([string]::IsNullOrWhiteSpace("$env:REGINSA_PASS_7")) { $missing += 'REGINSA_PASS_7' }
+          if ([string]::IsNullOrWhiteSpace("$env:REGINSA_USER_8")) { $missing += 'REGINSA_USER_8' }
+          if ([string]::IsNullOrWhiteSpace("$env:REGINSA_PASS_8")) { $missing += 'REGINSA_PASS_8' }
+
+          if ($missing.Count -gt 0) {
+            throw "workers=$runWorkers requiere pool 1..8 completo. Faltan secrets: $($missing -join ', ')"
+          }
+
+          Write-Host "Pool paralelo validado para workers=$runWorkers (slots 7 y 8 presentes)."
+
       - name: Validate REGINSA_URL DNS
         shell: pwsh
         run: |
@@ -120,11 +149,23 @@ jobs:
           }
 
       - name: Run functional scale
-        run: >-
-          npm run test:01:scale --
-          --workers=${{ github.event.inputs.workers || vars.PW_WORKERS || '6' }}
-          --repeat-each=${{ github.event.inputs.repeat_each || vars.PW_REPEAT_EACH || '10' }}
-          --project=chromium
+        shell: pwsh
+        env:
+          RUN_CASO: ${{ github.event.inputs.caso || '01' }}
+          RUN_WORKERS: ${{ github.event.inputs.workers || '6' }}
+          RUN_REPEAT: ${{ github.event.inputs.repeat_each || '10' }}
+        run: |
+          $caso = "$env:RUN_CASO"
+          $workers = "$env:RUN_WORKERS"
+          $repeat = "$env:RUN_REPEAT"
+
+          switch ($caso) {
+            '01' { npm run test:01:scale -- --workers=$workers --repeat-each=$repeat --project=chromium; break }
+            '02' { npm run test:02:scale -- --workers=$workers --repeat-each=$repeat --project=chromium; break }
+            '03' { npm run test:03:scale -- --workers=$workers --repeat-each=$repeat --project=chromium; break }
+            '04' { npm run test:04:scale -- --workers=$workers --repeat-each=$repeat --project=chromium; break }
+            Default { throw "Valor de 'caso' inválido: $caso" }
+          }
 
       - name: Evaluate test outcomes
         if: always() && hashFiles('test-results/results.json') != ''

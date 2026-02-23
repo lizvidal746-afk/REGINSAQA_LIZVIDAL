@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import path from 'path';
+import path from 'node:path';
 import {
   iniciarSesionYNavegar,
   completarCabeceraReconsideracion,
@@ -40,6 +40,26 @@ import {
 test.describe('04-RECONSIDERAR CON SANCIONES', () => {
   test('Reconsiderar - Buscar y abrir modal de sanción', async ({ page }, testInfo) => {
     test.setTimeout(300000);
+    const esScale = process.env.REGINSA_SCALE_MODE === '1';
+    const strictVerify = process.env.REGINSA_STRICT_VERIFY !== '0';
+
+    const esperarRespuestaApiGuardado = async (timeoutMs: number): Promise<boolean> => {
+      try {
+        const response = await page.waitForResponse((res) => {
+          const method = res.request().method().toUpperCase();
+          if (!['POST', 'PUT', 'PATCH'].includes(method)) return false;
+          const url = res.url().toLowerCase();
+          if (!url.includes('/api/')) return false;
+          if (!/(reconsider|sanci|infractor|resoluci|detalle)/i.test(url)) return false;
+          const status = res.status();
+          return status >= 200 && status < 300;
+        }, { timeout: timeoutMs });
+
+        return !!response;
+      } catch {
+        return false;
+      }
+    };
 
     try {
       console.log('\n================================================================================');
@@ -148,7 +168,6 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
       // PASO 3: CLICK EN RECONSIDERAR
       // ═══════════════════════════════════════════════════════════════════
       console.log('📋 PASO 3: Clickeando RECONSIDERAR...');
-      // ...existing code...
       const filaSeleccionada = filas.nth(numeroFilaEncontrada);
       const btnReconsiderar = filaSeleccionada.locator('button.p-button-warning');
       await btnReconsiderar.first().click();
@@ -238,27 +257,30 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
       // Guardar cabecera
       const btnGuardar = page.getByRole('button', { name: 'Guardar cabecera' });
       await btnGuardar.waitFor({ state: 'visible', timeout: 10000 });
-      for (let i = 0; i < 3; i++) {
-        const enabled = await btnGuardar.isEnabled().catch(() => false);
-        if (enabled) break;
-      }
       console.log('   ✓ Botón guardar encontrado, haciendo clic...');
+
+      const apiGuardadoPromise = esperarRespuestaApiGuardado(esScale ? 6000 : 9000);
       await btnGuardar.click();
       // Espera a que desaparezca el botón o se muestre el toast de éxito (igual que caso 3)
-      await page.locator('.p-toast-message-success, .p-toast-message').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+      await page.locator('.p-toast-message-success, .p-toast-message').first().waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+      const apiGuardadoOk = await apiGuardadoPromise;
       const toastCabecera = await capturarToastExito(
         page,
         '04-RECONSIDERAR-CON-SANCIONES',
         '11_EXITO_CABECERA',
         numeroReconsideracion,
         '',
-        'CABECERA_RECONSIDERACION'
+        'CABECERA_RECONSIDERACION',
+        2500
       );
+      if (strictVerify && !toastCabecera && !apiGuardadoOk) {
+        throw new Error('No se confirmó el guardado de cabecera (sin toast ni confirmación API).');
+      }
 
       // Capturar mensaje de confirmación en esquina superior izquierda (si existe)
       const toastIzq = page.locator('.p-toast-top-left .p-toast-message, .p-toast-top-left').first();
       if (!toastCabecera && (await toastIzq.isVisible().catch(() => false))) {
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+        const timestamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-').substring(0, 19);
         const archivo = `./screenshots/04-RECONSIDERAR-CON-SANCIONES_11_TOAST_IZQ_${timestamp}.png`;
         await toastIzq.screenshot({ path: archivo });
       }
@@ -289,6 +311,11 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
         .first();
       const filasTR = tablaDetalle.locator('tbody tr');
       const headersDetalle = tablaDetalle.locator('thead tr th');
+      const sinSanciones = await tablaDetalle.getByText(/Sin sanciones registradas/i).first().isVisible().catch(() => false);
+      if (sinSanciones) {
+        test.skip(true, 'El registro seleccionado no tiene sanciones en detalle; se omite para evitar falso fallo.');
+        return;
+      }
       const totalFilasTabla = await filasTR.count();
       console.log(`📊 Total de registros: ${totalFilasTabla}\n`);
       
@@ -352,7 +379,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
           await dialog.locator('p-checkbox').first().waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
 
           // Captura antes de realizar checks en detalle de sanciones
-          const timestampAntes = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+          const timestampAntes = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-').substring(0, 19);
           const archivoAntes = `./screenshots/04-DETALLE-SANCIONES_12_ANTES_REG_${filaIdx + 1}_${timestampAntes}.png`;
           await page.screenshot({ path: archivoAntes, fullPage: true });
 
@@ -413,10 +440,10 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
             const input = checkbox.locator('input[type="checkbox"]');
             const box = checkbox.locator('.p-checkbox-box');
             const ariaChecked = await input.getAttribute('aria-checked').catch(() => null);
-            const dataHighlight = await box.getAttribute('data-p-highlight').catch(() => null);
+            const dataHighlight = await box.evaluate((el) => (el as HTMLElement).dataset?.pHighlight ?? null).catch(() => null);
             const className = await box.getAttribute('class').catch(() => '');
             const checked = ariaChecked === 'true' || dataHighlight === 'true' || className?.includes('p-highlight');
-            const disabled = (await box.getAttribute('data-p-disabled').catch(() => null)) === 'true';
+            const disabled = (await box.evaluate((el) => (el as HTMLElement).dataset?.pDisabled ?? null).catch(() => null)) === 'true';
             const visible = await box.isVisible().catch(() => false);
             return { checkbox, input, box, checked, disabled, visible };
           };
@@ -443,13 +470,13 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
               if (estado2.checked) return true;
 
               await dialog.evaluate((root, checkboxId) => {
-                const input = root.querySelector(`p-checkbox[inputid="${checkboxId}"] input[type="checkbox"]`) as HTMLInputElement | null;
-                const box = root.querySelector(`p-checkbox[inputid="${checkboxId}"] .p-checkbox-box`) as HTMLElement | null;
+                const input = root.querySelector(`p-checkbox[inputid="${checkboxId}"] input[type="checkbox"]`);
+                const box = root.querySelector(`p-checkbox[inputid="${checkboxId}"] .p-checkbox-box`);
                 if (box) {
-                  box.click();
+                  (box as HTMLElement).click();
                 } else if (input) {
-                  input.checked = true;
-                  input.dispatchEvent(new Event('change', { bubbles: true }));
+                  (input as HTMLInputElement).checked = true;
+                  (input as HTMLInputElement).dispatchEvent(new Event('change', { bubbles: true }));
                 }
               }, id);
               // Espera fija eliminada para máxima velocidad
@@ -476,17 +503,18 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
               const recursoInput = await page.$(`input#${idRecurso}`);
               if (recursoInput) {
                 const isChecked = await page.evaluate((id) => {
-                  return (document.querySelector(`input#${id}`) as HTMLInputElement)?.checked || false;
+                  const input = document.querySelector(`input#${id}`);
+                  return (input as HTMLInputElement | null)?.checked || false;
                 }, idRecurso);
                 
                 if (!isChecked) {
                   console.log(`         ¿Presentó recurso? no está marcado, clickeando vía JavaScript...`);
                   await page.evaluate((id) => {
-                    const labelForId = document.querySelector(`label[for="${id}"]`) as HTMLElement;
+                    const labelForId = document.querySelector(`label[for="${id}"]`);
                     if (labelForId) {
-                      labelForId.click();
+                      (labelForId as HTMLElement).click();
                     } else {
-                      const input = document.querySelector(`input#${id}`) as HTMLInputElement;
+                      const input = document.querySelector(`input#${id}`);
                       if (input) input.click();
                     }
                   }, idRecurso);
@@ -494,7 +522,8 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
                 }
                 
                 const recursoMarcado = await page.evaluate((id) => {
-                  return (document.querySelector(`input#${id}`) as HTMLInputElement)?.checked || false;
+                  const input = document.querySelector(`input#${id}`);
+                  return (input as HTMLInputElement | null)?.checked || false;
                 }, idRecurso);
                 console.log(`         ✓ ¿Presentó recurso?: ${recursoMarcado ? '✅ MARCADO' : '⭕ NO'}`);
                 recursoEncontrado = true;
@@ -533,13 +562,16 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
           console.log(`   Validando cambios finales...`);
           
           const multaFinal = await page.evaluate(() => {
-            return (document.querySelector('input#reconsMulta') as HTMLInputElement)?.checked || false;
+            const input = document.querySelector('input#reconsMulta');
+            return (input as HTMLInputElement | null)?.checked || false;
           });
           const suspensionFinal = await page.evaluate(() => {
-            return (document.querySelector('input#reconsSuspension') as HTMLInputElement)?.checked || false;
+            const input = document.querySelector('input#reconsSuspension');
+            return (input as HTMLInputElement | null)?.checked || false;
           });
           const cancelacionFinal = await page.evaluate(() => {
-            return (document.querySelector('input#reconsCancelacion') as HTMLInputElement)?.checked || false;
+            const input = document.querySelector('input#reconsCancelacion');
+            return (input as HTMLInputElement | null)?.checked || false;
           });
           const pagoFinal = (await obtenerEstadoCheck('reconsPago')).checked;
           const reconsideraFinal = (await obtenerEstadoCheck('reconsReconsidera')).checked;
@@ -547,7 +579,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
           console.log(`      Estado final: Multa: ${multaFinal ? '✅' : '⭕'} | Suspensión: ${suspensionFinal ? '✅' : '⭕'} | Cancelación: ${cancelacionFinal ? '✅' : '⭕'} | Pagó: ${pagoFinal ? '✅' : '⭕'} | Reconsidera: ${reconsideraFinal ? '✅' : '⭕'}`);
 
           // Captura después de realizar checks en detalle de sanciones
-          const timestampDespues = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+          const timestampDespues = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-').substring(0, 19);
           const archivoDespues = `./screenshots/04-DETALLE-SANCIONES_13_DESPUES_REG_${filaIdx + 1}_${timestampDespues}.png`;
           await page.screenshot({ path: archivoDespues, fullPage: true });
 
@@ -594,9 +626,15 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
               // Espera fija eliminada para máxima velocidad
             }
           } catch (e) {
-            console.log(`⚠️ No se pudo cerrar modal`);
+            const detalle = e instanceof Error ? e.message : String(e);
+            console.log(`⚠️ No se pudo cerrar modal: ${detalle}`);
           }
         }
+      }
+
+      const minRegistrosRequeridos = strictVerify && totalFilasTabla > 0 ? 1 : 0;
+      if (registrosEditados < minRegistrosRequeridos) {
+        throw new Error(`No se completó ningún detalle de sanción (editados=${registrosEditados}).`);
       }
 
       console.log('================================================================================');
@@ -606,12 +644,13 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
     } catch (error) {
       console.error('\n❌ ERROR:', error instanceof Error ? error.message : String(error));
       try {
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+        const timestamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-').substring(0, 19);
         const archivo = `./screenshots/04-ERROR_${timestamp}.png`;
         await page.screenshot({ path: archivo, fullPage: true });
         console.log(`📸 Screenshot de error: ${archivo}\n`);
       } catch (e) {
-        console.warn('⚠️ No se pudo capturar screenshot');
+        const detalle = e instanceof Error ? e.message : String(e);
+        console.warn(`⚠️ No se pudo capturar screenshot: ${detalle}`);
       }
       throw error;
     }

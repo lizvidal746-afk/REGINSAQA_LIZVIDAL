@@ -44,7 +44,7 @@ $targetsCompletos = @(
 
 $historicoPath = 'reportes/historico/administrados-historico.json'
 
-function Get-ArrayDesdeJson($ruta) {
+function Get-JsonArray($ruta) {
   if (-not (Test-Path $ruta)) { return @() }
   $raw = Get-Content -Raw -Path $ruta
   if (-not $raw) { return @() }
@@ -58,10 +58,10 @@ function Get-ArrayDesdeJson($ruta) {
   return @()
 }
 
-function Join-HistoricoAdministrados {
-  $baseHistorico = Get-ArrayDesdeJson $historicoPath
-  $registros = Get-ArrayDesdeJson 'reportes/registros-administrados.json'
-  $administrados = Get-ArrayDesdeJson 'reportes/administrados-registrados.json'
+function Join-AdministradosHistorico {
+  $baseHistorico = Get-JsonArray $historicoPath
+  $registros = Get-JsonArray 'reportes/registros-administrados.json'
+  $administrados = Get-JsonArray 'reportes/administrados-registrados.json'
 
   $todos = @()
   $todos += $baseHistorico
@@ -115,7 +115,7 @@ if ($Modo -eq 'completa') {
   $allTargets += $targetsCompletos
 }
 if ($Modo -eq 'reinicio') {
-  Join-HistoricoAdministrados
+  Join-AdministradosHistorico
   $allTargets += $targetsReportesOperativos
 }
 

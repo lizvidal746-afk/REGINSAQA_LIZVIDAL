@@ -7,6 +7,13 @@
         "timestamp":  null
     },
     {
+        "ruc":  "16704419692",
+        "razonSocial":  "ALMACENES MUNICIPAL 19692 S.S",
+        "nombreComercial":  "ALMACENES MUNICIPAL 19692",
+        "estado":  "Informal",
+        "timestamp":  "2026-02-21T20:07:02.497Z"
+    },
+    {
         "ruc":  "18604962241",
         "razonSocial":  "SERVICIOS INTEGRALES INTERNACIONAL 62241 S.S",
         "nombreComercial":  "SERVICIOS INTEGRALES INTERNACIONAL 62241",
@@ -50,16 +57,16 @@
     },
     {
         "ruc":  null,
-        "razonSocial":  "UNIVERSIDAD PERUANA DEL ORIENTE",
-        "nombreComercial":  "UNIVERSIDAD PERUANA DEL ORIENTE S.A.C.",
-        "estado":  "Licencia denegada",
+        "razonSocial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR PEDAGÃ“GICA PÃšBLICA â€œAREQUIPAâ€",
+        "nombreComercial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR PEDAGÃ“GICA PÃšBLICA â€œAREQUIPAâ€",
+        "estado":  "Licenciada",
         "timestamp":  null
     },
     {
         "ruc":  null,
-        "razonSocial":  "ESCUELA DE EDUCACION  SUPERIOR PEDAGOGICA PUBLICA MONTERRICO",
-        "nombreComercial":  "ESCUELA DE EDUCACION  SUPERIOR PEDAGOGICA PUBLICA MONTERRICO",
-        "estado":  "Licenciada",
+        "razonSocial":  "UNIVERSIDAD PERUANA DEL ORIENTE",
+        "nombreComercial":  "UNIVERSIDAD PERUANA DEL ORIENTE S.A.C.",
+        "estado":  "Licencia denegada",
         "timestamp":  null
     },
     {
@@ -71,10 +78,24 @@
     },
     {
         "ruc":  null,
+        "razonSocial":  "UNIVERSIDAD DE LIMA",
+        "nombreComercial":  "UNIVERSIDAD DE LIMA",
+        "estado":  "Licenciada",
+        "timestamp":  null
+    },
+    {
+        "ruc":  null,
         "razonSocial":  "UNIVERSIDAD PERUANA UNIÃ“N",
         "nombreComercial":  "UNIVERSIDAD PERUANA UNIÃ“N",
         "estado":  "Licenciada",
         "timestamp":  null
+    },
+    {
+        "ruc":  "14615097903",
+        "razonSocial":  "CORPORACION PARTICULAR 97903 HOLDING S.A.",
+        "nombreComercial":  "CORPORACION PARTICULAR 97903 HOLDING",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-20T19:18:22.469Z"
     },
     {
         "ruc":  null,
@@ -96,6 +117,13 @@
         "nombreComercial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR PEDAGÃ“GICA PUBLICA LORETO",
         "estado":  "Licenciada",
         "timestamp":  null
+    },
+    {
+        "ruc":  "15702201139",
+        "razonSocial":  "COMERCIO NO GUBERNAMENTAL 01139 SERVICIOS GENERALES S.A.C.",
+        "nombreComercial":  "COMERCIO NO GUBERNAMENTAL 01139 SERVICIOS GENERALES",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T19:30:02.963Z"
     },
     {
         "ruc":  null,
@@ -133,11 +161,11 @@
         "timestamp":  null
     },
     {
-        "ruc":  "20507790179",
-        "razonSocial":  "UNIVERSIDAD ANTONIO RUIZ DE MONTOYA",
-        "nombreComercial":  "UNIVERSIDAD ANTONIO RUÃZ DE MONTOYA",
-        "estado":  "Licencia denegada",
-        "timestamp":  null
+        "ruc":  "13711222461",
+        "razonSocial":  "INDUSTRIA PUBLICA 22461 S.A.C.",
+        "nombreComercial":  "INDUSTRIA PUBLICA 22461",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:00:24.216Z"
     },
     {
         "ruc":  "14618877087",
@@ -159,6 +187,13 @@
         "nombreComercial":  "UNIVERSIDAD NACIONAL INTERCULTURAL DE LA AMAZONÃA",
         "estado":  "Licenciada",
         "timestamp":  null
+    },
+    {
+        "ruc":  "14704964880",
+        "razonSocial":  "CORPORACION PARTICULAR 64880 FUNDACION",
+        "nombreComercial":  "CORPORACION PARTICULAR 64880",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T20:16:06.578Z"
     },
     {
         "ruc":  null,
@@ -217,6 +252,20 @@
         "timestamp":  null
     },
     {
+        "ruc":  "20507790179",
+        "razonSocial":  "UNIVERSIDAD ANTONIO RUIZ DE MONTOYA",
+        "nombreComercial":  "UNIVERSIDAD ANTONIO RUÃZ DE MONTOYA",
+        "estado":  "Licencia denegada",
+        "timestamp":  null
+    },
+    {
+        "ruc":  "17704926914",
+        "razonSocial":  "CONSORCIO NACIONAL 26914 S.A.",
+        "nombreComercial":  "CONSORCIO 26914",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T20:17:33.088Z"
+    },
+    {
         "ruc":  "00000000000",
         "razonSocial":  "ESCUELA DE OFICIALES DE LA POLICIA NACIONAL DEL PERÃš",
         "nombreComercial":  "ESCUELA DE OFICIALES DE LA POLICIA NACIONAL DEL PERÃš",
@@ -224,16 +273,16 @@
         "timestamp":  null
     },
     {
-        "ruc":  "20517572544",
-        "razonSocial":  "SPEED APOYO EMPRESARIAL S.A.C.",
-        "nombreComercial":  "SPEED APOYO EMPRESARIAL S.A.C.",
-        "estado":  "Licencia denegada",
+        "ruc":  null,
+        "razonSocial":  "UNIVERSIDAD NACIONAL AUTONOMA DE CHOTA",
+        "nombreComercial":  "UNIVERSIDAD NACIONAL AUTÃ“NOMA DE CHOTA",
+        "estado":  "Licenciada",
         "timestamp":  null
     },
     {
         "ruc":  null,
-        "razonSocial":  "UNIVERSIDAD NACIONAL AUTONOMA DE CHOTA",
-        "nombreComercial":  "UNIVERSIDAD NACIONAL AUTÃ“NOMA DE CHOTA",
+        "razonSocial":  "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA JOSE JIMENEZ BORJA",
+        "nombreComercial":  "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA JOSE JIMENEZ BORJA",
         "estado":  "Licenciada",
         "timestamp":  null
     },
@@ -252,11 +301,18 @@
         "timestamp":  "2026-02-20T19:26:32.016Z"
     },
     {
-        "ruc":  "10619005880",
-        "razonSocial":  "CONSORCIO NACIONAL 05880 ASOCIACION CIVIL",
-        "nombreComercial":  "CONSORCIO NACIONAL 05880",
+        "ruc":  "12704967950",
+        "razonSocial":  "UNIVERSIDAD PRIVADA 67950 S.C.R.L",
+        "nombreComercial":  "UNIVERSIDAD PRIVADA 67950",
         "estado":  "Licenciada",
-        "timestamp":  "2026-02-20T20:23:27.126Z"
+        "timestamp":  "2026-02-21T20:16:10.508Z"
+    },
+    {
+        "ruc":  "14704582551",
+        "razonSocial":  "SOLUCIONES EMPRESARIALES OTRO 82551 ASOC.",
+        "nombreComercial":  "SOLUCIONES EMPRESARIALES OTRO 82551",
+        "estado":  "Licencia denegada",
+        "timestamp":  "2026-02-21T20:09:44.167Z"
     },
     {
         "ruc":  "20502267354",
@@ -266,18 +322,18 @@
         "timestamp":  null
     },
     {
-        "ruc":  "20202380621",
-        "razonSocial":  "MAPFRE PERU COMPAÃ‘IA DE SEGUROS Y REASEGUROS S.A.",
-        "nombreComercial":  "MAPFRE PERU COMPAÃ‘IA DE SEGUROS Y REASEGUROS S.A.",
-        "estado":  "Licencia denegada",
-        "timestamp":  null
+        "ruc":  "66944662027",
+        "razonSocial":  "EMPRESA ESTATAL 62027 S.C.R.L",
+        "nombreComercial":  "EMPRESA ESTATAL 62027",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:13:08.698Z"
     },
     {
-        "ruc":  null,
-        "razonSocial":  "UNIVERSIDAD CONTINENTAL",
-        "nombreComercial":  "UNIVERSIDAD CONTINENTAL",
+        "ruc":  "52446743822",
+        "razonSocial":  "EMPRESA ESTATAL 43822 SRL",
+        "nombreComercial":  "EMPRESA ESTATAL 43822",
         "estado":  "Licenciada",
-        "timestamp":  null
+        "timestamp":  "2026-02-21T22:05:44.501Z"
     },
     {
         "ruc":  "26680847922",
@@ -336,6 +392,13 @@
         "timestamp":  null
     },
     {
+        "ruc":  "10711173387",
+        "razonSocial":  "UNIVERSIDAD PRIVADA 73387 S.R.L.",
+        "nombreComercial":  "UNIVERSIDAD 73387",
+        "estado":  "Licencia denegada",
+        "timestamp":  "2026-02-21T22:02:24.999Z"
+    },
+    {
         "ruc":  "80759610970",
         "razonSocial":  "EMPRESA ESTATAL 10970 SRL",
         "nombreComercial":  "EMPRESA ESTATAL 10970",
@@ -348,6 +411,13 @@
         "nombreComercial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR PEDAGÃ“GICA PÃšBLICA \"PIURA\"",
         "estado":  "Licenciada",
         "timestamp":  null
+    },
+    {
+        "ruc":  "16711173384",
+        "razonSocial":  "EMPRESA ESTATAL 73384 S.A.C.",
+        "nombreComercial":  "EMPRESA 73384",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:02:03.813Z"
     },
     {
         "ruc":  null,
@@ -490,11 +560,25 @@
         "timestamp":  null
     },
     {
+        "ruc":  "20202380621",
+        "razonSocial":  "MAPFRE PERU COMPAÃ‘IA DE SEGUROS Y REASEGUROS S.A.",
+        "nombreComercial":  "MAPFRE PERU COMPAÃ‘IA DE SEGUROS Y REASEGUROS S.A.",
+        "estado":  "Licencia denegada",
+        "timestamp":  null
+    },
+    {
         "ruc":  "28069426285",
         "razonSocial":  "EMPRESA ESTATAL 26285 CONSORCIO S.A.C.",
         "nombreComercial":  "EMPRESA ESTATAL 26285 CONSORCIO",
         "estado":  "Licenciada",
         "timestamp":  "2026-02-20T17:39:48.092Z"
+    },
+    {
+        "ruc":  "11711813684",
+        "razonSocial":  "CONSORCIO NACIONAL 13684 S.A.C.",
+        "nombreComercial":  "CONSORCIO NACIONAL 13684",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:10:18.711Z"
     },
     {
         "ruc":  "55404619907",
@@ -560,11 +644,11 @@
         "timestamp":  null
     },
     {
-        "ruc":  "74673428143",
-        "razonSocial":  "Empresa comercial 1",
-        "nombreComercial":  "Empresa comercial 1",
+        "ruc":  "13704577644",
+        "razonSocial":  "SERVICIOS INTEGRALES INTERNACIONAL 77644 S.A.A.",
+        "nombreComercial":  "SERVICIOS INTEGRALES INTERNACIONAL 77644",
         "estado":  "Licencia denegada",
-        "timestamp":  null
+        "timestamp":  "2026-02-21T20:09:39.322Z"
     },
     {
         "ruc":  null,
@@ -606,13 +690,6 @@
         "razonSocial":  "UNIVERSIDAD PERUANA DE INVESTIGACION Y NEGOCIOS",
         "nombreComercial":  "UNIVERSIDAD PERUANA DE INVESTIGACIÃ“N Y NEGOCIOS",
         "estado":  "Licencia denegada",
-        "timestamp":  null
-    },
-    {
-        "ruc":  null,
-        "razonSocial":  "UNIVERSIDAD NACIONAL DE TRUJILLO",
-        "nombreComercial":  "UNIVERSIDAD NACIONAL DE TRUJILLO",
-        "estado":  "Licenciada",
         "timestamp":  null
     },
     {
@@ -665,6 +742,20 @@
         "timestamp":  null
     },
     {
+        "ruc":  "14702207337",
+        "razonSocial":  "CORPORACION PARTICULAR 07337 S.C.R.L",
+        "nombreComercial":  "CORPORACION PARTICULAR 07337",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T19:30:08.742Z"
+    },
+    {
+        "ruc":  "13711173389",
+        "razonSocial":  "CORPORACION PARTICULAR 73389 S.A.A.",
+        "nombreComercial":  "CORPORACION 73389",
+        "estado":  "Informal",
+        "timestamp":  "2026-02-21T22:02:38.494Z"
+    },
+    {
         "ruc":  "11608199114",
         "razonSocial":  "EMPRESA ESTATAL 99114 S.A.C.",
         "nombreComercial":  "EMPRESA 99114",
@@ -672,24 +763,24 @@
         "timestamp":  "2026-02-20T17:26:21.813Z"
     },
     {
-        "ruc":  "16616068253",
-        "razonSocial":  "INDUSTRIA PUBLICA 68253 E.I.R.L.",
-        "nombreComercial":  "INDUSTRIA 68253",
-        "estado":  "Informal",
-        "timestamp":  "2026-02-20T19:36:17.289Z"
+        "ruc":  "12711536534",
+        "razonSocial":  "UNIVERSIDAD PRIVADA 36534 CONSORCIO S.A.C.",
+        "nombreComercial":  "UNIVERSIDAD PRIVADA 36534 CONSORCIO",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:05:39.545Z"
+    },
+    {
+        "ruc":  "13711506326",
+        "razonSocial":  "EMPRESA ESTATAL 06326 S.A.C.",
+        "nombreComercial":  "EMPRESA 06326",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:07:30.890Z"
     },
     {
         "ruc":  "40404040409",
         "razonSocial":  "Exportaciones del Sur S.A. PRUEBAS",
         "nombreComercial":  "Exportaciones del Sur S.A.",
         "estado":  "Licencia denegada",
-        "timestamp":  null
-    },
-    {
-        "ruc":  null,
-        "razonSocial":  "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA LAMAS",
-        "nombreComercial":  "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA LAMAS",
-        "estado":  "Licenciada",
         "timestamp":  null
     },
     {
@@ -770,13 +861,6 @@
         "timestamp":  "2026-02-20T19:18:20.258Z"
     },
     {
-        "ruc":  "15618878098",
-        "razonSocial":  "COMERCIO NO GUBERNAMENTAL 78098 COOP.",
-        "nombreComercial":  "COMERCIO NO GUBERNAMENTAL 78098",
-        "estado":  "Licenciada",
-        "timestamp":  "2026-02-20T20:21:23.399Z"
-    },
-    {
         "ruc":  "17616068252",
         "razonSocial":  "UNIVERSIDAD PRIVADA 68252 S.R.L.",
         "nombreComercial":  "UNIVERSIDAD 68252",
@@ -789,6 +873,20 @@
         "nombreComercial":  "COMERCIO NO GUBERNAMENTAL 93012",
         "estado":  "Licenciada",
         "timestamp":  "2026-02-20T19:27:01.502Z"
+    },
+    {
+        "ruc":  null,
+        "razonSocial":  "UNIVERSIDAD DE CIENCIAS Y HUMANIDADES",
+        "nombreComercial":  "UNIVERSIDAD DE CIENCIAS Y HUMANIDADES",
+        "estado":  "Licenciada",
+        "timestamp":  null
+    },
+    {
+        "ruc":  null,
+        "razonSocial":  "UNIVERSIDAD PRIVADA DE HUANCAYO FRANKLIN ROOSEVELT SOCIEDAD ANONIMA CERRADA",
+        "nombreComercial":  "UNIVERSIDAD PRIVADA DE HUANCAYO FRANKLIN ROOSEVELT SOCIEDAD ANÃ“NIMA CERRADA",
+        "estado":  "Licenciada",
+        "timestamp":  null
     },
     {
         "ruc":  null,
@@ -840,6 +938,13 @@
         "timestamp":  null
     },
     {
+        "ruc":  "60030265926",
+        "razonSocial":  "EMPRESA ESTATAL 65926 CORP. S.A.C.",
+        "nombreComercial":  "EMPRESA ESTATAL 65926 CORP.",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-23T14:12:34.434Z"
+    },
+    {
         "ruc":  null,
         "razonSocial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR TECNOLÃ“GICA PRIVADA \"SAN IGNACIO DE LOYOLA -ESCUELA ISIL\"",
         "nombreComercial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR TECNOLÃ“GICA PRIVADA \"SAN IGNACIO DE LOYOLA -ESCUELA ISIL\"",
@@ -883,10 +988,17 @@
     },
     {
         "ruc":  null,
-        "razonSocial":  "INSTITUTO DE EDUCACION SUPERIOR PEDAGOGICO PUBLICO \"MONSEÃ‘OR ELIAS OLAZAR\"",
-        "nombreComercial":  "Escuela de EducaciÃ³n Superior PedagÃ³gica PÃºblica \"MonseÃ±or ElÃ­as OlÃ¡zar\"",
-        "estado":  "Licenciada",
+        "razonSocial":  "UNIVERSIDAD PRIVADA JUAN PABLO II",
+        "nombreComercial":  "UNIVERSIDAD PRIVADA JUAN PABLO II",
+        "estado":  "Licencia denegada",
         "timestamp":  null
+    },
+    {
+        "ruc":  "13602344378",
+        "razonSocial":  "INDUSTRIA PUBLICA 44378 GROUP S.A.C.",
+        "nombreComercial":  "INDUSTRIA PUBLICA 44378 GROUP",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-20T15:45:47.019Z"
     },
     {
         "ruc":  null,
@@ -903,11 +1015,11 @@
         "timestamp":  null
     },
     {
-        "ruc":  null,
-        "razonSocial":  "UNIVERSIDAD RICARDO PALMA",
-        "nombreComercial":  "UNIVERSIDAD RICARDO PALMA",
+        "ruc":  "00198125211",
+        "razonSocial":  "EMPRESA ESTATAL 25211 ASOCIACION CIVIL",
+        "nombreComercial":  "EMPRESA ESTATAL 25211",
         "estado":  "Licenciada",
-        "timestamp":  null
+        "timestamp":  "2026-02-21T20:09:17.385Z"
     },
     {
         "ruc":  "62465812143",
@@ -935,6 +1047,20 @@
         "razonSocial":  "UNIVERSIDAD ANDINA DEL CUSCO",
         "nombreComercial":  "UNIVERSIDAD ANDINA DEL CUSCO",
         "estado":  "Licencia denegada",
+        "timestamp":  null
+    },
+    {
+        "ruc":  "11704420620",
+        "razonSocial":  "CONSORCIO NACIONAL 20620 E.I.R.L.",
+        "nombreComercial":  "CONSORCIO NACIONAL 20620",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T20:07:03.917Z"
+    },
+    {
+        "ruc":  null,
+        "razonSocial":  "UNIVERSIDAD RICARDO PALMA",
+        "nombreComercial":  "UNIVERSIDAD RICARDO PALMA",
+        "estado":  "Licenciada",
         "timestamp":  null
     },
     {
@@ -966,6 +1092,20 @@
         "timestamp":  null
     },
     {
+        "ruc":  "13704423047",
+        "razonSocial":  "INDUSTRIA PUBLICA 23047 S.C.R.L.",
+        "nombreComercial":  "INDUSTRIA PUBLICA 23047",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T20:07:06.434Z"
+    },
+    {
+        "ruc":  "20552272332",
+        "razonSocial":  "NEWMAN CONSULTING GROUP E.I.R.L.",
+        "nombreComercial":  "NEWMAN CONSULTING GROUP E.I.R.L.",
+        "estado":  "Licencia denegada",
+        "timestamp":  null
+    },
+    {
         "ruc":  "17605543808",
         "razonSocial":  "SERVICIOS INTEGRALES INTERNACIONAL 43808 CONSORCIO S.A.C.",
         "nombreComercial":  "SERVICIOS INTEGRALES INTERNACIONAL 43808 CONSORCIO",
@@ -978,6 +1118,13 @@
         "nombreComercial":  "INDUSTRIA COMERCIAL 1497",
         "estado":  "Licencia denegada",
         "timestamp":  null
+    },
+    {
+        "ruc":  "17711784588",
+        "razonSocial":  "EMPRESA ESTATAL 84588 S.A.C.",
+        "nombreComercial":  "EMPRESA 84588",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:12:05.131Z"
     },
     {
         "ruc":  null,
@@ -994,13 +1141,6 @@
         "timestamp":  "2026-02-20T17:39:46.651Z"
     },
     {
-        "ruc":  "19615616203",
-        "razonSocial":  "SOLUCIONES EMPRESARIALES OTRO 16203 SERVICIOS GENERALES S.A.C.",
-        "nombreComercial":  "SOLUCIONES EMPRESARIALES OTRO 16203 SERVICIOS GENERALES",
-        "estado":  "Licencia denegada",
-        "timestamp":  "2026-02-20T19:27:23.653Z"
-    },
-    {
         "ruc":  "20154605046",
         "razonSocial":  "UNIVERSIDAD NACIONAL DANIEL ALCIDES CARRION",
         "nombreComercial":  "UNIVERSIDAD NACIONAL DANIEL ALCÃDES CARRIÃ“N",
@@ -1013,6 +1153,13 @@
         "nombreComercial":  "UNIVERSIDAD DE CIENCIAS Y ARTES DE AMÃ‰RICA LATINA",
         "estado":  "Licenciada",
         "timestamp":  null
+    },
+    {
+        "ruc":  "16711784592",
+        "razonSocial":  "INDUSTRIA PUBLICA 84592 E.I.R.L.",
+        "nombreComercial":  "INDUSTRIA 84592",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:12:39.379Z"
     },
     {
         "ruc":  "19608307964",
@@ -1078,18 +1225,18 @@
         "timestamp":  "2026-02-20T20:08:24.279Z"
     },
     {
-        "ruc":  null,
-        "razonSocial":  "UNIVERSIDAD DE LAMBAYEQUE",
-        "nombreComercial":  "UNIVERSIDAD DE LAMBAYEQUE",
-        "estado":  "Licencia denegada",
-        "timestamp":  null
+        "ruc":  "30615632089",
+        "razonSocial":  "EMPRESA ESTATAL 32089 CORP. S.A.C.",
+        "nombreComercial":  "EMPRESA ESTATAL 32089 CORP.",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T18:55:59.185Z"
     },
     {
-        "ruc":  null,
-        "razonSocial":  "INSTITUTO PALESTRA-ESCUELA IBEROAMERICANA DE DERECHO",
-        "nombreComercial":  "INSTITUTO PALESTRA-ESCUELA IBEROAMERICANA DE DERECHO",
+        "ruc":  "10619005880",
+        "razonSocial":  "CONSORCIO NACIONAL 05880 ASOCIACION CIVIL",
+        "nombreComercial":  "CONSORCIO NACIONAL 05880",
         "estado":  "Licenciada",
-        "timestamp":  null
+        "timestamp":  "2026-02-20T20:23:27.126Z"
     },
     {
         "ruc":  null,
@@ -1113,10 +1260,10 @@
         "timestamp":  "2026-02-20T17:39:50.899Z"
     },
     {
-        "ruc":  "20172557738",
-        "razonSocial":  "BAZAR OTI5 SAC",
-        "nombreComercial":  "BAZAR OTI5 DE REGALOS",
-        "estado":  "Estado 4",
+        "ruc":  null,
+        "razonSocial":  "UNIVERSIDAD AUTONOMA SAN FRANCISCO",
+        "nombreComercial":  "UNIVERSIDAD AUTÃ“NOMA SAN FRANCISCO",
+        "estado":  "Licencia denegada",
         "timestamp":  null
     },
     {
@@ -1141,6 +1288,13 @@
         "timestamp":  null
     },
     {
+        "ruc":  "12702350166",
+        "razonSocial":  "SOLUCIONES EMPRESARIALES OTRO 50166 SRL",
+        "nombreComercial":  "SOLUCIONES EMPRESARIALES OTRO 50166",
+        "estado":  "Licencia denegada",
+        "timestamp":  "2026-02-21T19:32:33.170Z"
+    },
+    {
         "ruc":  "13615104061",
         "razonSocial":  "INDUSTRIA PUBLICA 04061 GROUP S.A.C.",
         "nombreComercial":  "INDUSTRIA PUBLICA 04061 GROUP",
@@ -1155,10 +1309,10 @@
         "timestamp":  null
     },
     {
-        "ruc":  null,
-        "razonSocial":  "UNIVERSIDAD NACIONAL TORIBIO RODRIGUEZ DE MENDOZA DE AMAZONAS",
-        "nombreComercial":  "UNIVERSIDAD NACIONAL TORIBIO RODRÃGUEZ DE MENDOZA DE AMAZONAS",
-        "estado":  "Licenciada",
+        "ruc":  "20479748102",
+        "razonSocial":  "UNIVERSIDAD SEÃ‘OR DE SIPAN",
+        "nombreComercial":  "UNIVERSIDAD SEÃ‘OR DE SIPÃN",
+        "estado":  "Licencia denegada",
         "timestamp":  null
     },
     {
@@ -1190,11 +1344,11 @@
         "timestamp":  "2026-02-20T19:27:24.263Z"
     },
     {
-        "ruc":  null,
-        "razonSocial":  "ASOCIACIÃ“N PERUANA DE CIENCIAS JURÃDICAS Y CONCILIACIÃ“N",
-        "nombreComercial":  "AsociaciÃ³n Peruana de Ciencias JurÃ­dicas y ConciliaciÃ³n",
-        "estado":  "Licenciada",
-        "timestamp":  null
+        "ruc":  "14702366811",
+        "razonSocial":  "INVERSIONES REGIONAL 66811 COOP.",
+        "nombreComercial":  "INVERSIONES REGIONAL 66811",
+        "estado":  "Informal",
+        "timestamp":  "2026-02-21T19:32:48.201Z"
     },
     {
         "ruc":  "17618085005",
@@ -1253,6 +1407,13 @@
         "timestamp":  null
     },
     {
+        "ruc":  "11702198722",
+        "razonSocial":  "CONSORCIO NACIONAL 98722 S.A",
+        "nombreComercial":  "CONSORCIO NACIONAL 98722",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T19:30:00.081Z"
+    },
+    {
         "ruc":  "13616684711",
         "razonSocial":  "INDUSTRIA PUBLICA 84711 SERVICIOS GENERALES S.A.C.",
         "nombreComercial":  "INDUSTRIA PUBLICA 84711 SERVICIOS GENERALES",
@@ -1264,6 +1425,13 @@
         "razonSocial":  "CORPORACION COMERCIAL 9025 SAC",
         "nombreComercial":  "CORPORACION COMERCIAL 9025",
         "estado":  "Licencia denegada",
+        "timestamp":  null
+    },
+    {
+        "ruc":  null,
+        "razonSocial":  "ASOCIACIÃ“N PERUANA DE CIENCIAS JURÃDICAS Y CONCILIACIÃ“N",
+        "nombreComercial":  "AsociaciÃ³n Peruana de Ciencias JurÃ­dicas y ConciliaciÃ³n",
+        "estado":  "Licenciada",
         "timestamp":  null
     },
     {
@@ -1295,6 +1463,13 @@
         "timestamp":  null
     },
     {
+        "ruc":  "09228219226",
+        "razonSocial":  "EMPRESA ESTATAL 19226 ASOCIACION CIVIL",
+        "nombreComercial":  "EMPRESA ESTATAL 19226",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T20:16:17.250Z"
+    },
+    {
         "ruc":  null,
         "razonSocial":  "ESCUELA SUPERIOR DE FORMACIÃ“N ARTÃSTICA PÃšBLICA MARIO URTEAGA ALVARADO DE CAJAMARCA",
         "nombreComercial":  "ESCUELA SUPERIOR DE FORMACIÃ“N ARTÃSTICA PÃšBLICA MARIO URTEAGA ALVARADO DE CAJAMARCA",
@@ -1314,6 +1489,13 @@
         "nombreComercial":  "UNIVERSIDAD MARITIMA DEL PERÃš",
         "estado":  "Licencia denegada",
         "timestamp":  null
+    },
+    {
+        "ruc":  "14704926915",
+        "razonSocial":  "UNIVERSIDAD PRIVADA 26915 S.R.L.",
+        "nombreComercial":  "UNIVERSIDAD 26915",
+        "estado":  "Licencia denegada",
+        "timestamp":  "2026-02-21T20:17:47.390Z"
     },
     {
         "ruc":  null,
@@ -1351,10 +1533,10 @@
         "timestamp":  null
     },
     {
-        "ruc":  null,
-        "razonSocial":  "UNIVERSIDAD PRIVADA DE HUANCAYO FRANKLIN ROOSEVELT SOCIEDAD ANONIMA CERRADA",
-        "nombreComercial":  "UNIVERSIDAD PRIVADA DE HUANCAYO FRANKLIN ROOSEVELT SOCIEDAD ANÃ“NIMA CERRADA",
-        "estado":  "Licenciada",
+        "ruc":  "21890841044",
+        "razonSocial":  "UNIVERSIDAD COMERCIAL 7998 SAC",
+        "nombreComercial":  "UNIVERSIDAD COMERCIAL 7998",
+        "estado":  "Licencia denegada",
         "timestamp":  null
     },
     {
@@ -1386,9 +1568,16 @@
         "timestamp":  null
     },
     {
+        "ruc":  "17711556625",
+        "razonSocial":  "INVERSIONES REGIONAL 56625 HOLDING S.A.",
+        "nombreComercial":  "INVERSIONES REGIONAL 56625 HOLDING",
+        "estado":  "Informal",
+        "timestamp":  "2026-02-21T22:05:58.077Z"
+    },
+    {
         "ruc":  null,
-        "razonSocial":  "UNIVERSIDAD SEMINARIO BIBLICO DE ANDINO",
-        "nombreComercial":  "UNIVERSIDAD SEMINARIO BIBLICO DE ANDINO",
+        "razonSocial":  "UNIVERSIDAD DE LAMBAYEQUE",
+        "nombreComercial":  "UNIVERSIDAD DE LAMBAYEQUE",
         "estado":  "Licencia denegada",
         "timestamp":  null
     },
@@ -1398,6 +1587,13 @@
         "nombreComercial":  "EMPRESA ESTATAL 86664",
         "estado":  "Licenciada",
         "timestamp":  "2026-02-20T15:24:07.083Z"
+    },
+    {
+        "ruc":  "17711212152",
+        "razonSocial":  "INVERSIONES REGIONAL 12152 GROUP S.A.C.",
+        "nombreComercial":  "INVERSIONES REGIONAL 12152 GROUP",
+        "estado":  "Informal",
+        "timestamp":  "2026-02-21T22:00:15.601Z"
     },
     {
         "ruc":  "19618086889",
@@ -1470,6 +1666,13 @@
         "timestamp":  null
     },
     {
+        "ruc":  "11702349794",
+        "razonSocial":  "ALMACENES MUNICIPAL 49794 CORP. S.A.C.",
+        "nombreComercial":  "ALMACENES MUNICIPAL 49794 CORP.",
+        "estado":  "Informal",
+        "timestamp":  "2026-02-21T19:32:34.684Z"
+    },
+    {
         "ruc":  null,
         "razonSocial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR PEDAGÃ“GICA PÃšBLICA \"SANTA ROSA\"",
         "nombreComercial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR PEDAGÃ“GICA PÃšBLICA \"SANTA ROSA\"",
@@ -1484,6 +1687,20 @@
         "timestamp":  null
     },
     {
+        "ruc":  "13702198419",
+        "razonSocial":  "INDUSTRIA PUBLICA 98419 COOPERATIVA",
+        "nombreComercial":  "INDUSTRIA PUBLICA 98419",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T19:30:02.306Z"
+    },
+    {
+        "ruc":  "17704967742",
+        "razonSocial":  "INVERSIONES REGIONAL 67742 COOPERATIVA",
+        "nombreComercial":  "INVERSIONES REGIONAL 67742",
+        "estado":  "Informal",
+        "timestamp":  "2026-02-21T20:16:10.583Z"
+    },
+    {
         "ruc":  null,
         "razonSocial":  "UNIVERSIDAD LATINOAMERICANA CIMA",
         "nombreComercial":  "UNIVERSIDAD LATINOAMERICANA CIMA",
@@ -1491,11 +1708,11 @@
         "timestamp":  null
     },
     {
-        "ruc":  "14616096426",
-        "razonSocial":  "CORPORACION PARTICULAR 96426 CORP. S.A.C.",
-        "nombreComercial":  "CORPORACION PARTICULAR 96426 CORP.",
+        "ruc":  "12711506328",
+        "razonSocial":  "CONSORCIO NACIONAL 06328 S.A.",
+        "nombreComercial":  "CONSORCIO 06328",
         "estado":  "Licenciada",
-        "timestamp":  "2026-02-20T19:34:59.773Z"
+        "timestamp":  "2026-02-21T22:07:36.913Z"
     },
     {
         "ruc":  null,
@@ -1540,11 +1757,32 @@
         "timestamp":  null
     },
     {
-        "ruc":  "14615097903",
-        "razonSocial":  "CORPORACION PARTICULAR 97903 HOLDING S.A.",
-        "nombreComercial":  "CORPORACION PARTICULAR 97903 HOLDING",
+        "ruc":  "14616096426",
+        "razonSocial":  "CORPORACION PARTICULAR 96426 CORP. S.A.C.",
+        "nombreComercial":  "CORPORACION PARTICULAR 96426 CORP.",
         "estado":  "Licenciada",
-        "timestamp":  "2026-02-20T19:18:22.469Z"
+        "timestamp":  "2026-02-20T19:34:59.773Z"
+    },
+    {
+        "ruc":  "95522384175",
+        "razonSocial":  "EMPRESA ESTATAL 84175 S.A.",
+        "nombreComercial":  "EMPRESA ESTATAL 84175",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:00:10.716Z"
+    },
+    {
+        "ruc":  "74673428143",
+        "razonSocial":  "Empresa comercial 1",
+        "nombreComercial":  "Empresa comercial 1",
+        "estado":  "Licencia denegada",
+        "timestamp":  null
+    },
+    {
+        "ruc":  "12711812489",
+        "razonSocial":  "UNIVERSIDAD PRIVADA 12489 CONSORCIO S.A.C.",
+        "nombreComercial":  "UNIVERSIDAD PRIVADA 12489 CONSORCIO",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:10:15.275Z"
     },
     {
         "ruc":  "57538567641",
@@ -1554,6 +1792,13 @@
         "timestamp":  null
     },
     {
+        "ruc":  "15711215393",
+        "razonSocial":  "COMERCIO NO GUBERNAMENTAL 15393 COOPERATIVA",
+        "nombreComercial":  "COMERCIO NO GUBERNAMENTAL 15393",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:00:17.624Z"
+    },
+    {
         "ruc":  null,
         "razonSocial":  "UNIVERSIDAD NACIONAL TECNOLÃ“GICA DE FRONTERA SAN IGNACIO DE LOYOLA",
         "nombreComercial":  "UNIVERSIDAD NACIONAL TECNOLÃ“GICA DE FRONTERA SAN IGNACIO DE LOYOLA",
@@ -1561,9 +1806,16 @@
         "timestamp":  null
     },
     {
+        "ruc":  "15704422893",
+        "razonSocial":  "COMERCIO NO GUBERNAMENTAL 22893 S.R.L.",
+        "nombreComercial":  "COMERCIO NO GUBERNAMENTAL 22893",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T20:07:06.605Z"
+    },
+    {
         "ruc":  null,
-        "razonSocial":  "UNIVERSIDAD DE LIMA",
-        "nombreComercial":  "UNIVERSIDAD DE LIMA",
+        "razonSocial":  "UNIVERSIDAD CONTINENTAL",
+        "nombreComercial":  "UNIVERSIDAD CONTINENTAL",
         "estado":  "Licenciada",
         "timestamp":  null
     },
@@ -1580,6 +1832,13 @@
         "nombreComercial":  "UNIVERSIDAD PRIVADA DE LA SELVA PERUANA",
         "estado":  "Licencia denegada",
         "timestamp":  null
+    },
+    {
+        "ruc":  "13704963527",
+        "razonSocial":  "INDUSTRIA PUBLICA 63527 S.A.C.",
+        "nombreComercial":  "INDUSTRIA PUBLICA 63527",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T20:16:16.028Z"
     },
     {
         "ruc":  "11609183208",
@@ -1611,16 +1870,23 @@
     },
     {
         "ruc":  null,
+        "razonSocial":  "INSTITUTO DE EDUCACION SUPERIOR PEDAGOGICO PUBLICO \"MONSEÃ‘OR ELIAS OLAZAR\"",
+        "nombreComercial":  "Escuela de EducaciÃ³n Superior PedagÃ³gica PÃºblica \"MonseÃ±or ElÃ­as OlÃ¡zar\"",
+        "estado":  "Licenciada",
+        "timestamp":  null
+    },
+    {
+        "ruc":  null,
         "razonSocial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR PEDAGÃ“GICA PÃšBLICA \"TÃšPAC AMARU\"",
         "nombreComercial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR PEDAGÃ“GICA PÃšBLICA \"TÃšPAC AMARU\"",
         "estado":  "Licenciada",
         "timestamp":  null
     },
     {
-        "ruc":  "20552272332",
-        "razonSocial":  "NEWMAN CONSULTING GROUP E.I.R.L.",
-        "nombreComercial":  "NEWMAN CONSULTING GROUP E.I.R.L.",
-        "estado":  "Licencia denegada",
+        "ruc":  null,
+        "razonSocial":  "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA LAMAS",
+        "nombreComercial":  "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA LAMAS",
+        "estado":  "Licenciada",
         "timestamp":  null
     },
     {
@@ -1666,6 +1932,13 @@
         "timestamp":  null
     },
     {
+        "ruc":  "40404040406",
+        "razonSocial":  "EXPORTACIONES 2 PRUEBA",
+        "nombreComercial":  "EXPORTACIONES 2 PRUEBA",
+        "estado":  "Licencia denegada",
+        "timestamp":  null
+    },
+    {
         "ruc":  null,
         "razonSocial":  "UNIVERSIDAD LA SALLE",
         "nombreComercial":  "UNIVERSIDAD LA SALLE",
@@ -1690,13 +1963,6 @@
         "ruc":  "32511665695",
         "razonSocial":  "CORPORACION COMERCIAL 3379 EIRL",
         "nombreComercial":  "CORPORACION COMERCIAL 3379",
-        "estado":  "Licencia denegada",
-        "timestamp":  null
-    },
-    {
-        "ruc":  "20479748102",
-        "razonSocial":  "UNIVERSIDAD SEÃ‘OR DE SIPAN",
-        "nombreComercial":  "UNIVERSIDAD SEÃ‘OR DE SIPÃN",
         "estado":  "Licencia denegada",
         "timestamp":  null
     },
@@ -1750,23 +2016,16 @@
         "timestamp":  null
     },
     {
-        "ruc":  null,
-        "razonSocial":  "ZENÃ“N WANTUIL RIVERA CHUQUE",
-        "nombreComercial":  "ZENÃ“N WANTUIL RIVERA CHUQUE",
-        "estado":  "Licenciada",
+        "ruc":  "48771477948",
+        "razonSocial":  "CORPORACION COMERCIAL 2111 SAC",
+        "nombreComercial":  "CORPORACION COMERCIAL 2111",
+        "estado":  "Licencia denegada",
         "timestamp":  null
     },
     {
         "ruc":  "20120710436",
         "razonSocial":  "UNIVERSIDAD DE HUANUCO",
         "nombreComercial":  "UNIVERSIDAD DE HUÃNUCO",
-        "estado":  "Licencia denegada",
-        "timestamp":  null
-    },
-    {
-        "ruc":  "21890841044",
-        "razonSocial":  "UNIVERSIDAD COMERCIAL 7998 SAC",
-        "nombreComercial":  "UNIVERSIDAD COMERCIAL 7998",
         "estado":  "Licencia denegada",
         "timestamp":  null
     },
@@ -1786,9 +2045,16 @@
     },
     {
         "ruc":  null,
-        "razonSocial":  "UNIVERSIDAD PRIVADA JUAN PABLO II",
-        "nombreComercial":  "UNIVERSIDAD PRIVADA JUAN PABLO II",
-        "estado":  "Licencia denegada",
+        "razonSocial":  "UNIVERSIDAD NACIONAL TORIBIO RODRIGUEZ DE MENDOZA DE AMAZONAS",
+        "nombreComercial":  "UNIVERSIDAD NACIONAL TORIBIO RODRÃGUEZ DE MENDOZA DE AMAZONAS",
+        "estado":  "Licenciada",
+        "timestamp":  null
+    },
+    {
+        "ruc":  null,
+        "razonSocial":  "ESCUELA DE EDUCACION  SUPERIOR PEDAGOGICA PUBLICA MONTERRICO",
+        "nombreComercial":  "ESCUELA DE EDUCACION  SUPERIOR PEDAGOGICA PUBLICA MONTERRICO",
+        "estado":  "Licenciada",
         "timestamp":  null
     },
     {
@@ -1804,6 +2070,13 @@
         "nombreComercial":  "MUNICIPALIDAD DE CHORRILLOS",
         "estado":  "Licencia denegada",
         "timestamp":  null
+    },
+    {
+        "ruc":  "11711784591",
+        "razonSocial":  "UNIVERSIDAD PRIVADA 84591 S.R.L.",
+        "nombreComercial":  "UNIVERSIDAD 84591",
+        "estado":  "Licencia denegada",
+        "timestamp":  "2026-02-21T22:12:29.001Z"
     },
     {
         "ruc":  null,
@@ -1827,6 +2100,13 @@
         "timestamp":  null
     },
     {
+        "ruc":  "13711537686",
+        "razonSocial":  "INDUSTRIA PUBLICA 37686 S.A.A.",
+        "nombreComercial":  "INDUSTRIA PUBLICA 37686",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:05:41.457Z"
+    },
+    {
         "ruc":  "86273392140",
         "razonSocial":  "UNIVERSIDAD COMERCIAL 9405 EIRL",
         "nombreComercial":  "UNIVERSIDAD COMERCIAL 9405",
@@ -1837,6 +2117,13 @@
         "ruc":  null,
         "razonSocial":  "UNIVERSIDAD PRIVADA JUAN MEJIA BACA",
         "nombreComercial":  "UNIVERSIDAD PRIVADA JUAN MEJÃA BACA",
+        "estado":  "Licencia denegada",
+        "timestamp":  null
+    },
+    {
+        "ruc":  null,
+        "razonSocial":  "UNIVERSIDAD SEMINARIO BIBLICO DE ANDINO",
+        "nombreComercial":  "UNIVERSIDAD SEMINARIO BIBLICO DE ANDINO",
         "estado":  "Licencia denegada",
         "timestamp":  null
     },
@@ -1883,18 +2170,11 @@
         "timestamp":  null
     },
     {
-        "ruc":  "48771477948",
-        "razonSocial":  "CORPORACION COMERCIAL 2111 SAC",
-        "nombreComercial":  "CORPORACION COMERCIAL 2111",
-        "estado":  "Licencia denegada",
-        "timestamp":  null
-    },
-    {
-        "ruc":  null,
-        "razonSocial":  "ESCUELA SUPERIOR DE FORMACIÃ“N ARTÃSTICA PUBLICA \" SAN PEDRO DE CAJAS\"",
-        "nombreComercial":  "ESCUELA SUPERIOR DE FORMACIÃ“N ARTÃSTICA PUBLICA SAN PEDRO DE CAJAS",
-        "estado":  "Licenciada",
-        "timestamp":  null
+        "ruc":  "10705039051",
+        "razonSocial":  "ALMACENES MUNICIPAL 39051 GROUP S.A.C.",
+        "nombreComercial":  "ALMACENES MUNICIPAL 39051 GROUP",
+        "estado":  "Informal",
+        "timestamp":  "2026-02-21T20:17:20.652Z"
     },
     {
         "ruc":  "11618842029",
@@ -1925,6 +2205,13 @@
         "timestamp":  "2026-02-20T17:39:47.041Z"
     },
     {
+        "ruc":  "14711826874",
+        "razonSocial":  "CORPORACION PARTICULAR 26874 S.S",
+        "nombreComercial":  "CORPORACION PARTICULAR 26874",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:10:30.018Z"
+    },
+    {
         "ruc":  null,
         "razonSocial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR PEDAGÃ“GICA PÃšBLICA \"LA SALLE\" DE ABANCAY",
         "nombreComercial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR PEDAGÃ“GICA PÃšBLICA \"LA SALLE\" DE ABANCAY",
@@ -1939,6 +2226,13 @@
         "timestamp":  null
     },
     {
+        "ruc":  "17704926912",
+        "razonSocial":  "EMPRESA ESTATAL 26912 S.A.C.",
+        "nombreComercial":  "EMPRESA 26912",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T20:17:31.112Z"
+    },
+    {
         "ruc":  null,
         "razonSocial":  "EESTP ZEGEL IPAE",
         "nombreComercial":  "EESTP ZEGEL IPAE",
@@ -1946,10 +2240,17 @@
         "timestamp":  null
     },
     {
-        "ruc":  null,
-        "razonSocial":  "UNIVERSIDAD DE CIENCIAS Y HUMANIDADES",
-        "nombreComercial":  "UNIVERSIDAD DE CIENCIAS Y HUMANIDADES",
+        "ruc":  "10704551877",
+        "razonSocial":  "UNIVERSIDAD PRIVADA 51877 CONSORCIO S.A.C.",
+        "nombreComercial":  "UNIVERSIDAD PRIVADA 51877 CONSORCIO",
         "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T20:09:17.389Z"
+    },
+    {
+        "ruc":  "20517572544",
+        "razonSocial":  "SPEED APOYO EMPRESARIAL S.A.C.",
+        "nombreComercial":  "SPEED APOYO EMPRESARIAL S.A.C.",
+        "estado":  "Licencia denegada",
         "timestamp":  null
     },
     {
@@ -1960,17 +2261,17 @@
         "timestamp":  null
     },
     {
-        "ruc":  "40404040406",
-        "razonSocial":  "EXPORTACIONES 2 PRUEBA",
-        "nombreComercial":  "EXPORTACIONES 2 PRUEBA",
-        "estado":  "Licencia denegada",
-        "timestamp":  null
+        "ruc":  "32937389782",
+        "razonSocial":  "EMPRESA ESTATAL 89782 E.I.R.L.",
+        "nombreComercial":  "EMPRESA ESTATAL 89782",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T19:30:03.960Z"
     },
     {
-        "ruc":  "02053409300",
-        "razonSocial":  "EMPRESA CONSTRUCTORA MECEC S.R.L.",
-        "nombreComercial":  "EMPRESA CONSTRUCTORA MECEC S.R.L.",
-        "estado":  "Licencia denegada",
+        "ruc":  null,
+        "razonSocial":  "UNIVERSIDAD NACIONAL DE TRUJILLO",
+        "nombreComercial":  "UNIVERSIDAD NACIONAL DE TRUJILLO",
+        "estado":  "Licenciada",
         "timestamp":  null
     },
     {
@@ -1988,24 +2289,38 @@
         "timestamp":  "2026-02-20T17:26:34.688Z"
     },
     {
-        "ruc":  "15616646831",
-        "razonSocial":  "CORPORACION PARTICULAR 46831 S.A.A.",
-        "nombreComercial":  "CORPORACION 46831",
-        "estado":  "Licencia denegada",
-        "timestamp":  "2026-02-20T19:46:00.871Z"
+        "ruc":  null,
+        "razonSocial":  "ESCUELA SUPERIOR DE FORMACIÃ“N ARTÃSTICA PUBLICA \" SAN PEDRO DE CAJAS\"",
+        "nombreComercial":  "ESCUELA SUPERIOR DE FORMACIÃ“N ARTÃSTICA PUBLICA SAN PEDRO DE CAJAS",
+        "estado":  "Licenciada",
+        "timestamp":  null
     },
     {
-        "ruc":  "13602344378",
-        "razonSocial":  "INDUSTRIA PUBLICA 44378 GROUP S.A.C.",
-        "nombreComercial":  "INDUSTRIA PUBLICA 44378 GROUP",
-        "estado":  "Licenciada",
-        "timestamp":  "2026-02-20T15:45:47.019Z"
+        "ruc":  "10711784590",
+        "razonSocial":  "CONSORCIO NACIONAL 84590 S.A.",
+        "nombreComercial":  "CONSORCIO 84590",
+        "estado":  "Licencia denegada",
+        "timestamp":  "2026-02-21T22:12:29.078Z"
+    },
+    {
+        "ruc":  "12704926916",
+        "razonSocial":  "INDUSTRIA PUBLICA 26916 E.I.R.L.",
+        "nombreComercial":  "INDUSTRIA 26916",
+        "estado":  "Licencia denegada",
+        "timestamp":  "2026-02-21T20:17:49.496Z"
     },
     {
         "ruc":  "20487949125",
         "razonSocial":  "POLITECNICA AMAZONICA SAC",
         "nombreComercial":  "POLITECNICA AMAZONICA SAC",
         "estado":  "Licencia denegada",
+        "timestamp":  null
+    },
+    {
+        "ruc":  "20172557738",
+        "razonSocial":  "BAZAR OTI5 SAC",
+        "nombreComercial":  "BAZAR OTI5 DE REGALOS",
+        "estado":  "Estado 4",
         "timestamp":  null
     },
     {
@@ -2051,6 +2366,13 @@
         "timestamp":  null
     },
     {
+        "ruc":  "12704564715",
+        "razonSocial":  "CORPORACION PARTICULAR 64715 COOPERATIVA",
+        "nombreComercial":  "CORPORACION PARTICULAR 64715",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T20:09:26.619Z"
+    },
+    {
         "ruc":  "45974156456",
         "razonSocial":  "Naciones Unidas Unidas SAc",
         "nombreComercial":  "Naciones Unidas Unidas",
@@ -2062,6 +2384,13 @@
         "razonSocial":  "ESCUELA DE SUBOFICIALES DE LA POLICIA NACIONAL DEL PERÃš",
         "nombreComercial":  "ESCUELA DE OFICIALES DE LA POLICIA NACIONAL DEL PERÃš",
         "estado":  "Licencia denegada",
+        "timestamp":  null
+    },
+    {
+        "ruc":  null,
+        "razonSocial":  "INSTITUTO PALESTRA-ESCUELA IBEROAMERICANA DE DERECHO",
+        "nombreComercial":  "INSTITUTO PALESTRA-ESCUELA IBEROAMERICANA DE DERECHO",
+        "estado":  "Licenciada",
         "timestamp":  null
     },
     {
@@ -2086,11 +2415,18 @@
         "timestamp":  null
     },
     {
-        "ruc":  null,
-        "razonSocial":  "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA JOSE JIMENEZ BORJA",
-        "nombreComercial":  "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA JOSE JIMENEZ BORJA",
-        "estado":  "Licenciada",
+        "ruc":  "02053409300",
+        "razonSocial":  "EMPRESA CONSTRUCTORA MECEC S.R.L.",
+        "nombreComercial":  "EMPRESA CONSTRUCTORA MECEC S.R.L.",
+        "estado":  "Licencia denegada",
         "timestamp":  null
+    },
+    {
+        "ruc":  "19615616203",
+        "razonSocial":  "SOLUCIONES EMPRESARIALES OTRO 16203 SERVICIOS GENERALES S.A.C.",
+        "nombreComercial":  "SOLUCIONES EMPRESARIALES OTRO 16203 SERVICIOS GENERALES",
+        "estado":  "Licencia denegada",
+        "timestamp":  "2026-02-20T19:27:23.653Z"
     },
     {
         "ruc":  "20517162052",
@@ -2098,6 +2434,13 @@
         "nombreComercial":  "EMAUS MADRE TERESA DE CALCUTA",
         "estado":  "Licencia denegada",
         "timestamp":  null
+    },
+    {
+        "ruc":  "16711830093",
+        "razonSocial":  "ALMACENES MUNICIPAL 30093 COOPERATIVA",
+        "nombreComercial":  "ALMACENES MUNICIPAL 30093",
+        "estado":  "Informal",
+        "timestamp":  "2026-02-21T22:10:31.420Z"
     },
     {
         "ruc":  null,
@@ -2156,11 +2499,11 @@
         "timestamp":  null
     },
     {
-        "ruc":  null,
-        "razonSocial":  "UNIVERSIDAD ENRIQUE GUZMAN Y VALLE",
-        "nombreComercial":  "UNIVERSIDAD NACIONAL DE EDUCACIÃ“N ENRIQUE GUZMÃN Y VALLE",
-        "estado":  "Licenciada",
-        "timestamp":  null
+        "ruc":  "16616068253",
+        "razonSocial":  "INDUSTRIA PUBLICA 68253 E.I.R.L.",
+        "nombreComercial":  "INDUSTRIA 68253",
+        "estado":  "Informal",
+        "timestamp":  "2026-02-20T19:36:17.289Z"
     },
     {
         "ruc":  null,
@@ -2203,6 +2546,13 @@
         "nombreComercial":  "UNIVERSIDAD DE HUÃNUCO",
         "estado":  "Licenciada",
         "timestamp":  null
+    },
+    {
+        "ruc":  "18711173388",
+        "razonSocial":  "INDUSTRIA PUBLICA 73388 E.I.R.L.",
+        "nombreComercial":  "INDUSTRIA 73388",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:02:26.697Z"
     },
     {
         "ruc":  null,
@@ -2296,11 +2646,25 @@
         "timestamp":  null
     },
     {
+        "ruc":  "13702353225",
+        "razonSocial":  "SERVICIOS INTEGRALES INTERNACIONAL 53225 S.A",
+        "nombreComercial":  "SERVICIOS INTEGRALES INTERNACIONAL 53225",
+        "estado":  "Licencia denegada",
+        "timestamp":  "2026-02-21T19:32:35.413Z"
+    },
+    {
         "ruc":  null,
         "razonSocial":  "CORPORACION ESPECIALIZADA EN EDUCACION, TECNOLOGIA, EMPRESARIADO Y ETICA D S.A.C.",
         "nombreComercial":  "AsociaciÃ³n Peruana de Ciencias JurÃ­dicas y ConciliaciÃ³n",
         "estado":  "Licenciada",
         "timestamp":  null
+    },
+    {
+        "ruc":  "10711173386",
+        "razonSocial":  "CONSORCIO NACIONAL 73386 S.A.",
+        "nombreComercial":  "CONSORCIO 73386",
+        "estado":  "Licencia denegada",
+        "timestamp":  "2026-02-21T22:02:22.243Z"
     },
     {
         "ruc":  "20502454545",
@@ -2352,6 +2716,13 @@
         "timestamp":  null
     },
     {
+        "ruc":  "17711823674",
+        "razonSocial":  "INVERSIONES REGIONAL 23674 CONSORCIO S.A.C.",
+        "nombreComercial":  "INVERSIONES REGIONAL 23674 CONSORCIO",
+        "estado":  "Informal",
+        "timestamp":  "2026-02-21T22:10:26.800Z"
+    },
+    {
         "ruc":  null,
         "razonSocial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR PEDAGÃ“GICA PÃšBLICA DAVID SÃNCHEZ INFANTE",
         "nombreComercial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR PEDAGÃ“GICA PÃšBLICA DAVID SÃNCHEZ INFANTE",
@@ -2373,11 +2744,11 @@
         "timestamp":  null
     },
     {
-        "ruc":  null,
-        "razonSocial":  "UNIVERSIDAD PRIVADA LEONARDO DA VINCI",
-        "nombreComercial":  "UNIVERSIDAD PRIVADA LEONARDO DA VINCI SAC.",
-        "estado":  "Licencia denegada",
-        "timestamp":  null
+        "ruc":  "15618878098",
+        "razonSocial":  "COMERCIO NO GUBERNAMENTAL 78098 COOP.",
+        "nombreComercial":  "COMERCIO NO GUBERNAMENTAL 78098",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-20T20:21:23.399Z"
     },
     {
         "ruc":  "13618878916",
@@ -2392,6 +2763,13 @@
         "nombreComercial":  "CONSORCIO NACIONAL 96765 GROUP",
         "estado":  "Licenciada",
         "timestamp":  "2026-02-20T19:18:21.875Z"
+    },
+    {
+        "ruc":  null,
+        "razonSocial":  "UNIVERSIDAD PRIVADA LEONARDO DA VINCI",
+        "nombreComercial":  "UNIVERSIDAD PRIVADA LEONARDO DA VINCI SAC.",
+        "estado":  "Licencia denegada",
+        "timestamp":  null
     },
     {
         "ruc":  null,
@@ -2436,6 +2814,13 @@
         "timestamp":  null
     },
     {
+        "ruc":  null,
+        "razonSocial":  "ZENÃ“N WANTUIL RIVERA CHUQUE",
+        "nombreComercial":  "ZENÃ“N WANTUIL RIVERA CHUQUE",
+        "estado":  "Licenciada",
+        "timestamp":  null
+    },
+    {
         "ruc":  "88285752801",
         "razonSocial":  "CORPORACION COMERCIAL 5309 SAA",
         "nombreComercial":  "CORPORACION COMERCIAL 5309",
@@ -2450,11 +2835,11 @@
         "timestamp":  null
     },
     {
-        "ruc":  null,
-        "razonSocial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR PEDAGÃ“GICA PÃšBLICA â€œAREQUIPAâ€",
-        "nombreComercial":  "ESCUELA DE EDUCACIÃ“N SUPERIOR PEDAGÃ“GICA PÃšBLICA â€œAREQUIPAâ€",
-        "estado":  "Licenciada",
-        "timestamp":  null
+        "ruc":  "17704430961",
+        "razonSocial":  "INVERSIONES REGIONAL 30961 S.A.C.",
+        "nombreComercial":  "INVERSIONES REGIONAL 30961",
+        "estado":  "Informal",
+        "timestamp":  "2026-02-21T20:07:13.446Z"
     },
     {
         "ruc":  "20303063766",
@@ -2520,6 +2905,13 @@
         "timestamp":  null
     },
     {
+        "ruc":  null,
+        "razonSocial":  "UNIVERSIDAD ENRIQUE GUZMAN Y VALLE",
+        "nombreComercial":  "UNIVERSIDAD NACIONAL DE EDUCACIÃ“N ENRIQUE GUZMÃN Y VALLE",
+        "estado":  "Licenciada",
+        "timestamp":  null
+    },
+    {
         "ruc":  "11618057368",
         "razonSocial":  "CONSORCIO NACIONAL 57368 COOP.",
         "nombreComercial":  "CONSORCIO NACIONAL 57368",
@@ -2548,11 +2940,18 @@
         "timestamp":  "2026-02-20T16:38:34.892Z"
     },
     {
-        "ruc":  null,
-        "razonSocial":  "UNIVERSIDAD AUTONOMA SAN FRANCISCO",
-        "nombreComercial":  "UNIVERSIDAD AUTÃ“NOMA SAN FRANCISCO",
+        "ruc":  "15616646831",
+        "razonSocial":  "CORPORACION PARTICULAR 46831 S.A.A.",
+        "nombreComercial":  "CORPORACION 46831",
         "estado":  "Licencia denegada",
-        "timestamp":  null
+        "timestamp":  "2026-02-20T19:46:00.871Z"
+    },
+    {
+        "ruc":  "11711220447",
+        "razonSocial":  "CONSORCIO NACIONAL 20447 S.A",
+        "nombreComercial":  "CONSORCIO NACIONAL 20447",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:00:22.032Z"
     },
     {
         "ruc":  null,
@@ -2581,6 +2980,13 @@
         "nombreComercial":  "ASOCIACIÃ“N EDUCATIVA GRENDAL COLLEGE",
         "estado":  "Licenciada",
         "timestamp":  null
+    },
+    {
+        "ruc":  "15711545503",
+        "razonSocial":  "COMERCIO NO GUBERNAMENTAL 45503 CORP. S.A.C.",
+        "nombreComercial":  "COMERCIO NO GUBERNAMENTAL 45503 CORP.",
+        "estado":  "Licenciada",
+        "timestamp":  "2026-02-21T22:05:54.747Z"
     },
     {
         "ruc":  "19618842028",

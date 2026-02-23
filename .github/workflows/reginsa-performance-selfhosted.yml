@@ -1,0 +1,88 @@
+name: REGINSA Performance K6 (Self-hosted)
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: "Scenario: caso02|caso03|caso04"
+        required: false
+        default: "caso02"
+      vus:
+        description: "k6 virtual users"
+        required: false
+        default: "10"
+      duration:
+        description: "k6 duration (e.g. 60s)"
+        required: false
+        default: "60s"
+      k6_auth_header:
+        description: "Optional K6 auth header (if empty, uses runner env K6_AUTH_HEADER)"
+        required: false
+        default: ""
+      upload_artifacts:
+        description: "Upload k6 artifacts (true/false)"
+        required: false
+        default: "true"
+
+jobs:
+  k6-selfhosted:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: cmd
+    env:
+      BASE_URL: ${{ secrets.REGINSA_URL }}
+      K6_AUTH_HEADER: ${{ github.event.inputs.k6_auth_header }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Prepare reports folder
+        run: if not exist reportes mkdir reportes
+
+      - name: Run k6 scenario
+        env:
+          SCENARIO: ${{ github.event.inputs.scenario || 'caso02' }}
+          RUN_VUS: ${{ github.event.inputs.vus || '10' }}
+          RUN_DURATION: ${{ github.event.inputs.duration || '60s' }}
+        run: |
+          @echo off
+          setlocal
+          set SUMMARY=reportes\k6-summary-%SCENARIO%.json
+
+          if /I "%SCENARIO%"=="caso02" (
+            k6 run docs/plantillas/k6_caso_02_registrar_sancion.js --env BASE_URL=%BASE_URL% --env K6_AUTH_HEADER=%K6_AUTH_HEADER% --vus %RUN_VUS% --duration %RUN_DURATION% --summary-export %SUMMARY%
+            goto :eof
+          )
+
+          if /I "%SCENARIO%"=="caso03" (
+            k6 run docs/plantillas/k6_caso_03_reconsiderar_sin_sanciones.js --env BASE_URL=%BASE_URL% --env K6_AUTH_HEADER=%K6_AUTH_HEADER% --vus %RUN_VUS% --duration %RUN_DURATION% --summary-export %SUMMARY%
+            goto :eof
+          )
+
+          if /I "%SCENARIO%"=="caso04" (
+            k6 run docs/plantillas/k6_caso_04_reconsiderar_con_sanciones.js --env BASE_URL=%BASE_URL% --env K6_AUTH_HEADER=%K6_AUTH_HEADER% --vus %RUN_VUS% --duration %RUN_DURATION% --summary-export %SUMMARY%
+            goto :eof
+          )
+
+          echo ERROR: scenario invalido. Use caso02, caso03 o caso04.
+          exit /b 1
+
+      - name: Upload k6 artifacts
+        if: always() && github.event.inputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-artifacts-selfhosted
+          path: |
+            reportes/k6-summary-caso02.json
+            reportes/k6-summary-caso03.json
+            reportes/k6-summary-caso04.json
+          if-no-files-found: warn

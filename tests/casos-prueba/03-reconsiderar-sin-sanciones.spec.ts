@@ -43,6 +43,26 @@ test.describe('03-RECONSIDERAR SIN SANCIONES', () => {
     test.setTimeout(300000); // 5 minutos - evitar timeout en flujo completo
     const nombreCaso = '03-reconsiderar-sin-sanciones';
     const ctx = getTestContext(testInfo);
+    const esScale = process.env.REGINSA_SCALE_MODE === '1';
+    const strictVerify = process.env.REGINSA_STRICT_VERIFY !== '0';
+
+    const esperarRespuestaApiGuardado = async (timeoutMs: number): Promise<boolean> => {
+      try {
+        const response = await page.waitForResponse((res) => {
+          const method = res.request().method().toUpperCase();
+          if (!['POST', 'PUT', 'PATCH'].includes(method)) return false;
+          const url = res.url().toLowerCase();
+          if (!url.includes('/api/')) return false;
+          if (!/(reconsider|sanci|infractor|resoluci|detalle)/i.test(url)) return false;
+          const status = res.status();
+          return status >= 200 && status < 300;
+        }, { timeout: timeoutMs });
+
+        return !!response;
+      } catch {
+        return false;
+      }
+    };
 
     try {
       console.log('\n================================================================================');
@@ -220,10 +240,13 @@ test.describe('03-RECONSIDERAR SIN SANCIONES', () => {
       const btnGuardar = page.getByRole('button', { name: 'Guardar cabecera' });
       await btnGuardar.waitFor({ state: 'visible', timeout: 10000 });
       console.log('   ✓ Botón guardar encontrado, haciendo clic...');
+
+      const apiGuardadoPromise = esperarRespuestaApiGuardado(esScale ? 6000 : 9000);
       await btnGuardar.click();
-      // Espera a que desaparezca el botón o se muestre el toast de éxito
-      await page.locator('.p-toast-message-success, .p-toast-message').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
-      console.log('✅ Guardar completado\n');
+      // Espera corta no bloqueante para permitir render de toast si aparece
+      await page.locator('.p-toast-message-success, .p-toast-message').first().waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+      const apiGuardadoOk = await apiGuardadoPromise;
+      console.log(`✅ Guardar completado (api=${apiGuardadoOk ? 'sí' : 'no'})\n`);
 
       // ═══════════════════════════════════════════════════════════════════
       // PASO 10.5: CAPTURA MENSAJE DE ÉXITO
@@ -231,20 +254,21 @@ test.describe('03-RECONSIDERAR SIN SANCIONES', () => {
       // ═══════════════════════════════════════════════════════════════════
       console.log('📸 PASO 10.5: Captura mensaje de éxito (toast verde)...');
       console.log('   ⏳ Esperando que aparezca el mensaje de confirmación...');
-      await page
-        .locator('.p-toast-message-success, .p-toast-message')
-        .filter({ hasText: /registro|registrad|guardad|Éxito|exito/i })
-        .first()
-        .waitFor({ state: 'visible', timeout: 15000 })
-        .catch(() => {});
-      await capturarToastExito(
+      const toastCabecera = await capturarToastExito(
         page,
         '03-RECONSIDERAR-SIN-SANCIONES',
         '10_EXITO_CABECERA',
         numeroReconsideracion,
         '',
-        'CABECERA_RECONSIDERACION'
+        'CABECERA_RECONSIDERACION',
+        2500
       );
+      if (strictVerify && !toastCabecera && !apiGuardadoOk) {
+        throw new Error('No se confirmó el guardado de cabecera (sin toast ni confirmación API).');
+      }
+      if (!toastCabecera) {
+        console.log('   ⚠️ Toast de éxito no visible en ventana rápida, se continúa.');
+      }
 
       // ═══════════════════════════════════════════════════════════════════
       // PASO 11: ACCEDER A DETALLE DE SANCIONES
@@ -281,17 +305,21 @@ test.describe('03-RECONSIDERAR SIN SANCIONES', () => {
         return;
       } else {
         console.log('ℹ️ Se encontraron sanciones en este registro\n');
+        if (strictVerify) {
+          throw new Error('El registro seleccionado contiene sanciones; no cumple el objetivo de Caso 03.');
+        }
       }
 
     } catch (error) {
       console.error('❌ ERROR:', error instanceof Error ? error.message : String(error));
       try {
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+        const timestamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-').substring(0, 19);
         const archivo = `./screenshots/${nombreCaso}_ERROR_${timestamp}.png`;
         await page.screenshot({ path: archivo, fullPage: true });
         console.log(`📸 Screenshot de error guardado\n`);
       } catch (e) {
-        console.warn('⚠️ No se pudo capturar screenshot de error');
+        const detalle = e instanceof Error ? e.message : String(e);
+        console.warn(`⚠️ No se pudo capturar screenshot de error: ${detalle}`);
       }
       throw error;
     }

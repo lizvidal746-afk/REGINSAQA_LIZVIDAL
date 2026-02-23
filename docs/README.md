@@ -20,6 +20,7 @@ Nota operativa:
 - Guía rápida de ejecución de pipelines: [GUIA_EJECUCION_PIPELINES_PASO_A_PASO.md](GUIA_EJECUCION_PIPELINES_PASO_A_PASO.md)
 - Guía de runner self-hosted en GitHub: [GUIA_RUNNER_SELF_HOSTED_GITHUB.md](GUIA_RUNNER_SELF_HOSTED_GITHUB.md)
 - Checklist operativo runner self-hosted: [CHECKLIST_RUNNER_SELF_HOSTED_OPERATIVO.md](CHECKLIST_RUNNER_SELF_HOSTED_OPERATIVO.md)
+- Guía funcional + K6 casos 02/03/04: [GUIA_FUNCIONAL_Y_K6_CASOS_02_03_04.md](GUIA_FUNCIONAL_Y_K6_CASOS_02_03_04.md)
 - Plan de migración Casos 02/03/04: [PLAN_MIGRACION_CASOS_02_03_04.md](PLAN_MIGRACION_CASOS_02_03_04.md)
 - Prompt operativo del agente: [prompts/AGENTE_QA_DEVSECOPS_REGINSA.md](prompts/AGENTE_QA_DEVSECOPS_REGINSA.md)
 - Pipeline Azure plantilla: [plantillas/azure-pipelines.qa-devsecops.yml](plantillas/azure-pipelines.qa-devsecops.yml)

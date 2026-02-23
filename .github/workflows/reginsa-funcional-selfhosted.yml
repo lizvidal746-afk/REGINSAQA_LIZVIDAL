@@ -7,6 +7,10 @@ on:
         description: "Playwright workers"
         required: false
         default: "6"
+      case_target:
+        description: "Target: caso01|caso02|caso03|caso04|suite_01_04"
+        required: false
+        default: "caso01"
       repeat_each:
         description: "Playwright repeat-each"
         required: false
@@ -47,6 +51,14 @@ on:
         description: "Upload workflow artifacts (true/false)"
         required: false
         default: "false"
+      gate_mode:
+        description: "Gate mode: strict|tolerant"
+        required: false
+        default: "strict"
+      max_failed_allowed:
+        description: "Allowed failed tests when gate_mode=tolerant"
+        required: false
+        default: "0"
 
 jobs:
   functional-scale-selfhosted:
@@ -58,8 +70,6 @@ jobs:
     env:
       REGINSA_URL: ${{ secrets.REGINSA_URL }}
       BASE_URL: ${{ secrets.REGINSA_URL }}
-      REGINSA_USER: ${{ secrets.REGINSA_USER || secrets.REGINSA_USER_1 }}
-      REGINSA_PASS: ${{ secrets.REGINSA_PASS || secrets.REGINSA_PASS_1 }}
       REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
       REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
       REGINSA_USER_2: ${{ secrets.REGINSA_USER_2 }}
@@ -72,7 +82,11 @@ jobs:
       REGINSA_PASS_5: ${{ secrets.REGINSA_PASS_5 }}
       REGINSA_USER_6: ${{ secrets.REGINSA_USER_6 }}
       REGINSA_PASS_6: ${{ secrets.REGINSA_PASS_6 }}
-      REGINSA_POOL_TARGET: ${{ github.event.inputs.pool_target || vars.POOL_TARGET || '600' }}
+      REGINSA_USER_7: ${{ secrets.REGINSA_USER_7 }}
+      REGINSA_PASS_7: ${{ secrets.REGINSA_PASS_7 }}
+      REGINSA_USER_8: ${{ secrets.REGINSA_USER_8 }}
+      REGINSA_PASS_8: ${{ secrets.REGINSA_PASS_8 }}
+      REGINSA_POOL_TARGET: ${{ github.event.inputs.pool_target || '600' }}
       REGINSA_STRICT_VERIFY: '1'
       REGINSA_SKIP_LIST_VERIFY: '1'
       REGINSA_REQUIRE_API_CREATE: '1'
@@ -124,13 +138,45 @@ jobs:
           if not defined HAS_CREDS if not "%REGINSA_USER_4%"=="" if not "%REGINSA_PASS_4%"=="" set HAS_CREDS=REGINSA_USER_4/REGINSA_PASS_4
           if not defined HAS_CREDS if not "%REGINSA_USER_5%"=="" if not "%REGINSA_PASS_5%"=="" set HAS_CREDS=REGINSA_USER_5/REGINSA_PASS_5
           if not defined HAS_CREDS if not "%REGINSA_USER_6%"=="" if not "%REGINSA_PASS_6%"=="" set HAS_CREDS=REGINSA_USER_6/REGINSA_PASS_6
+          if not defined HAS_CREDS if not "%REGINSA_USER_7%"=="" if not "%REGINSA_PASS_7%"=="" set HAS_CREDS=REGINSA_USER_7/REGINSA_PASS_7
+          if not defined HAS_CREDS if not "%REGINSA_USER_8%"=="" if not "%REGINSA_PASS_8%"=="" set HAS_CREDS=REGINSA_USER_8/REGINSA_PASS_8
 
           if not defined HAS_CREDS (
-            echo ERROR: No se detecto ningun par de credenciales en Secrets. Configure REGINSA_USER/REGINSA_PASS o REGINSA_USER_n/REGINSA_PASS_n ^(n=1..6^).
+            echo ERROR: No se detecto ningun par de credenciales en Secrets. Configure REGINSA_USER/REGINSA_PASS o REGINSA_USER_n/REGINSA_PASS_n ^(n=1..8^).
             exit /b 1
           )
 
           echo Credenciales detectadas en: !HAS_CREDS!
+
+      - name: Validate parallel credential slots for workers>=7
+        run: |
+          @echo off
+          setlocal enabledelayedexpansion
+
+          set RUN_WORKERS=${{ github.event.inputs.workers || '6' }}
+          set MISSING=
+
+          if %RUN_WORKERS% GEQ 7 (
+            if "%REGINSA_USER_7%"=="" set MISSING=REGINSA_USER_7
+            if "%REGINSA_PASS_7%"=="" (
+              if defined MISSING (set MISSING=!MISSING!, REGINSA_PASS_7) else (set MISSING=REGINSA_PASS_7)
+            )
+            if "%REGINSA_USER_8%"=="" (
+              if defined MISSING (set MISSING=!MISSING!, REGINSA_USER_8) else (set MISSING=REGINSA_USER_8)
+            )
+            if "%REGINSA_PASS_8%"=="" (
+              if defined MISSING (set MISSING=!MISSING!, REGINSA_PASS_8) else (set MISSING=REGINSA_PASS_8)
+            )
+
+            if defined MISSING (
+              echo ERROR: workers=%RUN_WORKERS% requiere pool 1..8 completo. Faltan secrets: !MISSING!
+              exit /b 1
+            )
+
+            echo Pool paralelo validado para workers=%RUN_WORKERS% (slots 7 y 8 presentes).
+          ) else (
+            echo workers=%RUN_WORKERS% no requiere validacion de slots 7 y 8.
+          )
 
       - name: Run functional scale
         env:
@@ -141,13 +187,48 @@ jobs:
           REGINSA_VIDEO: ${{ github.event.inputs.minimal_evidence == 'true' && 'off' || 'retain-on-failure' }}
           REGINSA_SCREENSHOT: ${{ github.event.inputs.minimal_evidence == 'true' && 'off' || 'only-on-failure' }}
           REGINSA_REPORTER_MODE: ${{ github.event.inputs.minimal_evidence == 'true' && 'minimal' || 'full' }}
-        run: >-
-          npm run test:01:scale --
-          --workers=${{ github.event.inputs.workers || vars.PW_WORKERS || '6' }}
-          --repeat-each=${{ github.event.inputs.repeat_each || vars.PW_REPEAT_EACH || '10' }}
-          --project=chromium
+          CASE_TARGET: ${{ github.event.inputs.case_target || 'caso01' }}
+        run: |
+          @echo off
+          setlocal
+          set RUN_WORKERS=${{ github.event.inputs.workers || '6' }}
+          set RUN_REPEAT=${{ github.event.inputs.repeat_each || '10' }}
+          set RUN_PROJECT=chromium
+
+          echo Ejecutando target funcional: %CASE_TARGET%
+
+          if /I "%CASE_TARGET%"=="caso01" (
+            npm run test:01:scale -- --workers=%RUN_WORKERS% --repeat-each=%RUN_REPEAT% --project=%RUN_PROJECT%
+            goto :eof
+          )
+
+          if /I "%CASE_TARGET%"=="caso02" (
+            npx playwright test --grep="02-REGISTRAR SANCIÓN" --workers=%RUN_WORKERS% --repeat-each=%RUN_REPEAT% --project=%RUN_PROJECT%
+            goto :eof
+          )
+
+          if /I "%CASE_TARGET%"=="caso03" (
+            npx playwright test --grep="03-RECONSIDERAR SIN SANCIONES" --workers=%RUN_WORKERS% --repeat-each=%RUN_REPEAT% --project=%RUN_PROJECT%
+            goto :eof
+          )
+
+          if /I "%CASE_TARGET%"=="caso04" (
+            npx playwright test --grep="04-RECONSIDERAR CON SANCIONES" --workers=%RUN_WORKERS% --repeat-each=%RUN_REPEAT% --project=%RUN_PROJECT%
+            goto :eof
+          )
+
+          if /I "%CASE_TARGET%"=="suite_01_04" (
+            npx playwright test --grep="01-AGREGAR ADMINISTRADO|02-REGISTRAR SANCIÓN|03-RECONSIDERAR SIN SANCIONES|04-RECONSIDERAR CON SANCIONES" --workers=%RUN_WORKERS% --repeat-each=%RUN_REPEAT% --project=%RUN_PROJECT%
+            goto :eof
+          )
+
+          echo ERROR: case_target invalido. Use caso01, caso02, caso03, caso04 o suite_01_04.
+          exit /b 1
 
       - name: Evaluate test outcomes
+        env:
+          REGINSA_GATE_MODE: ${{ github.event.inputs.gate_mode || 'strict' }}
+          REGINSA_MAX_FAILED_ALLOWED: ${{ github.event.inputs.max_failed_allowed || '0' }}
         if: always() && github.event.inputs.evaluate_outcomes == 'true' && hashFiles('test-results/results.json') != ''
         run: node scripts/evaluate-playwright-results.js
 

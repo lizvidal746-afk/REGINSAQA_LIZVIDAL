@@ -1,6 +1,7 @@
 import { Page, expect, type Locator } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import 'dotenv/config';
 
 /**
  * Funciones Reutilizables - REGINSA SUNEDU
@@ -25,12 +26,12 @@ const construirPoolCredenciales = () => {
   return pool;
 };
 
-const CREDENCIALES = {
+const obtenerCredencialesConfiguradas = () => ({
   url: process.env.REGINSA_URL || process.env.BASE_URL || 'https://example-reginsa.local/#/home',
   usuario: process.env.REGINSA_USER || process.env.REGINSA_USER_1 || '',
   contraseña: process.env.REGINSA_PASS || process.env.REGINSA_PASS_1 || '',
   usuarios: construirPoolCredenciales()
-};
+});
 
 export function resolverDocumentoPrueba(nombreArchivo = 'GENERAL N° 00001-2026-SUNEDU-SG-OTI.pdf'): string {
   const candidatos = [
@@ -50,12 +51,13 @@ export function resolverDocumentoPrueba(nombreArchivo = 'GENERAL N° 00001-2026-
   );
 }
 
-const usuarioEnv = process.env.REGINSA_USER;
-const contraseñaEnv = process.env.REGINSA_PASS;
 const permitirUsuarioUnicoEnParalelo = process.env.REGINSA_ALLOW_SINGLE_USER_PARALLEL === '1';
 
 const seleccionarCredencial = (workerIndex?: number): { usuario: string; contraseña: string } => {
-  const usuarios = CREDENCIALES.usuarios;
+  const credenciales = obtenerCredencialesConfiguradas();
+  const usuarios = credenciales.usuarios;
+  const usuarioEnv = process.env.REGINSA_USER || '';
+  const contraseñaEnv = process.env.REGINSA_PASS || '';
   const hayPool = usuarios.length > 0;
 
   if (typeof workerIndex === 'number' && hayPool && !permitirUsuarioUnicoEnParalelo) {
@@ -90,17 +92,39 @@ export async function iniciarSesionYNavegar(
   workerIndex?: number
 ): Promise<void> {
   console.log('🔐 INICIALIZANDO SESIÓN Y NAVEGACIÓN...');
+  const credenciales = obtenerCredencialesConfiguradas();
+  const usuarioEnv = process.env.REGINSA_USER || '';
+  const contraseñaEnv = process.env.REGINSA_PASS || '';
   const credencialActiva = seleccionarCredencial(workerIndex);
-  if (usuarioEnv && contraseñaEnv && !(typeof workerIndex === 'number' && CREDENCIALES.usuarios.length > 0 && !permitirUsuarioUnicoEnParalelo)) {
+  if (usuarioEnv && contraseñaEnv && !(typeof workerIndex === 'number' && credenciales.usuarios.length > 0 && !permitirUsuarioUnicoEnParalelo)) {
     console.log('⚠️ REGINSA_USER/REGINSA_PASS definidos: todos los workers usarán el mismo usuario.');
-  } else if (typeof workerIndex === 'number' && CREDENCIALES.usuarios.length > 0) {
-    console.log(`🔁 Pool paralelo activo: ${CREDENCIALES.usuarios.length} usuarios disponibles.`);
+  } else if (typeof workerIndex === 'number' && credenciales.usuarios.length > 0) {
+    console.log(`🔁 Pool paralelo activo: ${credenciales.usuarios.length} usuarios disponibles.`);
+    const usuariosDisponibles = credenciales.usuarios
+      .map((item) => item.usuario)
+      .filter((usuario) => !!usuario)
+      .join(', ');
+    if (usuariosDisponibles) {
+      console.log(`👥 Usuarios disponibles: ${usuariosDisponibles}`);
+    }
+
+    const slotsFaltantes: number[] = [];
+    for (let slot = 1; slot <= 8; slot++) {
+      const hasUser = !!(process.env[`REGINSA_USER_${slot}`] || '').trim();
+      const hasPass = !!(process.env[`REGINSA_PASS_${slot}`] || '').trim();
+      if (!hasUser || !hasPass) {
+        slotsFaltantes.push(slot);
+      }
+    }
+    if (slotsFaltantes.length > 0) {
+      console.warn(`⚠️ Slots de credenciales incompletos: ${slotsFaltantes.join(', ')}.`);
+    }
   }
   console.log(`👤 Usuario asignado: ${credencialActiva.usuario} (worker ${typeof workerIndex === 'number' ? workerIndex : 0})`);
   
   try {
     // Navegar a home
-    await page.goto(CREDENCIALES.url);
+    await page.goto(credenciales.url);
     await page.waitForLoadState('domcontentloaded');
 
     if (typeof workerIndex === 'number' || process.env.REGINSA_FORCE_LOGIN === '1') {
@@ -195,6 +219,33 @@ export async function iniciarSesionYNavegar(
       throw new Error(`No se encontró el módulo ${etiqueta}.`);
     };
 
+    const navegarDirectoPorRuta = async (moduloTarget: 'infractor' | 'administrado'): Promise<boolean> => {
+      const permitirFallback = process.env.REGINSA_DIRECT_NAV_FALLBACK !== '0';
+      if (!permitirFallback) return false;
+
+      const hashTarget = moduloTarget === 'administrado' ? '#/pages/administrado' : '#/pages/infractor';
+      const actual = page.url() || credenciales.url;
+
+      let targetUrl = '';
+      try {
+        const base = new URL(actual);
+        targetUrl = `${base.origin}/${hashTarget}`;
+      } catch {
+        const candidato = (credenciales.url || '').replace(/\/$/, '');
+        targetUrl = /^https?:\/\//i.test(candidato)
+          ? `${candidato.split('#')[0]}/${hashTarget}`
+          : `https://${candidato.split('#')[0]}/${hashTarget}`;
+      }
+
+      await page.goto(targetUrl, { waitUntil: 'domcontentloaded' }).catch(() => {});
+      await page.waitForLoadState('networkidle').catch(() => {});
+
+      const urlOk = page.url().includes(hashTarget);
+      const tablaOk = await page.locator('table').first().isVisible().catch(() => false);
+      const botonRegistroOk = await page.locator('button:has-text("Registrar Sancionar")').first().isVisible().catch(() => false);
+      return urlOk || tablaOk || botonRegistroOk;
+    };
+
     // Navegar al módulo solicitado - Con reintentos y alternativas
     const regexModulo = modulo === 'administrado'
       ? /Administrado|Administrados/i
@@ -204,11 +255,17 @@ export async function iniciarSesionYNavegar(
     try {
       await navegar(regexModulo, etiqueta);
     } catch (error) {
-      const esScale = process.env.REGINSA_SCALE_MODE === '1';
-      if (esScale) {
-        console.warn(`⚠️ Navegación de módulo no encontrada (${etiqueta}) en modo scale. Se continúa con recuperación posterior.`);
+      const moduloFallback = modulo === 'administrado' ? 'administrado' : 'infractor';
+      const navegoDirecto = await navegarDirectoPorRuta(moduloFallback);
+      if (navegoDirecto) {
+        console.log(`↪️ Fallback navegación directa aplicado: ${modulo}`);
       } else {
-        throw error;
+        const esScale = process.env.REGINSA_SCALE_MODE === '1';
+        if (esScale) {
+          console.warn(`⚠️ Navegación de módulo no encontrada (${etiqueta}) en modo scale. Se continúa con recuperación posterior.`);
+        } else {
+          throw error;
+        }
       }
     }
 
@@ -230,11 +287,13 @@ export async function iniciarSesionYNavegar(
 export async function loginReginsa(page: Page): Promise<void> {
   console.log('🔐 Iniciando sesión en REGINSA SUNEDU...');
 
-  if (!CREDENCIALES.usuario || !CREDENCIALES.contraseña) {
+  const credenciales = obtenerCredencialesConfiguradas();
+
+  if (!credenciales.usuario || !credenciales.contraseña) {
     throw new Error('Faltan credenciales. Define REGINSA_USER y REGINSA_PASS.');
   }
   
-  await page.goto(CREDENCIALES.url);
+  await page.goto(credenciales.url);
   await page.waitForLoadState('networkidle');
 
   await page.getByRole('button', { name: 'Acceder Ahora' }).click();
@@ -242,12 +301,12 @@ export async function loginReginsa(page: Page): Promise<void> {
 
   const inputUsuario = page.getByRole('textbox', { name: 'Usuario' });
   await inputUsuario.click();
-  await inputUsuario.fill(CREDENCIALES.usuario);
+  await inputUsuario.fill(credenciales.usuario);
   await page.waitForTimeout(300);
 
   const inputContraseña = page.getByRole('textbox', { name: 'Contraseña' });
   await inputContraseña.click();
-  await inputContraseña.fill(CREDENCIALES.contraseña);
+  await inputContraseña.fill(credenciales.contraseña);
   await page.waitForTimeout(300);
 
   await page.getByRole('button', { name: 'Iniciar sesión' }).click();
@@ -651,6 +710,35 @@ export async function abrirFormularioNuevoAdministrado(page: Page): Promise<void
     return;
   }
 
+  const recuperarSesionSiEsNecesario = async (): Promise<void> => {
+    const btnAcceder = page.getByRole('button', { name: /^Acceder Ahora$/i });
+    const requiereLogin = await btnAcceder.isVisible().catch(() => false);
+    if (!requiereLogin) return;
+
+    const credencial = seleccionarCredencial();
+    if (!credencial.usuario || !credencial.contraseña) {
+      throw new Error('Sesión expirada y sin credenciales disponibles para relogin.');
+    }
+
+    console.log('↪️ Sesión no activa detectada. Reintentando login rápido...');
+    await btnAcceder.click({ timeout: 12000 });
+    const inputUsuario = page.getByRole('textbox', { name: 'Usuario' });
+    const inputContraseña = page.getByRole('textbox', { name: 'Contraseña' });
+    await inputUsuario.waitFor({ state: 'visible', timeout: 12000 });
+    await inputUsuario.fill(credencial.usuario);
+    await inputContraseña.fill(credencial.contraseña);
+    await page.getByRole('button', { name: 'Iniciar sesión' }).click();
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('networkidle').catch(() => {});
+
+    const linkModulo = page.getByRole('link', { name: /Infractor y Sanci[oó]n/i }).first();
+    if (await linkModulo.isVisible().catch(() => false)) {
+      await linkModulo.click({ timeout: 12000 }).catch(() => {});
+      await page.waitForLoadState('domcontentloaded');
+      await page.waitForLoadState('networkidle').catch(() => {});
+    }
+  };
+
   const recuperarPantalla = async (intento: number): Promise<void> => {
     await page.keyboard.press('Escape').catch(() => {});
     await page.waitForTimeout(250);
@@ -670,6 +758,8 @@ export async function abrirFormularioNuevoAdministrado(page: Page): Promise<void
   };
   
   await page.waitForLoadState('networkidle');
+  await recuperarSesionSiEsNecesario();
+
   const overlay = page.locator('.p-dialog-mask, .p-component-overlay');
   if (await overlay.isVisible().catch(() => false)) {
     await overlay.first().waitFor({ state: 'hidden', timeout: 10000 }).catch(async () => {
@@ -677,7 +767,16 @@ export async function abrirFormularioNuevoAdministrado(page: Page): Promise<void
       await overlay.first().waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     });
   }
+
+  const btnRegistrarSancionar = page.locator([
+    'button[label="Registrar Sancionar"][icon="pi pi-plus"]',
+    'button[label="Registrar Sancionar"]',
+    'div.mb-3.sm\\:mb-0 button[label="Registrar Sancionar"]',
+    'button.p-button-info:has-text("Registrar Sancionar")'
+  ].join(', ')).first();
+
   const candidatos = [
+    btnRegistrarSancionar,
     page.locator('div.flex.align-items-end button.btn-royal-blue.p-button-icon-only:has(span.pi.pi-user-plus)').first(),
     page.locator('div.flex.align-items-end span.pi.pi-user-plus').first().locator('xpath=ancestor::button[1]'),
     page.getByRole('button', { name: /Registrar\s*Sancionar/i }).first(),
@@ -698,12 +797,12 @@ export async function abrirFormularioNuevoAdministrado(page: Page): Promise<void
   const rucGlobal = page.locator('input[formcontrolname*="ruc" i], input[name*="ruc" i], input[id*="ruc" i], input[placeholder*="ruc" i], input[aria-label*="ruc" i]').first();
 
   let abierto = false;
-  for (let intento = 0; intento < 3 && !abierto; intento++) {
+  for (let intento = 0; intento < 6 && !abierto; intento++) {
     for (const boton of candidatos) {
       if (!(await boton.isVisible().catch(() => false))) continue;
       await boton.scrollIntoViewIfNeeded().catch(() => {});
       await boton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(550);
 
       const modalVisible = await modal.isVisible().catch(() => false);
       const modalAltVisible = await modalAlt.isVisible().catch(() => false);
@@ -715,8 +814,10 @@ export async function abrirFormularioNuevoAdministrado(page: Page): Promise<void
     }
 
     if (!abierto) {
-      console.log(`⚠️ No se pudo abrir formulario (intento ${intento + 1}/3). Aplicando recuperación...`);
+      console.log(`⚠️ No se pudo abrir formulario (intento ${intento + 1}/6). Aplicando recuperación...`);
       await recuperarPantalla(intento);
+      await recuperarSesionSiEsNecesario();
+      await page.waitForLoadState('domcontentloaded').catch(() => {});
     }
   }
 
@@ -781,9 +882,60 @@ export async function abrirFormularioNuevoAdministrado(page: Page): Promise<void
  */
 export async function abrirFormularioRegistrarSancion(page: Page): Promise<void> {
   console.log('➕ Abriendo formulario registrar sanción...');
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForLoadState('networkidle').catch(() => {});
+
+  const formularioAbierto = async (): Promise<boolean> => {
+    const indicadores = [
+      page.getByRole('button', { name: /^Guardar$/i }).first(),
+      page.getByRole('tab', { name: /Datos del administrado/i }).first(),
+      page.locator('input[formcontrolname="numeroExpediente"]').first()
+    ];
+
+    for (const indicador of indicadores) {
+      if (await indicador.isVisible().catch(() => false)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const recuperarSesionSiEsNecesario = async (): Promise<void> => {
+    const btnAcceder = page.getByRole('button', { name: /^Acceder Ahora$/i });
+    const requiereLogin = await btnAcceder.isVisible().catch(() => false);
+    if (!requiereLogin) return;
+
+    const credencial = seleccionarCredencial();
+    if (!credencial.usuario || !credencial.contraseña) {
+      throw new Error('Sesión expirada y sin credenciales disponibles para relogin.');
+    }
+
+    console.log('↪️ Sesión no activa detectada. Reintentando login rápido...');
+    await btnAcceder.click({ timeout: 12000 });
+    const inputUsuario = page.getByRole('textbox', { name: 'Usuario' });
+    const inputContraseña = page.getByRole('textbox', { name: 'Contraseña' });
+    await inputUsuario.waitFor({ state: 'visible', timeout: 12000 });
+    await inputUsuario.fill(credencial.usuario);
+    await inputContraseña.fill(credencial.contraseña);
+    await page.getByRole('button', { name: 'Iniciar sesión' }).click();
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('networkidle').catch(() => {});
+    await page.goto('#/pages/infractor', { waitUntil: 'domcontentloaded' }).catch(() => {});
+    await page.waitForLoadState('networkidle').catch(() => {});
+  };
+
+  if (await formularioAbierto()) {
+    console.log('✅ Formulario ya estaba abierto');
+    return;
+  }
+
+  await recuperarSesionSiEsNecesario();
 
   const candidatos = [
+    page.locator('button[label="Registrar Sancionar"]').first(),
+    page.locator('div.mb-3.sm\\:mb-0 button[label="Registrar Sancionar"]').first(),
+    page.locator('button.p-button-info:has-text("Registrar Sancionar")').first(),
+    page.getByRole('button', { name: /^Registrar\s*Sancionar$/i }).first(),
     page.getByRole('button').filter({ hasText: /Registrar\s*Sanci[oó]n|Registrar|Sanci[oó]n/i }).first(),
     page.getByRole('button', { name: /Registrar\s*Sanci[oó]n|Registrar|Sanci[oó]n/i }).first(),
     page.locator('button:has-text("Registrar")').first(),
@@ -797,7 +949,8 @@ export async function abrirFormularioRegistrarSancion(page: Page): Promise<void>
       if (await boton.isVisible().catch(() => false)) {
         await boton.scrollIntoViewIfNeeded().catch(() => {});
         await boton.click({ timeout: 45000 }).catch(() => {});
-        abierto = true;
+        await page.waitForTimeout(300);
+        abierto = await formularioAbierto();
         break;
       }
     }
@@ -810,13 +963,18 @@ export async function abrirFormularioRegistrarSancion(page: Page): Promise<void>
   }
 
   if (!abierto) {
-    const botonAlt = page.getByRole('button').filter({ hasText: /Registrar|Sanci[oó]n/i }).first();
-    await botonAlt.waitFor({ state: 'visible', timeout: 45000 });
-    await botonAlt.click({ timeout: 45000 });
+    const botonAlt = page.locator('button[label="Registrar Sancionar"], button:has-text("Registrar Sancionar"), button:has-text("Registrar Sanción")').first();
+    await botonAlt.waitFor({ state: 'visible', timeout: 12000 });
+    await botonAlt.click({ timeout: 12000 });
+    await page.waitForTimeout(300);
+    abierto = await formularioAbierto();
   }
 
-  // Espera inteligente: esperar a que el formulario/modal esté visible
-  await page.locator('form').first().waitFor({ state: 'visible', timeout: 45000 });
+  if (!abierto) {
+    throw new Error('No se pudo abrir formulario de Registrar Sancionar con los selectores actuales.');
+  }
+
+  await page.locator('input[formcontrolname="numeroExpediente"]').first().waitFor({ state: 'visible', timeout: 45000 });
   console.log('✅ Formulario abierto');
 }
 
@@ -917,10 +1075,16 @@ export async function obtenerAdministradoAleatorio(page: Page, indicePreferido?:
       console.log('   ✓ Dropdown clickeado');
     } else {
       console.warn('   ⚠️ Dropdown no visible, intentando alternativa...');
-      const allDropdowns = await page.locator('p-dropdown').all();
-      if (allDropdowns.length > 0) {
-        await allDropdowns[0].click();
-        await page.waitForTimeout(500);
+      await page.waitForTimeout(1200);
+      if (await dropdown.isVisible({ timeout: 1500 }).catch(() => false)) {
+        await dropdown.click();
+        await page.waitForTimeout(700);
+      } else {
+        const allDropdowns = await page.locator('p-dropdown').all();
+        if (allDropdowns.length > 0) {
+          await allDropdowns[0].click();
+          await page.waitForTimeout(900);
+        }
       }
     }
 
@@ -1194,7 +1358,8 @@ export async function capturarToastExito(
   etiqueta: string,
   ref1?: string,
   ref2?: string,
-  modal?: string
+  modal?: string,
+  timeoutMs = 15000
 ): Promise<string | null> {
   if (process.env.SKIP_SCREENSHOTS === '1') {
     console.log('⏩ Captura omitida por SKIP_SCREENSHOTS=1');
@@ -1209,7 +1374,7 @@ export async function capturarToastExito(
     .filter({ hasText: /registro|registrad|guardad|Éxito|exito/i })
     .first();
 
-  const visible = await toast.isVisible({ timeout: 15000 }).catch(() => false);
+  const visible = await toast.isVisible({ timeout: timeoutMs }).catch(() => false);
   if (!visible) return null;
 
   const paso = /EXITO/i.test(etiqueta) ? etiqueta : `EXITO_${etiqueta}`;

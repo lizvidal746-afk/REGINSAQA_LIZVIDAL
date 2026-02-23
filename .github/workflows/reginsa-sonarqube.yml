@@ -1,0 +1,38 @@
+name: REGINSA SonarQube
+
+on:
+  workflow_dispatch:
+    inputs:
+      sonar_host_url:
+        description: "SonarQube URL (ej: https://sonar.mi-entidad.gob.pe)"
+        required: true
+        default: ""
+      sonar_token:
+        description: "SonarQube token"
+        required: true
+        default: ""
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ github.event.inputs.sonar_token }}
+          SONAR_HOST_URL: ${{ github.event.inputs.sonar_host_url }}

@@ -1,0 +1,91 @@
+name: REGINSA Enterprise Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: Tipo de suite
+        required: true
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - functional
+          - regression
+          - performance
+          - security
+      workers:
+        description: Número de workers Playwright
+        required: false
+        default: "4"
+      repeat_each:
+        description: Repeticiones por caso
+        required: false
+        default: "1"
+      registros:
+        description: Cantidad de registros objetivo
+        required: false
+        default: "10"
+      headless:
+        description: Ejecutar en headless
+        required: false
+        default: "1"
+      environment:
+        description: Ambiente
+        required: false
+        default: qa
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    env:
+      REGINSA_URL: ${{ secrets.REGINSA_URL }}
+      REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
+      REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
+      REGINSA_USER_2: ${{ secrets.REGINSA_USER_2 }}
+      REGINSA_PASS_2: ${{ secrets.REGINSA_PASS_2 }}
+      REGINSA_USER_3: ${{ secrets.REGINSA_USER_3 }}
+      REGINSA_PASS_3: ${{ secrets.REGINSA_PASS_3 }}
+      REGINSA_USER_4: ${{ secrets.REGINSA_USER_4 }}
+      REGINSA_PASS_4: ${{ secrets.REGINSA_PASS_4 }}
+      REGINSA_USER_5: ${{ secrets.REGINSA_USER_5 }}
+      REGINSA_PASS_5: ${{ secrets.REGINSA_PASS_5 }}
+      REGINSA_USER_6: ${{ secrets.REGINSA_USER_6 }}
+      REGINSA_PASS_6: ${{ secrets.REGINSA_PASS_6 }}
+      REGINSA_USER_7: ${{ secrets.REGINSA_USER_7 }}
+      REGINSA_PASS_7: ${{ secrets.REGINSA_PASS_7 }}
+      REGINSA_USER_8: ${{ secrets.REGINSA_USER_8 }}
+      REGINSA_PASS_8: ${{ secrets.REGINSA_PASS_8 }}
+      REGINSA_WORKERS: ${{ inputs.workers }}
+      REGINSA_HEADLESS: ${{ inputs.headless }}
+      REGINSA_TARGET_REGISTROS: ${{ inputs.registros }}
+      REGINSA_ENVIRONMENT: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+
+      - name: Run selected suite
+        shell: bash
+        run: |
+          case "${{ inputs.test_type }}" in
+            smoke) npm run test:smoke ;;
+            functional) npm run test:functional:suite -- --workers=${{ inputs.workers }} --repeat-each=${{ inputs.repeat_each }} ;;
+            regression) npm run test:regression ;;
+            performance) npm run test:performance ;;
+            security) npm run test:security ;;
+          esac
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: reginsa-reports
+          path: |
+            playwright-report
+            allure-report
+            reportes
+            test-results

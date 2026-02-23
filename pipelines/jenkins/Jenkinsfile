@@ -1,0 +1,51 @@
+pipeline {
+  agent any
+
+  parameters {
+    choice(name: 'TEST_TYPE', choices: ['smoke', 'functional', 'regression', 'performance', 'security'], description: 'Tipo de suite')
+    string(name: 'WORKERS', defaultValue: '4', description: 'Workers Playwright')
+    string(name: 'REPEAT_EACH', defaultValue: '1', description: 'Repeat each')
+    string(name: 'REGISTROS', defaultValue: '10', description: 'Cantidad de registros')
+    choice(name: 'HEADLESS', choices: ['1', '0'], description: 'Headless')
+    choice(name: 'ENVIRONMENT', choices: ['dev', 'qa', 'prod'], description: 'Ambiente')
+  }
+
+  environment {
+    REGINSA_WORKERS = "${params.WORKERS}"
+    REGINSA_HEADLESS = "${params.HEADLESS}"
+    REGINSA_TARGET_REGISTROS = "${params.REGISTROS}"
+    REGINSA_ENVIRONMENT = "${params.ENVIRONMENT}"
+  }
+
+  stages {
+    stage('Install') {
+      steps {
+        sh 'npm ci'
+      }
+    }
+
+    stage('Execute') {
+      steps {
+        script {
+          if (params.TEST_TYPE == 'smoke') {
+            sh 'npm run test:smoke'
+          } else if (params.TEST_TYPE == 'functional') {
+            sh "npm run test:functional:suite -- --workers=${params.WORKERS} --repeat-each=${params.REPEAT_EACH}"
+          } else if (params.TEST_TYPE == 'regression') {
+            sh 'npm run test:regression'
+          } else if (params.TEST_TYPE == 'performance') {
+            sh 'npm run test:performance'
+          } else if (params.TEST_TYPE == 'security') {
+            sh 'npm run test:security'
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      archiveArtifacts artifacts: 'playwright-report/**,allure-report/**,reportes/**,test-results/**', allowEmptyArchive: true
+    }
+  }
+}

@@ -14,6 +14,14 @@ variables:
     value: '10'
   - name: K6_DURATION
     value: '60s'
+  - name: RUN_SONAR
+    value: 'false'
+  - name: SONARQUBE_SERVICE_CONNECTION
+    value: 'SONARQUBE_SERVICE_CONNECTION'
+  - name: SONAR_PROJECT_KEY
+    value: 'reginsa_qa_framework'
+  - name: SONAR_PROJECT_NAME
+    value: 'REGINSA QA Framework'
 
 stages:
   - stage: FunctionalScale
@@ -120,3 +128,34 @@ stages:
             inputs:
               PathtoPublish: 'reportes'
               ArtifactName: 'k6-reportes'
+
+  - stage: SonarQubeAnalysis
+    displayName: SonarQube Analysis
+    dependsOn: FunctionalScale
+    condition: and(succeededOrFailed(), eq(variables['RUN_SONAR'], 'true'))
+    jobs:
+      - job: Sonar
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+
+          - task: SonarQubePrepare@5
+            inputs:
+              SonarQube: '$(SONARQUBE_SERVICE_CONNECTION)'
+              scannerMode: 'CLI'
+              configMode: 'manual'
+              cliProjectKey: '$(SONAR_PROJECT_KEY)'
+              cliProjectName: '$(SONAR_PROJECT_NAME)'
+              cliSources: '.'
+              extraProperties: |
+                sonar.sourceEncoding=UTF-8
+                sonar.exclusions=**/node_modules/**,**/playwright-report/**,**/allure-report/**,**/allure-results/**,**/test-results/**,**/reportes/**,**/playwrigth/**
+                sonar.tests=tests
+                sonar.test.inclusions=tests/**/*.spec.ts
+
+          - task: SonarQubeAnalyze@5
+
+          - task: SonarQubePublish@5
+            inputs:
+              pollingTimeoutSec: '300'

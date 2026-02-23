@@ -31,10 +31,10 @@ jobs:
 
       - name: Run k6 smoke
         run: >-
-          k6 run docs/plantillas/k6_smoke_reginsa.js
+          k6 run tests/performance/k6/reginsa-smoke.js
           --env BASE_URL=${{ env.BASE_URL }}
-          --vus ${{ github.event.inputs.vus || vars.K6_VUS || '10' }}
-          --duration ${{ github.event.inputs.duration || vars.K6_DURATION || '60s' }}
+          --vus ${{ github.event.inputs.vus || '10' }}
+          --duration ${{ github.event.inputs.duration || '60s' }}
           --summary-export reportes/k6-summary.json
 
       - name: Upload k6 artifacts

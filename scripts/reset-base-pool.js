@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const XLSX = require('xlsx');
 
 const root = path.resolve(__dirname, '..');
@@ -28,9 +28,25 @@ const createdSources = [
 const targetArg = process.argv.find((arg) => /^--target=\d+$/i.test(arg));
 const targetFromArg = targetArg ? Number(targetArg.split('=')[1]) : 0;
 const targetFromEnv = Number(process.env.REGINSA_POOL_TARGET || 0);
-const target = Number.isFinite(targetFromArg) && targetFromArg > 0
-  ? targetFromArg
-  : (Number.isFinite(targetFromEnv) && targetFromEnv > 0 ? targetFromEnv : 0);
+let target = 0;
+if (Number.isFinite(targetFromArg) && targetFromArg > 0) {
+  target = targetFromArg;
+} else if (Number.isFinite(targetFromEnv) && targetFromEnv > 0) {
+  target = targetFromEnv;
+}
+
+const razonSuffixes = [
+  /\s+CONSORCIO\s+S\.?A\.?C\.?$/i,
+  /\s+S\.?A\.?A\.?$/i,
+  /\s+S\.?A\.?C\.?$/i,
+  /\s+S\.?A\.?$/i,
+  /\s+S\.?R\.?L\.?$/i,
+  /\s+E\.?I\.?R\.?L\.?$/i,
+  /\s+S\.?C\.?R\.?L\.?$/i,
+  /\s+COOP\.?$/i,
+  /\s+ASOC\.?$/i,
+  /\s+FUNDACION$/i
+];
 
 function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
@@ -39,19 +55,22 @@ function ensureDir(dirPath) {
 function normalizeText(value) {
   return String(value || '')
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replaceAll(/[\u0300-\u036f]/g, '')
     .toUpperCase()
-    .replace(/\s+/g, ' ')
+    .replaceAll(/\s+/g, ' ')
     .trim();
 }
 
 function normalizeRuc(value) {
-  return String(value || '').replace(/\D/g, '').slice(0, 11);
+  return String(value || '').replaceAll(/\D/g, '').slice(0, 11);
 }
 
 function cleanNombreComercial(razonSocial) {
-  const suffixRegex = /\s+(S\.?A\.?C\.?|S\.?A\.?A\.?|S\.?A\.?|S\.?R\.?L\.?|E\.?I\.?R\.?L\.?|S\.?C\.?R\.?L\.?|COOP\.?|ASOC\.?|FUNDACION|CONSORCIO\s+S\.?A\.?C\.?)$/i;
-  return String(razonSocial || '').replace(suffixRegex, '').trim() || String(razonSocial || '').trim();
+  let cleaned = String(razonSocial || '').trim();
+  for (const suffix of razonSuffixes) {
+    cleaned = cleaned.replace(suffix, '').trim();
+  }
+  return cleaned || String(razonSocial || '').trim();
 }
 
 function resolveFirstExisting(paths) {
@@ -128,28 +147,26 @@ function readBaseFromExcel() {
   return rows;
 }
 
-function readCreatedData() {
-  const rows = [];
-
-  for (const src of createdSources) {
-    const data = readJson(src, []);
-
-    if (Array.isArray(data)) {
-      for (const raw of data) {
-        const item = fromAnyRecord(raw);
-        if (item) rows.push(item);
-      }
-      continue;
-    }
-
-    if (Array.isArray(data?.registros)) {
-      for (const raw of data.registros) {
-        const item = fromAnyRecord(raw);
-        if (item) rows.push(item);
-      }
-    }
+function appendRowsFromAnySource(rows, source) {
+  let inputs = [];
+  if (Array.isArray(source)) {
+    inputs = source;
+  } else if (Array.isArray(source?.registros)) {
+    inputs = source.registros;
   }
 
+  for (const raw of inputs) {
+    const item = fromAnyRecord(raw);
+    if (item) rows.push(item);
+  }
+}
+
+function readCreatedData() {
+  const rows = [];
+  for (const src of createdSources) {
+    const data = readJson(src, []);
+    appendRowsFromAnySource(rows, data);
+  }
   return rows;
 }
 
@@ -195,7 +212,8 @@ function run() {
   console.log(`Base inicial TSV: ${fromTsv.length}`);
   console.log(`Base inicial Excel: ${fromExcel.length}`);
   console.log(`Creados + historico: ${fromCreated.length}`);
-  console.log(`Pool reconstruido: ${finalPool.length}${target ? `/${target}` : ''}`);
+  const targetSuffix = target ? `/${target}` : '';
+  console.log(`Pool reconstruido: ${finalPool.length}${targetSuffix}`);
   console.log(`Archivo generado: ${poolPath}`);
 }
 
