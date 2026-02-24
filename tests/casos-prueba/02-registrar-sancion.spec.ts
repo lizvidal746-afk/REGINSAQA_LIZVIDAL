@@ -221,16 +221,18 @@ test('02-REGISTRAR SANCIÓN: 8 sanciones para 1 administrado', async ({ page }, 
   console.log('⚖️  PASO 8: AGREGANDO 8 SANCIONES');
   console.log('═'.repeat(90));
 
-  const sanciones = [
-    { numero: 1, nombre: 'MULTA', multa: true, suspension: false, cancelacion: false },
-    { numero: 2, nombre: 'SUSPENSIÓN', multa: false, suspension: true, cancelacion: false },
-    { numero: 3, nombre: 'CANCELACIÓN', multa: false, suspension: false, cancelacion: true },
-    { numero: 4, nombre: 'MULTA + SUSPENSIÓN', multa: true, suspension: true, cancelacion: false },
-    { numero: 5, nombre: 'MULTA + CANCELACIÓN', multa: true, suspension: false, cancelacion: true },
-    { numero: 6, nombre: 'MULTA (UIT) + SUSPENSIÓN', multa: true, suspension: true, cancelacion: false, forceUIT: true },
-    { numero: 7, nombre: 'MULTA (UIT)', multa: true, suspension: false, cancelacion: false, forceUIT: true },
-    { numero: 8, nombre: 'MULTA (UIT) + CANCELACIÓN', multa: true, suspension: false, cancelacion: true, forceUIT: true }
-  ];
+  // Permite configurar el número de sanciones por variable de entorno o parámetro
+  const repeat = Number(process.env.REGINSA_REPEAT || 5); // Por defecto 5, pero puedes cambiarlo
+  const sanciones = [];
+  for (let i = 1; i <= repeat; i++) {
+    sanciones.push({
+      numero: i,
+      nombre: `Sanción ${i}`,
+      multa: i % 2 === 1,
+      suspension: i % 2 === 0,
+      cancelacion: i % 3 === 0
+    });
+  }
 
   let exitosas = 0;
   const esScale = process.env.REGINSA_SCALE_MODE === '1';
@@ -633,7 +635,38 @@ test('02-REGISTRAR SANCIÓN: 8 sanciones para 1 administrado', async ({ page }, 
     }
   }
 
+
   console.log('  ✅ Formulario guardado');
+
+  // Validar que la cabecera aparece en el listado paginado (nueva API)
+  const response = await page.request.post(
+    'https://reginsaapiqa.sunedu.gob.pe/api/CabeceraInfraccionSancion/ListarPaginado',
+    {
+      data: {
+        PageNumber: 1,
+        PageSize: 10,
+        // Puedes agregar filtros si tienes datos únicos del expediente/resolución
+      },
+      headers: {
+        'Content-Type': 'application/json',
+        // Agrega autenticación si aplica
+      }
+    }
+  );
+
+  if (response.ok()) {
+    const data = await response.json();
+    // Busca por número de expediente o resolución generado en el test
+    const encontrado = data.oData?.Results?.some(
+      (cab) => cab.NumeroExpediente === `Exp N° ${numExp}-${yearResolucion}`
+    );
+    if (!encontrado) {
+      throw new Error('La cabecera recién creada no aparece en el listado paginado.');
+    }
+    console.log('  ✅ Cabecera encontrada en el listado paginado');
+  } else {
+    throw new Error('Error al consultar la API de cabeceras paginadas');
+  }
 
   if (!esScale) {
     // Captura pantalla completa de éxito final

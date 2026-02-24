@@ -7,6 +7,22 @@ on:
         description: "Scenario: caso02|caso03|caso04"
         required: false
         default: "caso02"
+      k6_profile:
+        description: "Profile: carga_secuencial|carga_tiempo0|limite_20|pico|estres|fijo"
+        required: false
+        default: "carga_secuencial"
+      fixed_iterations:
+        description: "Used when k6_profile=fijo"
+        required: false
+        default: "20"
+      fixed_vus:
+        description: "Used when k6_profile=fijo"
+        required: false
+        default: "1"
+      perf_duration:
+        description: "Profile duration (e.g. 1m, 2m)"
+        required: false
+        default: "1m"
       vus:
         description: "k6 virtual users"
         required: false
@@ -51,6 +67,10 @@ jobs:
       - name: Run k6 scenario
         env:
           SCENARIO: ${{ github.event.inputs.scenario || 'caso02' }}
+          RUN_PROFILE: ${{ github.event.inputs.k6_profile || 'carga_secuencial' }}
+          RUN_FIXED_ITERATIONS: ${{ github.event.inputs.fixed_iterations || '20' }}
+          RUN_FIXED_VUS: ${{ github.event.inputs.fixed_vus || '1' }}
+          RUN_PERF_DURATION: ${{ github.event.inputs.perf_duration || '1m' }}
           RUN_VUS: ${{ github.event.inputs.vus || '10' }}
           RUN_DURATION: ${{ github.event.inputs.duration || '60s' }}
         run: |
@@ -58,18 +78,41 @@ jobs:
           setlocal
           set SUMMARY=reportes\k6-summary-%SCENARIO%.json
 
+          set K6_COMMON=--env BASE_URL=%BASE_URL% --env K6_AUTH_HEADER=%K6_AUTH_HEADER% --env K6_PROFILE=%RUN_PROFILE% --env K6_FIXED_ITERATIONS=%RUN_FIXED_ITERATIONS% --env K6_FIXED_VUS=%RUN_FIXED_VUS% --env PERF_DURATION=%RUN_PERF_DURATION% --summary-export %SUMMARY%
+
+          if /I "%RUN_PROFILE%"=="fijo" goto :run_fixed
+
           if /I "%SCENARIO%"=="caso02" (
-            k6 run docs/plantillas/k6_caso_02_registrar_sancion.js --env BASE_URL=%BASE_URL% --env K6_AUTH_HEADER=%K6_AUTH_HEADER% --vus %RUN_VUS% --duration %RUN_DURATION% --summary-export %SUMMARY%
+            k6 run docs/plantillas/k6_caso_02_registrar_sancion.js %K6_COMMON% --vus %RUN_VUS% --duration %RUN_DURATION%
             goto :eof
           )
 
           if /I "%SCENARIO%"=="caso03" (
-            k6 run docs/plantillas/k6_caso_03_reconsiderar_sin_sanciones.js --env BASE_URL=%BASE_URL% --env K6_AUTH_HEADER=%K6_AUTH_HEADER% --vus %RUN_VUS% --duration %RUN_DURATION% --summary-export %SUMMARY%
+            k6 run docs/plantillas/k6_caso_03_reconsiderar_sin_sanciones.js %K6_COMMON% --vus %RUN_VUS% --duration %RUN_DURATION%
             goto :eof
           )
 
           if /I "%SCENARIO%"=="caso04" (
-            k6 run docs/plantillas/k6_caso_04_reconsiderar_con_sanciones.js --env BASE_URL=%BASE_URL% --env K6_AUTH_HEADER=%K6_AUTH_HEADER% --vus %RUN_VUS% --duration %RUN_DURATION% --summary-export %SUMMARY%
+            k6 run docs/plantillas/k6_caso_04_reconsiderar_con_sanciones.js %K6_COMMON% --vus %RUN_VUS% --duration %RUN_DURATION%
+            goto :eof
+          )
+
+          echo ERROR: scenario invalido. Use caso02, caso03 o caso04.
+          exit /b 1
+
+          :run_fixed
+          if /I "%SCENARIO%"=="caso02" (
+            k6 run docs/plantillas/k6_caso_02_registrar_sancion.js %K6_COMMON%
+            goto :eof
+          )
+
+          if /I "%SCENARIO%"=="caso03" (
+            k6 run docs/plantillas/k6_caso_03_reconsiderar_sin_sanciones.js %K6_COMMON%
+            goto :eof
+          )
+
+          if /I "%SCENARIO%"=="caso04" (
+            k6 run docs/plantillas/k6_caso_04_reconsiderar_con_sanciones.js %K6_COMMON%
             goto :eof
           )
 

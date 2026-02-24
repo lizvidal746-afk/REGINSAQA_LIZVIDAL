@@ -1,22 +1,9 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
+import { buildOptions, mark429, readPerfConfig, successCheck } from './k6_perfiles_comunes.js';
 
-export const options = {
-  scenarios: {
-    caso03: {
-      executor: 'ramping-vus',
-      stages: [
-        { duration: '30s', target: 5 },
-        { duration: '1m', target: 10 },
-        { duration: '30s', target: 0 }
-      ]
-    }
-  },
-  thresholds: {
-    http_req_failed: ['rate<0.03'],
-    http_req_duration: ['p(95)<1800', 'avg<900']
-  }
-};
+const cfg = readPerfConfig();
+export const options = buildOptions(cfg);
 
 const BASE_URL = __ENV.BASE_URL || 'https://tu-url-reginsa';
 const AUTH_HEADER = __ENV.K6_AUTH_HEADER || '';
@@ -42,9 +29,10 @@ export default function () {
     sinSanciones: true,
     reconsideracionPendiente: true
   });
+  mark429(listarResp);
 
   check(listarResp, {
-    'caso03 listar status 2xx/3xx': (r) => r.status >= 200 && r.status < 400
+    'caso03 listar status esperado': (r) => successCheck(r, cfg.profile)
   });
 
   const guardarResp = postJson(ENDPOINT_GUARDAR_RECONSIDERACION, {
@@ -52,9 +40,10 @@ export default function () {
     fechaReconsideracion: new Date(now).toISOString(),
     sinSanciones: true
   });
+  mark429(guardarResp);
 
   check(guardarResp, {
-    'caso03 guardar status 2xx/3xx': (r) => r.status >= 200 && r.status < 400
+    'caso03 guardar status esperado': (r) => successCheck(r, cfg.profile)
   });
 
   const detalleResp = postJson(ENDPOINT_LISTAR_DETALLE, {
@@ -62,10 +51,11 @@ export default function () {
     pageSize: 20,
     sinSanciones: true
   });
+  mark429(detalleResp);
 
   check(detalleResp, {
-    'caso03 detalle status 2xx/3xx': (r) => r.status >= 200 && r.status < 400
+    'caso03 detalle status esperado': (r) => successCheck(r, cfg.profile)
   });
 
-  sleep(1);
+  sleep(Math.max(0.05, cfg.thinkTimeMs / 1000));
 }

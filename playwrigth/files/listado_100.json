@@ -1,0 +1,33 @@
+[
+  {
+    "idRis": 2,
+    "IdEntidad": 3,
+    "NumeroExpediente": "EXP N° 123-2026",
+    "NumeroResolucion": "RES N° 456-2026",
+    "FechaResolucion": "2026-02-01",
+    "RutaResolucionSancion": "GENERAL N° 00001-2026-SUNEDU-SG-OTI.pdf",
+    "Medidas": [
+      {
+        "descripcionMedidaCorrectiva": "Medida Correctiva 1",
+        "orden": 1
+      }
+    ],
+    "Detalles": [
+      {
+        "desSancion": "Suspensión",
+        "bitReconsidera": 0,
+        "bitReincidente": 0,
+        "bitPago": 0,
+        "desSuspension": "A",
+        "bitCancelacion": 0,
+        "canSuspension": 2,
+        "tipoMulta": null,
+        "numMonto": 0,
+        "desHechoInfractor": "Hecho Infractor",
+        "numCorrelativo": 2,
+        "bitMedida": 1,
+        "desMedidaCorrectivaGen": "Medida Correctiva 1"
+      }
+    ]
+  }
+]

@@ -1,22 +1,9 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
+import { buildOptions, mark429, readPerfConfig, successCheck } from './k6_perfiles_comunes.js';
 
-export const options = {
-  scenarios: {
-    caso04: {
-      executor: 'ramping-vus',
-      stages: [
-        { duration: '30s', target: 5 },
-        { duration: '1m', target: 10 },
-        { duration: '30s', target: 0 }
-      ]
-    }
-  },
-  thresholds: {
-    http_req_failed: ['rate<0.03'],
-    http_req_duration: ['p(95)<2000', 'avg<1000']
-  }
-};
+const cfg = readPerfConfig();
+export const options = buildOptions(cfg);
 
 const BASE_URL = __ENV.BASE_URL || 'https://tu-url-reginsa';
 const AUTH_HEADER = __ENV.K6_AUTH_HEADER || '';
@@ -41,9 +28,10 @@ export default function () {
     pageSize: 20,
     conSanciones: true
   });
+  mark429(listarResp);
 
   check(listarResp, {
-    'caso04 listar status 2xx/3xx': (r) => r.status >= 200 && r.status < 400
+    'caso04 listar status esperado': (r) => successCheck(r, cfg.profile)
   });
 
   const actualizarResp = postJson(ENDPOINT_ACTUALIZAR_RECONSIDERACION, {
@@ -52,19 +40,21 @@ export default function () {
     pago: false,
     fechaReconsideracion: new Date(now).toISOString()
   });
+  mark429(actualizarResp);
 
   check(actualizarResp, {
-    'caso04 actualizar status 2xx/3xx': (r) => r.status >= 200 && r.status < 400
+    'caso04 actualizar status esperado': (r) => successCheck(r, cfg.profile)
   });
 
   const confirmarResp = postJson(ENDPOINT_CONFIRMAR_DETALLE, {
     idDetalle: Number(__ENV.K6_CASO04_ID_DETALLE || 1),
     confirmar: true
   });
+  mark429(confirmarResp);
 
   check(confirmarResp, {
-    'caso04 confirmar status 2xx/3xx': (r) => r.status >= 200 && r.status < 400
+    'caso04 confirmar status esperado': (r) => successCheck(r, cfg.profile)
   });
 
-  sleep(1);
+  sleep(Math.max(0.05, cfg.thinkTimeMs / 1000));
 }

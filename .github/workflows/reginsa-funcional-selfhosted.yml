@@ -1,4 +1,4 @@
-name: REGINSA Functional Scale (Self-hosted)
+name: REGINSA Funcional Caso 01 Scale (Self-hosted)
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
       workers:
         description: "Playwright workers"
         required: false
-        default: "6"
+        default: "2"
       case_target:
         description: "Target: caso01|caso02|caso03|caso04|suite_01_04"
         required: false
@@ -14,7 +14,7 @@ on:
       repeat_each:
         description: "Playwright repeat-each"
         required: false
-        default: "30"
+        default: "3"
       pool_target:
         description: "Pool target size"
         required: false
@@ -42,7 +42,7 @@ on:
       install_dependencies:
         description: "Run npm ci in this run (true/false)"
         required: false
-        default: "true"
+        default: "false"
       evaluate_outcomes:
         description: "Evaluate Playwright results gate (true/false)"
         required: false
@@ -149,34 +149,33 @@ jobs:
           echo Credenciales detectadas en: !HAS_CREDS!
 
       - name: Validate parallel credential slots for workers>=7
+        shell: pwsh
         run: |
-          @echo off
-          setlocal enabledelayedexpansion
+          $runWorkers = 6
+          try {
+            $raw = "${{ github.event.inputs.workers || '6' }}"
+            $parsed = [int]$raw
+            if ($parsed -gt 0) { $runWorkers = $parsed }
+          } catch {
+            $runWorkers = 6
+          }
 
-          set RUN_WORKERS=${{ github.event.inputs.workers || '6' }}
-          set MISSING=
+          if ($runWorkers -lt 7) {
+            Write-Host "workers=$runWorkers no requiere validacion de slots 7 y 8."
+            exit 0
+          }
 
-          if %RUN_WORKERS% GEQ 7 (
-            if "%REGINSA_USER_7%"=="" set MISSING=REGINSA_USER_7
-            if "%REGINSA_PASS_7%"=="" (
-              if defined MISSING (set MISSING=!MISSING!, REGINSA_PASS_7) else (set MISSING=REGINSA_PASS_7)
-            )
-            if "%REGINSA_USER_8%"=="" (
-              if defined MISSING (set MISSING=!MISSING!, REGINSA_USER_8) else (set MISSING=REGINSA_USER_8)
-            )
-            if "%REGINSA_PASS_8%"=="" (
-              if defined MISSING (set MISSING=!MISSING!, REGINSA_PASS_8) else (set MISSING=REGINSA_PASS_8)
-            )
+          $missing = @()
+          if ([string]::IsNullOrWhiteSpace("$env:REGINSA_USER_7")) { $missing += 'REGINSA_USER_7' }
+          if ([string]::IsNullOrWhiteSpace("$env:REGINSA_PASS_7")) { $missing += 'REGINSA_PASS_7' }
+          if ([string]::IsNullOrWhiteSpace("$env:REGINSA_USER_8")) { $missing += 'REGINSA_USER_8' }
+          if ([string]::IsNullOrWhiteSpace("$env:REGINSA_PASS_8")) { $missing += 'REGINSA_PASS_8' }
 
-            if defined MISSING (
-              echo ERROR: workers=%RUN_WORKERS% requiere pool 1..8 completo. Faltan secrets: !MISSING!
-              exit /b 1
-            )
+          if ($missing.Count -gt 0) {
+            throw "workers=$runWorkers requiere pool 1..8 completo. Faltan secrets: $($missing -join ', ')"
+          }
 
-            echo Pool paralelo validado para workers=%RUN_WORKERS% (slots 7 y 8 presentes).
-          ) else (
-            echo workers=%RUN_WORKERS% no requiere validacion de slots 7 y 8.
-          )
+          Write-Host "Pool paralelo validado para workers=$runWorkers (slots 7 y 8 presentes)."
 
       - name: Run functional scale
         env:

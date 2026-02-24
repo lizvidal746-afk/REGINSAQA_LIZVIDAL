@@ -30,6 +30,9 @@ jobs:
       - name: NPM audit
         run: npm audit --audit-level=high
 
+      - name: Prepare security reports folder
+        run: mkdir -p reportes/security
+
       - name: Run OWASP ZAP baseline
         if: github.event.inputs.run_zap == 'true'
         run: |
