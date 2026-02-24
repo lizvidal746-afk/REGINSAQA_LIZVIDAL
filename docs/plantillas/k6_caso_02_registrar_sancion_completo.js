@@ -1,7 +1,7 @@
 import http from 'k6/http';
 import { open } from 'k6';
 
-const BASE_API = __ENV.BASE_API;
+import { open, check, sleep } from 'k6';
 const TOKEN = __ENV.TOKEN1;
 
 const headers = {
@@ -38,7 +38,7 @@ export default function () {
 // - Cada línea debe contener solo un ID numérico de administrado activo.
 // Ejemplo:
 // 12345
-// 67890
+  administradosRaw = open('./docs/plantillas/administrados.txt'); // Ruta relativa desde el root del proyecto
 // 54321
 
 
