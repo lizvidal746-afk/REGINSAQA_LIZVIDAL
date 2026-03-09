@@ -56,6 +56,11 @@
     "k6:caso02": "if not exist reportes mkdir reportes && k6 run docs/plantillas/k6_caso_02_registrar_sancion.js --env BASE_URL=%BASE_URL% --summary-export reportes/k6-caso02-summary.json",
     "k6:caso03": "if not exist reportes mkdir reportes && k6 run docs/plantillas/k6_caso_03_reconsiderar_sin_sanciones.js --env BASE_URL=%BASE_URL% --summary-export reportes/k6-caso03-summary.json",
     "k6:caso04": "if not exist reportes mkdir reportes && k6 run docs/plantillas/k6_caso_04_reconsiderar_con_sanciones.js --env BASE_URL=%BASE_URL% --summary-export reportes/k6-caso04-summary.json",
+    "api:test:caso01": "if not exist reportes\\newman mkdir reportes\\newman && npx newman run API_TEST/postman/reginsa-caso01-api-test.collection.json -e API_TEST/postman/reginsa-caso01-api-test.environment.json --reporters cli,junit --reporter-junit-export reportes/newman/caso01-api-test.xml",
+    "api:test:caso02": "if not exist reportes\\newman mkdir reportes\\newman && npx newman run API_TEST/postman/reginsa-caso02-api-test.collection.json -e API_TEST/postman/reginsa-caso01-api-test.environment.json --reporters cli,junit --reporter-junit-export reportes/newman/caso02-api-test.xml",
+    "api:test:caso03": "if not exist reportes\\newman mkdir reportes\\newman && npx newman run API_TEST/postman/reginsa-caso03-api-test.collection.json -e API_TEST/postman/reginsa-caso01-api-test.environment.json --reporters cli,junit --reporter-junit-export reportes/newman/caso03-api-test.xml",
+    "api:test:caso04": "if not exist reportes\\newman mkdir reportes\\newman && npx newman run API_TEST/postman/reginsa-caso04-api-test.collection.json -e API_TEST/postman/reginsa-caso01-api-test.environment.json --reporters cli,junit --reporter-junit-export reportes/newman/caso04-api-test.xml",
+    "api:test:all": "npm run api:test:caso01 && npm run api:test:caso02 && npm run api:test:caso03 && npm run api:test:caso04",
     "lint": "eslint . --ext .ts,.js"
   },
   "keywords": [],

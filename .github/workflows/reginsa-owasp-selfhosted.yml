@@ -1,0 +1,44 @@
+name: REGINSA OWASP ZAP (Self-hosted)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "Target URL (si vacío usa secret REGINSA_URL)"
+        required: false
+        default: ""
+      upload_artifacts:
+        description: "Upload artifacts (true/false)"
+        required: false
+        default: "true"
+
+jobs:
+  owasp-zap:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: powershell
+    env:
+      REGINSA_URL: ${{ secrets.REGINSA_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Run OWASP baseline + translate
+        run: |
+          $target = "${{ github.event.inputs.target_url }}"
+          if ([string]::IsNullOrWhiteSpace($target)) { $target = $env:REGINSA_URL }
+          .\scripts\security\run-owasp-baseline-and-translate.ps1 -Target $target -OutputDir "reportes/security"
+
+      - name: Upload artifacts
+        if: always() && github.event.inputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-selfhosted
+          path: reportes/security
+          if-no-files-found: warn

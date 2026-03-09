@@ -1,0 +1,117 @@
+name: REGINSA Quality Gate (Self-hosted)
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_playwright_failed:
+        description: "Max failed tests allowed in test-results/results.json"
+        required: false
+        default: "0"
+      max_k6_http_req_failed_rate:
+        description: "Max http_req_failed rate in k6 summary (0-1)"
+        required: false
+        default: "0.40"
+      min_k6_registro_ok_rate:
+        description: "Min registro_ok_rate/create_business_ok_rate (0-1)"
+        required: false
+        default: "0.60"
+      max_newman_failed:
+        description: "Max failed assertions in reportes/newman/*.xml"
+        required: false
+        default: "0"
+
+jobs:
+  quality-gate:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Evaluate gate
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $maxPwFailed = [int]"${{ github.event.inputs.max_playwright_failed || '0' }}"
+          $maxK6FailRate = [double]"${{ github.event.inputs.max_k6_http_req_failed_rate || '0.40' }}"
+          $minK6OkRate = [double]"${{ github.event.inputs.min_k6_registro_ok_rate || '0.60' }}"
+          $maxNewmanFailed = [int]"${{ github.event.inputs.max_newman_failed || '0' }}"
+
+          $gateErrors = @()
+
+          $pwPath = 'test-results/results.json'
+          if (Test-Path $pwPath) {
+            $pw = Get-Content $pwPath -Raw | ConvertFrom-Json
+            $pwFailed = [int]($pw.stats.unexpected + $pw.stats.flaky)
+            Write-Host "Playwright failed=$pwFailed (max=$maxPwFailed)"
+            if ($pwFailed -gt $maxPwFailed) { $gateErrors += "Playwright failed=$pwFailed > $maxPwFailed" }
+          } else {
+            Write-Host 'Playwright results not found: test-results/results.json (se omite)'
+          }
+
+          $k6Candidates = @(
+            'reportes/k6-caso01-selfhosted-summary.json',
+            'reportes/k6-caso02-selfhosted-summary.json',
+            'reportes/k6-caso03-selfhosted-summary.json',
+            'reportes/k6-caso04-selfhosted-summary.json',
+            'reportes/k6-caso01-summary-local.json',
+            'reportes/k6-caso02-summary-local.json'
+          )
+
+          $foundK6 = $false
+          foreach ($k6Path in $k6Candidates) {
+            if (-not (Test-Path $k6Path)) { continue }
+            $foundK6 = $true
+            $k6 = Get-Content $k6Path -Raw | ConvertFrom-Json
+            $m = $k6.metrics
+            $httpFail = 0.0
+            if ($m.http_req_failed -and $m.http_req_failed.values.rate -ne $null) { $httpFail = [double]$m.http_req_failed.values.rate }
+
+            $okRate = $null
+            if ($m.registro_ok_rate -and $m.registro_ok_rate.values.rate -ne $null) {
+              $okRate = [double]$m.registro_ok_rate.values.rate
+            } elseif ($m.create_business_ok_rate -and $m.create_business_ok_rate.values.rate -ne $null) {
+              $okRate = [double]$m.create_business_ok_rate.values.rate
+            }
+
+            Write-Host "K6 file=$k6Path http_req_failed=$httpFail"
+            if ($httpFail -gt $maxK6FailRate) { $gateErrors += "K6 $k6Path http_req_failed=$httpFail > $maxK6FailRate" }
+
+            if ($okRate -ne $null) {
+              Write-Host "K6 file=$k6Path ok_rate=$okRate"
+              if ($okRate -lt $minK6OkRate) { $gateErrors += "K6 $k6Path ok_rate=$okRate < $minK6OkRate" }
+            }
+          }
+
+          if (-not $foundK6) {
+            Write-Host 'K6 summary not found (se omite)'
+          }
+
+          $newmanFiles = Get-ChildItem -Path 'reportes/newman' -Filter '*.xml' -ErrorAction SilentlyContinue
+          if ($newmanFiles) {
+            foreach ($nf in $newmanFiles) {
+              [xml]$xml = Get-Content $nf.FullName -Raw
+              $failed = 0
+              if ($xml.testsuite -and $xml.testsuite.failures) { $failed = [int]$xml.testsuite.failures }
+              if ($xml.testsuite -and $xml.testsuite.errors) { $failed += [int]$xml.testsuite.errors }
+              Write-Host "Newman file=$($nf.Name) failed=$failed"
+              if ($failed -gt $maxNewmanFailed) { $gateErrors += "Newman $($nf.Name) failed=$failed > $maxNewmanFailed" }
+            }
+          } else {
+            Write-Host 'Newman XML not found in reportes/newman (se omite)'
+          }
+
+          if ($gateErrors.Count -gt 0) {
+            Write-Host 'QUALITY GATE FAILED:'
+            $gateErrors | ForEach-Object { Write-Host " - $_" }
+            exit 1
+          }
+
+          Write-Host 'QUALITY GATE PASSED'

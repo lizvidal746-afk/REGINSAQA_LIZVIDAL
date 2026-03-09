@@ -1,0 +1,7 @@
+
+> reginsa@1.0.0 test:02:fast
+> powershell -ExecutionPolicy Bypass -File scripts/run-test02-fast.ps1 --workers=3 --repeat-each=12 --project=chromium
+
+REGINSA_REPEAT_EACH sincronizado desde --repeat-each: 12
+ÐY>­‹÷? Perfil masivo activado en fast (workers=3, repeat=12, slots=36, scaleMode=1).
+Ejecutando Caso 02 en modo fast...

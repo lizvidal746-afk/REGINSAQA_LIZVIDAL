@@ -1,0 +1,170 @@
+{
+  "info": {
+    "name": "REGINSA API Smoke - Caso 02",
+    "_postman_id": "0cfcf2de-37c5-40c8-b18b-f7ae42f6f065",
+    "description": "Smoke API para registrar sanción (cabecera, medida y detalle).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const now = Date.now();",
+          "const correlativo = now % 100000;",
+          "pm.collectionVariables.set('correlativo', String(correlativo));",
+          "pm.collectionVariables.set('numero_expediente', `EXP N° ${correlativo}-2026`);",
+          "pm.collectionVariables.set('numero_resolucion', `RES N° ${correlativo}-2026`);",
+          "pm.collectionVariables.set('fecha_resolucion', new Date().toISOString());",
+          "if (!pm.collectionVariables.get('id_ris')) pm.collectionVariables.set('id_ris', '1');",
+          "if (!pm.collectionVariables.get('id_entidad')) pm.collectionVariables.set('id_entidad', '3');"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "id_ris", "value": "1" },
+    { "key": "id_entidad", "value": "3" },
+    { "key": "cabecera_id", "value": "" },
+    { "key": "id_infraccion", "value": "" },
+    { "key": "display_infraccion", "value": "" },
+    { "key": "numero_expediente", "value": "" },
+    { "key": "numero_resolucion", "value": "" },
+    { "key": "fecha_resolucion", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1) Infraccion/Listar",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "{{auth_header}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"idRis\": {{id_ris}}\n}"
+        },
+        "url": {
+          "raw": "{{base_api}}/Infraccion/Listar",
+          "host": ["{{base_api}}"],
+          "path": ["Infraccion", "Listar"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "const body = pm.response.json();",
+              "const arr = body?.oData || [];",
+              "pm.test('oData no vacío', function () { pm.expect(arr.length).to.be.above(0); });",
+              "if (arr.length > 0) {",
+              "  pm.collectionVariables.set('id_infraccion', String(arr[0].IdInfraccion));",
+              "  pm.collectionVariables.set('display_infraccion', String(arr[0].DisplayInfraccion || 'Infracción Smoke'));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2) CabeceraInfraccionSancion/Crear",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "{{auth_header}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"IdEntidad\": {{id_entidad}},\n  \"NumeroExpediente\": \"{{numero_expediente}}\",\n  \"NumeroResolucion\": \"{{numero_resolucion}}\",\n  \"FechaResolucion\": \"{{fecha_resolucion}}\",\n  \"RutaResolucionSancion\": \"GENERAL N° 00001-2026-SUNEDU-SG-OTI.pdf\",\n  \"ArchivoResolucion\": \"\"\n}"
+        },
+        "url": {
+          "raw": "{{base_api}}/CabeceraInfraccionSancion/Crear",
+          "host": ["{{base_api}}"],
+          "path": ["CabeceraInfraccionSancion", "Crear"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 o 201', function () { pm.expect([200,201]).to.include(pm.response.code); });",
+              "const body = pm.response.json();",
+              "let id = body?.oData?.idCabeceraInfraccionSancion;",
+              "if (!id && Array.isArray(body?.oData) && body.oData.length > 0) id = body.oData[0].idCabeceraInfraccionSancion;",
+              "pm.test('cabecera_id presente', function () { pm.expect(id).to.exist; });",
+              "pm.collectionVariables.set('cabecera_id', String(id));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3) MedidaCorrectiva/Crear",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "{{auth_header}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"idCabeceraInfraccionSancion\": {{cabecera_id}},\n  \"descripcionMedidaCorrectiva\": \"Medida Correctiva Postman Smoke\",\n  \"orden\": 1\n}"
+        },
+        "url": {
+          "raw": "{{base_api}}/MedidaCorrectiva/Crear",
+          "host": ["{{base_api}}"],
+          "path": ["MedidaCorrectiva", "Crear"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 o 201', function () { pm.expect([200,201]).to.include(pm.response.code); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4) DetalleInfraccionSancion/Crear",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "{{auth_header}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"idCabeceraInfraccionSancion\": {{cabecera_id}},\n  \"IdInfraccion\": {{id_infraccion}},\n  \"desInfraccion\": \"{{display_infraccion}}\",\n  \"desSancion\": \"Multa\",\n  \"bitCancelacion\": 0,\n  \"canSuspension\": 0,\n  \"tipoMulta\": \"SOLES\",\n  \"numMonto\": 1000,\n  \"bitReconsidera\": 0,\n  \"bitReincidente\": 0,\n  \"bitPago\": 0,\n  \"desSuspension\": null,\n  \"desHechoInfractor\": \"Hecho Infractor Postman Smoke\",\n  \"numCorrelativo\": 1,\n  \"bitMedida\": 1,\n  \"desMedidaCorrectivaGen\": \"Medida Correctiva Postman Smoke\",\n  \"idRis\": {{id_ris}},\n  \"tempId\": -2\n}"
+        },
+        "url": {
+          "raw": "{{base_api}}/DetalleInfraccionSancion/Crear",
+          "host": ["{{base_api}}"],
+          "path": ["DetalleInfraccionSancion", "Crear"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 o 201', function () { pm.expect([200,201]).to.include(pm.response.code); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

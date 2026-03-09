@@ -1,0 +1,52 @@
+name: REGINSA Postman Todos los Casos (Self-hosted)
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload_artifacts:
+        description: "Upload artifacts (true/false)"
+        required: false
+        default: "true"
+
+jobs:
+  postman-all:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 150
+    defaults:
+      run:
+        shell: cmd
+    env:
+      REGINSA_API_BASE: ${{ secrets.REGINSA_API_BASE }}
+      REGINSA_USER: ${{ secrets.REGINSA_USER }}
+      REGINSA_PASS: ${{ secrets.REGINSA_PASS }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Newman casos 01-04
+        run: |
+          if not exist reportes\newman mkdir reportes\newman
+          npx newman run API_TEST/postman/reginsa-caso01-api-test.collection.json -e API_TEST/postman/reginsa-caso01-api-test.environment.json --env-var base_api=%REGINSA_API_BASE% --env-var usuario=%REGINSA_USER% --env-var contrasena=%REGINSA_PASS% --reporters cli,junit --reporter-junit-export reportes/newman/caso01-api-test.xml
+          npx newman run API_TEST/postman/reginsa-caso02-api-test.collection.json -e API_TEST/postman/reginsa-caso01-api-test.environment.json --env-var base_api=%REGINSA_API_BASE% --env-var usuario=%REGINSA_USER% --env-var contrasena=%REGINSA_PASS% --reporters cli,junit --reporter-junit-export reportes/newman/caso02-api-test.xml
+          npx newman run API_TEST/postman/reginsa-caso03-api-test.collection.json -e API_TEST/postman/reginsa-caso01-api-test.environment.json --env-var base_api=%REGINSA_API_BASE% --env-var usuario=%REGINSA_USER% --env-var contrasena=%REGINSA_PASS% --reporters cli,junit --reporter-junit-export reportes/newman/caso03-api-test.xml
+          npx newman run API_TEST/postman/reginsa-caso04-api-test.collection.json -e API_TEST/postman/reginsa-caso01-api-test.environment.json --env-var base_api=%REGINSA_API_BASE% --env-var usuario=%REGINSA_USER% --env-var contrasena=%REGINSA_PASS% --reporters cli,junit --reporter-junit-export reportes/newman/caso04-api-test.xml
+
+      - name: Upload artifacts
+        if: always() && github.event.inputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: postman-all-selfhosted
+          path: reportes/newman/*.xml
+          if-no-files-found: warn

@@ -1,0 +1,213 @@
+{
+  "info": {
+    "name": "REGINSA API Test - Caso 02 Registrar Sancion",
+    "_postman_id": "2d793527-9da1-4898-b3d8-f0db9c8f01a1",
+    "description": "Objetivo: validar flujo sancionador Caso 02 extremo a extremo | Reglas: integridad cabecera-medida-detalle y consistencia por RIS | Exito: creacion completa con respuestas funcionales | Evidencia: assertions Postman y XML Newman del caso",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const now = Date.now();",
+          "const correlativo = now % 100000;",
+          "pm.collectionVariables.set('correlativo', String(correlativo));",
+          "pm.collectionVariables.set('numero_expediente', `EXP N ${correlativo}-2026`);",
+          "pm.collectionVariables.set('numero_resolucion', `RES N ${correlativo}-2026`);",
+          "pm.collectionVariables.set('fecha_resolucion', new Date().toISOString());",
+          "if (!pm.collectionVariables.get('id_ris')) pm.collectionVariables.set('id_ris', '1');",
+          "if (!pm.collectionVariables.get('id_entidad')) pm.collectionVariables.set('id_entidad', '3');"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "id_ris", "value": "1" },
+    { "key": "id_entidad", "value": "3" },
+    { "key": "cabecera_id", "value": "" },
+    { "key": "id_infraccion", "value": "" },
+    { "key": "display_infraccion", "value": "" },
+    { "key": "numero_expediente", "value": "" },
+    { "key": "numero_resolucion", "value": "" },
+    { "key": "fecha_resolucion", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1) Auth/Login",
+      "description": "Objetivo: autenticar para ejecutar Caso 02 | Reglas: credenciales QA validas generan token vigente | Exito: status 200/201 y token en auth_header | Evidencia: test Token presente",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"usuario\": \"{{usuario}}\",\n  \"contrasena\": \"{{contrasena}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_api}}/Auth/Login",
+          "host": ["{{base_api}}"],
+          "path": ["Auth", "Login"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Login status 200/201', function () { pm.expect([200,201]).to.include(pm.response.code); });",
+              "const data = pm.response.json();",
+              "const candidates = [data?.token, data?.accessToken, data?.access_token, data?.oData?.token, data?.oData?.accessToken, data?.oData?.access_token, data?.oData?.jwt];",
+              "const token = candidates.find((v) => typeof v === 'string' && v.trim().length > 0) || '';",
+              "pm.test('Token presente', function () { pm.expect(token).to.not.equal(''); });",
+              "pm.environment.set('token', token);",
+              "pm.environment.set('auth_header', token.startsWith('Bearer ') ? token : `Bearer ${token}`);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2) Infraccion/Listar",
+      "description": "Objetivo: obtener infraccion aplicable por RIS | Reglas: RIS configurado debe retornar al menos una infraccion | Exito: status 200 y oData con elementos | Evidencia: variables id_infraccion y display_infraccion seteadas",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "{{auth_header}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"idRis\": {{id_ris}}\n}"
+        },
+        "url": {
+          "raw": "{{base_api}}/Infraccion/Listar",
+          "host": ["{{base_api}}"],
+          "path": ["Infraccion", "Listar"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "const body = pm.response.json();",
+              "const arr = body?.oData || [];",
+              "pm.test('oData no vacio', function () { pm.expect(arr.length).to.be.above(0); });",
+              "if (arr.length > 0) {",
+              "  pm.collectionVariables.set('id_infraccion', String(arr[0].IdInfraccion));",
+              "  pm.collectionVariables.set('display_infraccion', String(arr[0].DisplayInfraccion || 'Infraccion API Test'));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3) CabeceraInfraccionSancion/Crear",
+      "description": "Objetivo: crear cabecera de expediente sancionador | Reglas: entidad, expediente y resolucion deben pasar validaciones backend | Exito: status 200/201 y cabecera_id generado | Evidencia: variable cabecera_id seteada",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "{{auth_header}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"IdEntidad\": {{id_entidad}},\n  \"NumeroExpediente\": \"{{numero_expediente}}\",\n  \"NumeroResolucion\": \"{{numero_resolucion}}\",\n  \"FechaResolucion\": \"{{fecha_resolucion}}\",\n  \"RutaResolucionSancion\": \"GENERAL N 00001-2026-SUNEDU-SG-OTI.pdf\",\n  \"ArchivoResolucion\": \"\"\n}"
+        },
+        "url": {
+          "raw": "{{base_api}}/CabeceraInfraccionSancion/Crear",
+          "host": ["{{base_api}}"],
+          "path": ["CabeceraInfraccionSancion", "Crear"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 o 201', function () { pm.expect([200,201]).to.include(pm.response.code); });",
+              "const body = pm.response.json();",
+              "let id = body?.oData?.idCabeceraInfraccionSancion;",
+              "if (!id && Array.isArray(body?.oData) && body.oData.length > 0) id = body.oData[0].idCabeceraInfraccionSancion;",
+              "pm.test('cabecera_id presente', function () { pm.expect(id).to.exist; });",
+              "pm.collectionVariables.set('cabecera_id', String(id));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4) MedidaCorrectiva/Crear",
+      "description": "Objetivo: registrar medida correctiva asociada | Reglas: idCabeceraInfraccionSancion existente y orden valido | Exito: status 200/201 | Evidencia: assertion Status 200 o 201",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "{{auth_header}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"idCabeceraInfraccionSancion\": {{cabecera_id}},\n  \"descripcionMedidaCorrectiva\": \"Medida Correctiva API Test\",\n  \"orden\": 1\n}"
+        },
+        "url": {
+          "raw": "{{base_api}}/MedidaCorrectiva/Crear",
+          "host": ["{{base_api}}"],
+          "path": ["MedidaCorrectiva", "Crear"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 o 201', function () { pm.expect([200,201]).to.include(pm.response.code); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5) DetalleInfraccionSancion/Crear",
+      "description": "Objetivo: registrar detalle de infraccion y sancion final | Reglas: infraccion valida para RIS, payload consistente y relacion con cabecera existente | Exito: status 200/201 y bSuccess distinto de false | Evidencia: assertion bSuccess no falso",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "{{auth_header}}", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"idCabeceraInfraccionSancion\": {{cabecera_id}},\n  \"IdInfraccion\": {{id_infraccion}},\n  \"desInfraccion\": \"{{display_infraccion}}\",\n  \"desSancion\": \"Multa\",\n  \"bitCancelacion\": 0,\n  \"canSuspension\": 0,\n  \"tipoMulta\": \"SOLES\",\n  \"numMonto\": 1000,\n  \"bitReconsidera\": 0,\n  \"bitReincidente\": 0,\n  \"bitPago\": 0,\n  \"desSuspension\": null,\n  \"desHechoInfractor\": \"Hecho Infractor API Test\",\n  \"numCorrelativo\": 1,\n  \"bitMedida\": 1,\n  \"desMedidaCorrectivaGen\": \"Medida Correctiva API Test\",\n  \"idRis\": {{id_ris}},\n  \"tempId\": -2\n}"
+        },
+        "url": {
+          "raw": "{{base_api}}/DetalleInfraccionSancion/Crear",
+          "host": ["{{base_api}}"],
+          "path": ["DetalleInfraccionSancion", "Crear"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 o 201', function () { pm.expect([200,201]).to.include(pm.response.code); });",
+              "const body = pm.response.json();",
+              "pm.test('bSuccess no falso', function () { pm.expect(body?.bSuccess).to.not.eql(false); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

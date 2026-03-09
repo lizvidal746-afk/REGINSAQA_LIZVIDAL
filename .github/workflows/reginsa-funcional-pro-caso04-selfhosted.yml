@@ -1,0 +1,125 @@
+name: REGINSA Funcional Pro Caso 04 (Self-hosted)
+
+on:
+  workflow_dispatch:
+    inputs:
+      workers:
+        description: "Playwright workers"
+        required: false
+        default: "3"
+      repeat_each:
+        description: "Playwright repeat-each"
+        required: false
+        default: "9"
+      smoke_mode:
+        description: "Smoke mode true/false"
+        required: false
+        default: "false"
+      install_dependencies:
+        description: "Run npm ci (true/false)"
+        required: false
+        default: "false"
+      install_browser:
+        description: "Install Playwright browser (true/false)"
+        required: false
+        default: "false"
+      generate_reports:
+        description: "Generate post-test reports (true/false)"
+        required: false
+        default: "false"
+      pw_retries:
+        description: "Playwright retries"
+        required: false
+        default: "2"
+      upload_artifacts:
+        description: "Upload artifacts (true/false)"
+        required: false
+        default: "true"
+      gate_mode:
+        description: "Gate mode: strict|tolerant"
+        required: false
+        default: "strict"
+      max_failed_allowed:
+        description: "Allowed failed tests when gate_mode=tolerant"
+        required: false
+        default: "0"
+
+jobs:
+  caso04-funcional-pro:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 180
+    defaults:
+      run:
+        shell: cmd
+    env:
+      REGINSA_URL: ${{ secrets.REGINSA_URL }}
+      BASE_URL: ${{ secrets.REGINSA_URL }}
+      REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
+      REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
+      REGINSA_USER_2: ${{ secrets.REGINSA_USER_2 }}
+      REGINSA_PASS_2: ${{ secrets.REGINSA_PASS_2 }}
+      REGINSA_USER_3: ${{ secrets.REGINSA_USER_3 }}
+      REGINSA_PASS_3: ${{ secrets.REGINSA_PASS_3 }}
+      REGINSA_USER_4: ${{ secrets.REGINSA_USER_4 }}
+      REGINSA_PASS_4: ${{ secrets.REGINSA_PASS_4 }}
+      REGINSA_USER_5: ${{ secrets.REGINSA_USER_5 }}
+      REGINSA_PASS_5: ${{ secrets.REGINSA_PASS_5 }}
+      REGINSA_USER_6: ${{ secrets.REGINSA_USER_6 }}
+      REGINSA_PASS_6: ${{ secrets.REGINSA_PASS_6 }}
+      REGINSA_USER_7: ${{ secrets.REGINSA_USER_7 }}
+      REGINSA_PASS_7: ${{ secrets.REGINSA_PASS_7 }}
+      REGINSA_USER_8: ${{ secrets.REGINSA_USER_8 }}
+      REGINSA_PASS_8: ${{ secrets.REGINSA_PASS_8 }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        if: ${{ github.event.inputs.install_dependencies == 'true' }}
+        run: npm ci
+
+      - name: Install Playwright browser
+        if: ${{ github.event.inputs.install_browser == 'true' }}
+        run: npx playwright install chromium
+
+      - name: Run Caso 04 scale
+        env:
+          REGINSA_SKIP_POST_REPORTS: ${{ github.event.inputs.generate_reports == 'true' && '0' || '1' }}
+          REGINSA_PW_RETRIES: ${{ github.event.inputs.pw_retries || '2' }}
+        run: |
+          @echo off
+          setlocal
+          if /I "${{ github.event.inputs.smoke_mode || 'false' }}"=="true" (
+            npx playwright test --grep "04-RECONSIDERAR CON SANCIONES" --workers=2 --repeat-each=1 --project=chromium
+          ) else (
+            npm run test:04:scale -- --workers=${{ github.event.inputs.workers || '3' }} --repeat-each=${{ github.event.inputs.repeat_each || '9' }} --project=chromium
+          )
+
+      - name: Evaluate outcomes
+        env:
+          REGINSA_GATE_MODE: ${{ github.event.inputs.gate_mode || 'strict' }}
+          REGINSA_MAX_FAILED_ALLOWED: ${{ github.event.inputs.max_failed_allowed || '0' }}
+        if: always() && hashFiles('test-results/results.json') != ''
+        run: node scripts/evaluate-playwright-results.js
+
+      - name: Upload artifacts
+        if: always() && github.event.inputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: funcional-pro-caso04-selfhosted
+          path: |
+            playwright-report
+            allure-report
+            allure-results
+            test-results
+            reportes
+          if-no-files-found: warn

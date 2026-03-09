@@ -1,0 +1,72 @@
+name: REGINSA Smoke Caso 04 Cloud (Self-hosted)
+
+on:
+  workflow_dispatch:
+    inputs:
+      auth_mode:
+        description: "Auth mode: token|auto"
+        required: false
+        default: "token"
+      k6_auth_header:
+        description: "Bearer token when auth_mode=token"
+        required: false
+        default: ""
+      upload_artifacts:
+        description: "Upload artifacts (true/false)"
+        required: false
+        default: "true"
+
+jobs:
+  smoke-caso04-cloud:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: cmd
+    env:
+      REGINSA_API_BASE: ${{ secrets.REGINSA_API_BASE }}
+      REGINSA_URL: ${{ secrets.REGINSA_URL }}
+      REGINSA_USER: ${{ secrets.REGINSA_USER }}
+      REGINSA_PASS: ${{ secrets.REGINSA_PASS }}
+      K6_CLOUD_TOKEN: ${{ secrets.K6_CLOUD_TOKEN }}
+      K6_CLOUD_PROJECT_ID: ${{ secrets.K6_CLOUD_PROJECT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run k6 cloud smoke caso04
+        env:
+          AUTH_MODE: ${{ github.event.inputs.auth_mode || 'token' }}
+          AUTH_HEADER_INPUT: ${{ github.event.inputs.k6_auth_header }}
+        run: |
+          if "%K6_CLOUD_TOKEN%"=="" echo K6_CLOUD_TOKEN missing && exit /b 1
+          if "%K6_CLOUD_PROJECT_ID%"=="" echo K6_CLOUD_PROJECT_ID missing && exit /b 1
+
+          set BASE_API_URL=%REGINSA_API_BASE%
+          if "%BASE_API_URL%"=="" set BASE_API_URL=%REGINSA_URL%
+          if "%BASE_API_URL%"=="" set BASE_API_URL=https://reginsaapiqa.sunedu.gob.pe/api
+
+          set AUTH_FLAGS=
+          if /I "%AUTH_MODE%"=="token" (
+            if not "%AUTH_HEADER_INPUT%"=="" set AUTH_FLAGS= --env K6_AUTH_HEADER=%AUTH_HEADER_INPUT%
+          )
+          if /I "%AUTH_MODE%"=="auto" (
+            set AUTH_FLAGS= --env K6_AUTO_LOGIN=1 --env REGINSA_USER=%REGINSA_USER% --env REGINSA_PASS=%REGINSA_PASS%
+          )
+
+          k6 run -o cloud tests/performance/k6/k6_caso_04_reconsiderar_con_sanciones.js --tag case=caso04 --tag mode=smoke --env BASE_API=%BASE_API_URL% --env K6_BURST_MODE=0 --env K6_FIXED_VUS=1 --env K6_FIXED_ITERATIONS=10 --env K6_TOTAL_REGISTROS=10 --env K6_SLEEP_SECONDS=0.8 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 %AUTH_FLAGS% --summary-export reportes/k6-smoke-caso04-cloud-selfhosted-summary.json
+
+      - name: Upload artifacts
+        if: always() && github.event.inputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-caso04-cloud-selfhosted
+          path: reportes/k6-smoke-caso04-cloud-selfhosted-summary.json
+          if-no-files-found: warn

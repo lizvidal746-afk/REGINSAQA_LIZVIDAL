@@ -1,0 +1,49 @@
+name: REGINSA Postman Caso 04 (Self-hosted)
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload_artifacts:
+        description: "Upload artifacts (true/false)"
+        required: false
+        default: "true"
+
+jobs:
+  postman-caso04:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: cmd
+    env:
+      REGINSA_API_BASE: ${{ secrets.REGINSA_API_BASE }}
+      REGINSA_USER: ${{ secrets.REGINSA_USER }}
+      REGINSA_PASS: ${{ secrets.REGINSA_PASS }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Newman Caso 04
+        run: |
+          if not exist reportes\newman mkdir reportes\newman
+          npx newman run API_TEST/postman/reginsa-caso04-api-test.collection.json -e API_TEST/postman/reginsa-caso01-api-test.environment.json --env-var base_api=%REGINSA_API_BASE% --env-var usuario=%REGINSA_USER% --env-var contrasena=%REGINSA_PASS% --reporters cli,junit --reporter-junit-export reportes/newman/caso04-api-test.xml
+
+      - name: Upload artifacts
+        if: always() && github.event.inputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: postman-caso04-selfhosted
+          path: reportes/newman/caso04-api-test.xml
+          if-no-files-found: warn

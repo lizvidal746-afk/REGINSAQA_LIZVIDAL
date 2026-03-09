@@ -14,11 +14,15 @@
 
 3. **Ejecución:**
    - Desde la raíz del proyecto, ejecuta:
+
      ```sh
      k6 run docs/plantillas/k6_caso_02_registrar_sancion_completo.js
      ```
+
    - Puedes pasar variables de entorno así:
+
      ```sh
+     
      BASE_API=https://reginsaapiqa.sunedu.gob.pe/api TOKEN=tu_token k6 run docs/plantillas/k6_caso_02_registrar_sancion_completo.js
      ```
 

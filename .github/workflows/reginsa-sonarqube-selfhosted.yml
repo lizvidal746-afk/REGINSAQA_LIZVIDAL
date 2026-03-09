@@ -1,0 +1,56 @@
+name: REGINSA SonarQube (Self-hosted)
+
+on:
+  workflow_dispatch:
+    inputs:
+      sonar_host_url:
+        description: "SonarQube URL (si vacío usa secret SONAR_HOST_URL)"
+        required: false
+        default: ""
+      upload_artifacts:
+        description: "Upload artifacts (true/false)"
+        required: false
+        default: "true"
+
+jobs:
+  sonarqube:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: cmd
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL_SECRET: ${{ secrets.SONAR_HOST_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Sonar scan
+        run: |
+          set SONAR_HOST_URL=%SONAR_HOST_URL_SECRET%
+          if not "${{ github.event.inputs.sonar_host_url }}"=="" set SONAR_HOST_URL=${{ github.event.inputs.sonar_host_url }}
+          if "%SONAR_HOST_URL%"=="" echo SONAR_HOST_URL missing && exit /b 1
+          if "%SONAR_TOKEN%"=="" echo SONAR_TOKEN missing && exit /b 1
+          npm run test:sonar
+
+      - name: Upload scanner artifacts
+        if: always() && github.event.inputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonarqube-selfhosted
+          path: |
+            .scannerwork
+          if-no-files-found: warn

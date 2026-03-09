@@ -1,0 +1,74 @@
+name: REGINSA Validaciones Caso 04 (Self-hosted)
+
+on:
+  workflow_dispatch:
+    inputs:
+      workers:
+        description: "Playwright workers"
+        required: false
+        default: "1"
+      repeat_each:
+        description: "Playwright repeat-each"
+        required: false
+        default: "1"
+      install_dependencies:
+        description: "Run npm ci (true/false)"
+        required: false
+        default: "false"
+      install_browser:
+        description: "Install Playwright browser (true/false)"
+        required: false
+        default: "false"
+      upload_artifacts:
+        description: "Upload artifacts (true/false)"
+        required: false
+        default: "true"
+
+jobs:
+  validaciones-caso04:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 180
+    defaults:
+      run:
+        shell: cmd
+    env:
+      REGINSA_URL: ${{ secrets.REGINSA_URL }}
+      BASE_URL: ${{ secrets.REGINSA_URL }}
+      REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
+      REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
+      REGINSA_USER_2: ${{ secrets.REGINSA_USER_2 }}
+      REGINSA_PASS_2: ${{ secrets.REGINSA_PASS_2 }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        if: ${{ github.event.inputs.install_dependencies == 'true' }}
+        run: npm ci
+
+      - name: Install Playwright browser
+        if: ${{ github.event.inputs.install_browser == 'true' }}
+        run: npx playwright install chromium
+
+      - name: Run validaciones Caso 04
+        run: npx playwright test tests/casos-prueba/04-reconsiderar-con-sanciones-validaciones.plantilla.spec.ts --workers=${{ github.event.inputs.workers || '1' }} --repeat-each=${{ github.event.inputs.repeat_each || '1' }} --project=chromium
+
+      - name: Upload artifacts
+        if: always() && github.event.inputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: validaciones-caso04-selfhosted
+          path: |
+            playwright-report
+            test-results
+            reportes
+          if-no-files-found: warn

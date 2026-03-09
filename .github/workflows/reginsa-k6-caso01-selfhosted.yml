@@ -1,0 +1,225 @@
+name: REGINSA K6 Caso 01 (Self-hosted)
+
+on:
+  workflow_dispatch:
+    inputs:
+      auth_mode:
+        description: "Auth mode: token|auto"
+        required: false
+        default: "token"
+      k6_auth_header:
+        description: "Bearer token when auth_mode=token"
+        required: false
+        default: ""
+      sleep_mode:
+        description: "Sleep mode: zero|min|custom"
+        required: false
+        default: "min"
+      pack:
+        description: "Pack preset: none|pack_1|pack_2|pack_3"
+        required: false
+        default: "none"
+      pack_step:
+        description: "Pack step: 1|2|3"
+        required: false
+        default: "1"
+      smoke_mode:
+        description: "Smoke mode true/false"
+        required: false
+        default: "false"
+      sleep_seconds:
+        description: "Used when sleep_mode=custom"
+        required: false
+        default: "0.2"
+      burst_mode:
+        description: "Burst mode true/false"
+        required: false
+        default: "true"
+      fixed_vus:
+        description: "VUs"
+        required: false
+        default: "10"
+      fixed_iterations:
+        description: "Total iterations"
+        required: false
+        default: "100"
+      burst_iter_per_vu:
+        description: "Used when burst_mode=true"
+        required: false
+        default: "10"
+      strict_unique:
+        description: "K6_STRICT_UNIQUE 1|0"
+        required: false
+        default: "1"
+      upload_artifacts:
+        description: "Upload artifacts (true/false)"
+        required: false
+        default: "true"
+
+jobs:
+  k6-caso01:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: cmd
+    env:
+      REGINSA_URL: ${{ secrets.REGINSA_URL }}
+      REGINSA_API_BASE: ${{ secrets.REGINSA_API_BASE }}
+      REGINSA_USER: ${{ secrets.REGINSA_USER }}
+      REGINSA_PASS: ${{ secrets.REGINSA_PASS }}
+      REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
+      REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
+      REGINSA_USER_2: ${{ secrets.REGINSA_USER_2 }}
+      REGINSA_PASS_2: ${{ secrets.REGINSA_PASS_2 }}
+      REGINSA_USER_3: ${{ secrets.REGINSA_USER_3 }}
+      REGINSA_PASS_3: ${{ secrets.REGINSA_PASS_3 }}
+      REGINSA_USER_4: ${{ secrets.REGINSA_USER_4 }}
+      REGINSA_PASS_4: ${{ secrets.REGINSA_PASS_4 }}
+      REGINSA_USER_5: ${{ secrets.REGINSA_USER_5 }}
+      REGINSA_PASS_5: ${{ secrets.REGINSA_PASS_5 }}
+      REGINSA_USER_6: ${{ secrets.REGINSA_USER_6 }}
+      REGINSA_PASS_6: ${{ secrets.REGINSA_PASS_6 }}
+      REGINSA_USER_7: ${{ secrets.REGINSA_USER_7 }}
+      REGINSA_PASS_7: ${{ secrets.REGINSA_PASS_7 }}
+      REGINSA_USER_8: ${{ secrets.REGINSA_USER_8 }}
+      REGINSA_PASS_8: ${{ secrets.REGINSA_PASS_8 }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run K6 Caso 01
+        env:
+          AUTH_MODE: ${{ github.event.inputs.auth_mode || 'token' }}
+          AUTH_HEADER_INPUT: ${{ github.event.inputs.k6_auth_header }}
+          PACK_INPUT: ${{ github.event.inputs.pack || 'none' }}
+          PACK_STEP_INPUT: ${{ github.event.inputs.pack_step || '1' }}
+          SLEEP_MODE: ${{ github.event.inputs.sleep_mode || 'min' }}
+          SMOKE_MODE: ${{ github.event.inputs.smoke_mode || 'false' }}
+          SLEEP_SECONDS_INPUT: ${{ github.event.inputs.sleep_seconds || '0.2' }}
+          BURST_MODE_INPUT: ${{ github.event.inputs.burst_mode || 'true' }}
+          FIXED_VUS_INPUT: ${{ github.event.inputs.fixed_vus || '10' }}
+          FIXED_ITER_INPUT: ${{ github.event.inputs.fixed_iterations || '100' }}
+          BURST_ITER_INPUT: ${{ github.event.inputs.burst_iter_per_vu || '10' }}
+          STRICT_UNIQUE_INPUT: ${{ github.event.inputs.strict_unique || '1' }}
+        run: |
+          @echo off
+          setlocal
+          if not exist reportes mkdir reportes
+
+          set BASE_API_URL=%REGINSA_API_BASE%
+          if "%BASE_API_URL%"=="" set BASE_API_URL=%REGINSA_URL%
+          if "%BASE_API_URL%"=="" set BASE_API_URL=https://reginsaapiqa.sunedu.gob.pe/api
+
+          set RUN_SLEEP=%SLEEP_SECONDS_INPUT%
+          if /I "%SLEEP_MODE%"=="zero" set RUN_SLEEP=0
+          if /I "%SLEEP_MODE%"=="min" set RUN_SLEEP=0.2
+
+          if /I "%PACK_INPUT%"=="pack_1" (
+            if "%PACK_STEP_INPUT%"=="1" (
+              set FIXED_VUS_INPUT=1
+              set FIXED_ITER_INPUT=3
+              set BURST_MODE_INPUT=false
+              set RUN_SLEEP=0.8
+            )
+            if "%PACK_STEP_INPUT%"=="2" (
+              set FIXED_VUS_INPUT=2
+              set FIXED_ITER_INPUT=10
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0.8
+            )
+            if "%PACK_STEP_INPUT%"=="3" (
+              set FIXED_VUS_INPUT=5
+              set FIXED_ITER_INPUT=50
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0.5
+            )
+          )
+
+          if /I "%PACK_INPUT%"=="pack_2" (
+            if "%PACK_STEP_INPUT%"=="1" (
+              set FIXED_VUS_INPUT=3
+              set FIXED_ITER_INPUT=20
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0.5
+            )
+            if "%PACK_STEP_INPUT%"=="2" (
+              set FIXED_VUS_INPUT=8
+              set FIXED_ITER_INPUT=100
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0.3
+            )
+            if "%PACK_STEP_INPUT%"=="3" (
+              set FIXED_VUS_INPUT=12
+              set FIXED_ITER_INPUT=200
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0.2
+            )
+          )
+
+          if /I "%PACK_INPUT%"=="pack_3" (
+            if "%PACK_STEP_INPUT%"=="1" (
+              set FIXED_VUS_INPUT=3
+              set FIXED_ITER_INPUT=20
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0.5
+            )
+            if "%PACK_STEP_INPUT%"=="2" (
+              set FIXED_VUS_INPUT=20
+              set FIXED_ITER_INPUT=500
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0.1
+            )
+            if "%PACK_STEP_INPUT%"=="3" (
+              set FIXED_VUS_INPUT=30
+              set FIXED_ITER_INPUT=1000
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0
+            )
+          )
+
+          if /I "%SMOKE_MODE%"=="true" (
+            set FIXED_VUS_INPUT=2
+            set FIXED_ITER_INPUT=10
+            set BURST_MODE_INPUT=false
+            set RUN_SLEEP=0.8
+            set STRICT_UNIQUE_INPUT=1
+          )
+
+          set AUTH_FLAGS=
+          if /I "%AUTH_MODE%"=="token" (
+            if not "%AUTH_HEADER_INPUT%"=="" set AUTH_FLAGS= --env K6_AUTH_HEADER=%AUTH_HEADER_INPUT%
+          )
+          if /I "%AUTH_MODE%"=="auto" (
+            set AUTH_FLAGS= --env K6_AUTO_LOGIN=1 --env REGINSA_USER=%REGINSA_USER% --env REGINSA_PASS=%REGINSA_PASS%
+          )
+
+          npm run pool:prewarm
+          node scripts/generar-k6-caso01-dataset.js --strategy=fresh --size=%FIXED_ITER_INPUT% --fail-fast=1
+
+          set BURST_FLAGS=
+          if /I "%BURST_MODE_INPUT%"=="true" set BURST_FLAGS= --env K6_BURST_MODE=1 --env K6_BURST_ITER_PER_VU=%BURST_ITER_INPUT%
+
+          k6 run tests/performance/k6/k6_caso_01_agregar_administrado.js --env BASE_URL=%BASE_API_URL% --env K6_FIXED_VUS=%FIXED_VUS_INPUT% --env K6_FIXED_ITERATIONS=%FIXED_ITER_INPUT% --env K6_TOTAL_REGISTROS=%FIXED_ITER_INPUT% --env K6_STRICT_UNIQUE=%STRICT_UNIQUE_INPUT% --env K6_SLEEP_SECONDS=%RUN_SLEEP% --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 %AUTH_FLAGS% %BURST_FLAGS% --summary-export reportes/k6-caso01-selfhosted-summary.json
+
+      - name: Upload artifacts
+        if: always() && github.event.inputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-caso01-selfhosted
+          path: |
+            reportes/k6-caso01-selfhosted-summary.json
+            reportes/k6-caso01-persistencia.json
+          if-no-files-found: warn

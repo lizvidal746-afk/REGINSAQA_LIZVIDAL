@@ -1,0 +1,1186 @@
+{
+  "registros": [
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL MAYOR DE SAN MARCOS",
+      "nombreComercial": "UNIVERSIDAD NACIONAL MAYOR DE SAN MARCOS",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE SAN CRISTOBAL DE HUAMANGA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE SAN CRISTÓBAL DE HUAMANGA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE SAN ANTONIO ABAD DEL CUSCO",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE SAN ANTONIO ABAD DEL CUSCO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE TRUJILLO",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE TRUJILLO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE SAN AGUSTIN DE AREQUIPA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE SAN AGUSTÍN",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE INGENIERIA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE INGENIERÍA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL AGRARIA LA MOLINA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL AGRARIA LA MOLINA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "PONTIFICIA UNIVERSIDAD CATOLICA DEL PERU",
+      "nombreComercial": "PONTIFICIA UNIVERSIDAD CATÓLICA DEL PERÚ",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL SAN LUIS GONZAGA DE ICA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL SAN LUIS GONZAGA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DEL CENTRO DEL PERU",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DEL CENTRO DEL PERÚ",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE LA AMAZONIA PERUANA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE LA AMAZONÍA PERUANA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DEL ALTIPLANO",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DEL ALTIPLANO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE PIURA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE PIURA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PERUANA CAYETANO HEREDIA",
+      "nombreComercial": "UNIVERSIDAD PERUANA CAYETANO HEREDIA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD CATÓLICA DE SANTA MARIA",
+      "nombreComercial": "UNIVERSIDAD CATÓLICA DE SANTA MARÍA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE CAJAMARCA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE CAJAMARCA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD DEL PACIFICO",
+      "nombreComercial": "UNIVERSIDAD DEL PACÍFICO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD DE LIMA",
+      "nombreComercial": "UNIVERSIDAD DE LIMA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD DE SAN MARTIN DE PORRES",
+      "nombreComercial": "UNIVERSIDAD DE SAN MARTÍN DE PORRES",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD FEMENINA DEL SAGRADO CORAZON",
+      "nombreComercial": "UNIVERSIDAD FEMENINA DEL SAGRADO CORAZÓN",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL FEDERICO VILLARREAL",
+      "nombreComercial": "UNIVERSIDAD NACIONAL FEDERICO VILLARREAL",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL AGRARIA DE LA SELVA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL AGRARIA DE LA SELVA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL HERMILIO VALDIZAN",
+      "nombreComercial": "UNIVERSIDAD NACIONAL HERMILIO VALDIZÁN",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD INCA GARCILAZO DE LA VEGA",
+      "nombreComercial": "UNIVERSIDAD INCA GARCILASO DE LA VEGA ASOCIACIÓN CIVIL",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD ENRIQUE GUZMAN Y VALLE",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE EDUCACIÓN ENRIQUE GUZMÁN Y VALLE",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DANIEL ALCIDES CARRION",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DANIEL ALCÍDES CARRIÓN",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DEL CALLAO",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DEL CALLAO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL JOSE FAUSTINO SANCHEZ CARRION",
+      "nombreComercial": "UNIVERSIDAD NACIONAL JOSÉ FAUSTINO SÁNCHEZ CARRIÓN",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD DE PIURA",
+      "nombreComercial": "UNIVERSIDAD DE PIURA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD RICARDO PALMA",
+      "nombreComercial": "UNIVERSIDAD RICARDO PALMA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL PEDRO RUIZ GALLO - ENLACE",
+      "nombreComercial": "UNIVERSIDAD NACIONAL PEDRO RUÍZ GALLO",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL JORGE BASADRE GROHMANN",
+      "nombreComercial": "UNIVERSIDAD NACIONAL JORGE BASADRE GROHMANN",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL SANTIAGO ANTUNEZ DE MAYOLO",
+      "nombreComercial": "UNIVERSIDAD NACIONAL SANTIAGO ANTÚNEZ DE MAYOLO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE SAN MARTIN",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE SAN MARTÍN",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE UCAYALI",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE UCAYALI",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD ANDINA NESTOR CACERES VELASQUEZ",
+      "nombreComercial": "UNIVERSIDAD ANDINA NÉSTOR CÁCERES VELÁSQUEZ",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PERUANA LOS ANDES",
+      "nombreComercial": "UNIVERSIDAD PERUANA LOS ANDES",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PERUANA UNIÓN",
+      "nombreComercial": "UNIVERSIDAD PERUANA UNIÓN",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD ANDINA DEL CUSCO",
+      "nombreComercial": "UNIVERSIDAD ANDINA DEL CUSCO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD TECNOLOGICA DE LOS ANDES",
+      "nombreComercial": "UNIVERSIDAD TECNOLÓGICA DE LOS ANDES",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE TUMBES",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE TUMBES",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DEL SANTA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DEL SANTA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA DE TACNA",
+      "nombreComercial": "UNIVERSIDAD PRIVADA DE TACNA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PARTICULAR DE CHICLAYO",
+      "nombreComercial": "UNIVERSIDAD PARTICULAR DE CHICLAYO",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA ANTENOR ORREGO",
+      "nombreComercial": "UNIVERSIDAD PRIVADA ANTENOR ORREGO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD DE HUÁNUCO",
+      "nombreComercial": "UNIVERSIDAD DE HUÁNUCO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD MARCELINO CHAMPAGNAT",
+      "nombreComercial": "UNIVERSIDAD PRIVADA MARCELINO CHAMPAGNAT",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE HUANCAVELICA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE HUANCAVELICA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PERUANA DE CIENCIAS APLICADAS S.A.C.",
+      "nombreComercial": "UNIVERSIDAD PERUANA DE CIENCIAS APLICADAS S.A.C.",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD SAN IGNACIO DE LOYOLA",
+      "nombreComercial": "UNIVERSIDAD SAN IGNACIO DE LOYOLA S.A.",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD ALAS PERUANAS S.A.",
+      "nombreComercial": "UNIVERSIDAD ALAS PERUANAS S.A.",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA NORBERT WIENER",
+      "nombreComercial": "UNIVERSIDAD PRIVADA NORBERT WIENER",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD CATOLICA SAN PABLO",
+      "nombreComercial": "UNIVERSIDAD CATÓLICA SAN PABLO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD TECNOLOGICA DEL PERU S.A.C. O UTP S.A.C.",
+      "nombreComercial": "UNIVERSIDAD TECNOLÓGICA DEL PERÚ S.A.C.",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD CIENTÍFICA DEL SUR S.A.C",
+      "nombreComercial": "UNIVERSIDAD CIENTÍFICA DEL SUR S.A.C.",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD CATOLICA SANTO TORIBIO DE MOGROVEJO",
+      "nombreComercial": "UNIVERSIDAD CATÓLICA SANTO TORIBIO DE MOGROVEJO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA ANTONIO GUILLERMO URRELO",
+      "nombreComercial": "UNIVERSIDAD PRIVADA ANTONIO GUILLERMO URRELO",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD CATOLICA SEDES SAPIENTIAE",
+      "nombreComercial": "UNIVERSIDAD CATÓLICA SEDES SAPIENTIAE",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD SEÑOR DE SIPAN S.A.C.",
+      "nombreComercial": "UNIVERSIDAD SEÑOR DE SIPÁN",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL AMAZONICA DE MADRE DE DIOS",
+      "nombreComercial": "UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL TORIBIO RODRIGUEZ DE MENDOZA DE AMAZONAS",
+      "nombreComercial": "UNIVERSIDAD NACIONAL TORIBIO RODRÍGUEZ DE MENDOZA DE AMAZONAS",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL MICAELA BASTIDAS DE APURIMAC",
+      "nombreComercial": "UNIVERSIDAD NACIONAL MICAELA BASTIDAS DE APURÍMAC",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PERUANA DE LAS AMÉRICAS",
+      "nombreComercial": "UNIVERSIDAD PERUANA DE LAS AMÉRICAS SAC",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD ESAN",
+      "nombreComercial": "UNIVERSIDAD ESAN",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD ANTONIO RUIZ DE MONTOYA",
+      "nombreComercial": "UNIVERSIDAD ANTONIO RUÍZ DE MONTOYA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PERUANA DE CIENCIAS E INFORMATICA",
+      "nombreComercial": "UNIVERSIDAD PERUANA DE CIENCIAS E INFORMÁTICA",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PARA EL DESARROLLO ANDINO",
+      "nombreComercial": "UNIVERSIDAD PARA EL DESARROLLO ANDINO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA TELESUP S.A.C",
+      "nombreComercial": "UNIVERSIDAD PRIVADA TELESUP S.A.C.",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL INTERCULTURAL DE LA AMAZONIA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL INTERCULTURAL DE LA AMAZONÍA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA SERGIO BERNALES S.A.C.",
+      "nombreComercial": "UNIVERSIDAD SERGIO BERNALES S.A.C.",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA DE PUCALLPA",
+      "nombreComercial": "UNIVERSIDAD PRIVADA DE PUCALLPA",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL JOSE MARIA ARGUEDAS",
+      "nombreComercial": "UNIVERSIDAD NACIONAL JOSÉ MARÍA ARGUEDAS",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA DE TRUJILLO",
+      "nombreComercial": "UNIVERSIDAD PRIVADA DE TRUJILLO",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA SAN CARLOS",
+      "nombreComercial": "UNIVERSIDAD PRIVADA SAN CARLOS",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PERUANA SIMON BOLIVAR",
+      "nombreComercial": "UNIVERSIDAD PERUANA SIMÓN BOLIVAR",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PERUANA DE INTEGRACION GLOBAL",
+      "nombreComercial": "UNIVERSIDAD PERUANA DE INTEGRACIÓN GLOBAL",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PERUANA DEL ORIENTE",
+      "nombreComercial": "UNIVERSIDAD PERUANA DEL ORIENTE S.A.C.",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE MOQUEGUA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE MOQUEGUA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD AUTONOMA DEL PERU S.A.C.",
+      "nombreComercial": "UNIVERSIDAD AUTÓNOMA DEL PERÚ S.A.C.",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD DE CIENCIAS Y HUMANIDADES",
+      "nombreComercial": "UNIVERSIDAD DE CIENCIAS Y HUMANIDADES",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD JAIME BAUSATE Y MEZA",
+      "nombreComercial": "UNIVERSIDAD JAIME BAUSATE Y MEZA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA JUAN MEJIA BACA",
+      "nombreComercial": "UNIVERSIDAD PRIVADA JUAN MEJÍA BACA",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PERUANA DEL CENTRO",
+      "nombreComercial": "UNIVERSIDAD PERUANA DEL CENTRO",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA ARZOBISPO LOAYZA",
+      "nombreComercial": "UNIVERSIDAD PRIVADA ARZOBISPO LOAYZA",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD LE CORDON BLEU",
+      "nombreComercial": "UNIVERSIDAD LE CORDON BLEU",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA DE HUANCAYO FRANKLIN ROOSEVELT SOCIEDAD ANONIMA CERRADA",
+      "nombreComercial": "UNIVERSIDAD PRIVADA DE HUANCAYO FRANKLIN ROOSEVELT SOCIEDAD ANÓNIMA CERRADA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD DE LAMBAYEQUE",
+      "nombreComercial": "UNIVERSIDAD DE LAMBAYEQUE",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD DE CIENCIAS Y ARTES DE AMERICA LATINA",
+      "nombreComercial": "UNIVERSIDAD DE CIENCIAS Y ARTES DE AMÉRICA LATINA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PERUANA DE ARTE ORVAL",
+      "nombreComercial": "UNIVERSIDAD PERUANA DE ARTE ORVAL",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD CIENCIAS DE LA SALUD",
+      "nombreComercial": "UNIVERSIDAD CIENCIAS DE LA SALUD",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD DE AYACUCHO FEDERICO FROEBEL SAC",
+      "nombreComercial": "UNIVERSIDAD DE AYACUCHO FEDERICO FROEBEL S.A.C.",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PERUANA DE INVESTIGACION Y NEGOCIOS",
+      "nombreComercial": "UNIVERSIDAD PERUANA DE INVESTIGACIÓN Y NEGOCIOS",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PERUANA AUSTRAL DEL CUSCO",
+      "nombreComercial": "UNIVERSIDAD PERUANA AUSTRAL DEL CUSCO",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD SAN ANDRES SAC",
+      "nombreComercial": "UNIVERSIDAD SAN ANDRÉS S.A.C.",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD INTERAMERICANA PARA EL DESARROLLO",
+      "nombreComercial": "UNIVERSIDAD INTERAMERICANA PARA EL DESARROLLO",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA JUAN PABLO II",
+      "nombreComercial": "UNIVERSIDAD PRIVADA JUAN PABLO II",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD AUTONOMA SAN FRANCISCO",
+      "nombreComercial": "UNIVERSIDAD AUTÓNOMA SAN FRANCISCO",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL INTERCULTURAL DE LA SELVA CENTRAL JUAN SANTOS ATAHUALPA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL  INTERCULTURAL DE LA SELVA CENTRAL JUAN SANTOS ATAHUALPA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE FRONTERA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE FRONTERA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE CAÑETE",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE CAÑETE",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE JULIACA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE JULIACA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE JAEN",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE JAÉN",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA LEONARDO DA VINCI",
+      "nombreComercial": "UNIVERSIDAD PRIVADA LEONARDO DA VINCI SAC.",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL DE BARRANCA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL DE BARRANCA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD DE INGENIERIA Y TECNOLOGIA",
+      "nombreComercial": "UNIVERSIDAD DE INGENIERÍA Y TECNOLOGÍA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "MARINA DE GUERRA DEL PERU",
+      "nombreComercial": "ESCUELA NAVAL DEL PERÚ",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL AUTONOMA DE CHOTA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL AUTÓNOMA DE CHOTA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD LATINOAMERICANA CIMA",
+      "nombreComercial": "UNIVERSIDAD LATINOAMERICANA CIMA",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD MARIA AUXILIADORA",
+      "nombreComercial": "UNIVERSIDAD MARÍA AUXILIADORA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD LA SALLE",
+      "nombreComercial": "UNIVERSIDAD LA SALLE",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA AUTONOMA DEL SUR",
+      "nombreComercial": "UNIVERSIDAD PRIVADA AUTÓNOMA DEL SUR",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD DE LA AMAZONÍA MARIO PELÁEZ BAZÁN",
+      "nombreComercial": "UNIVERSIDAD DE LA AMAZONÍA MARIO PELÁEZ BAZÁN",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD MARITIMA DEL PERU",
+      "nombreComercial": "UNIVERSIDAD MARITIMA DEL PERÚ",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA SISE",
+      "nombreComercial": "UNIVERSIDAD PRIVADA SISE",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD GLOBAL DEL CUSCO",
+      "nombreComercial": "UNIVERSIDAD GLOBAL DEL CUSCO",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD SANTO DOMINGO DE GUZMAN",
+      "nombreComercial": "UNIVERSIDAD SANTO DOMINGO DE GUZMÁN",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA LÍDER PERUANA",
+      "nombreComercial": "UNIVERSIDAD PRIVADA LÍDER PERUANA",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA PERUANO ALEMANA",
+      "nombreComercial": "UNIVERSIDAD PRIVADA PERUANO ALEMANA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD SEMINARIO BIBLICO DE ANDINO",
+      "nombreComercial": "UNIVERSIDAD SEMINARIO BIBLICO DE ANDINO",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD SAN PEDRO",
+      "nombreComercial": "UNIVERSIDAD SAN PEDRO",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD CATÓLICA LOS  ÁNGELES DE CHIMBOTE",
+      "nombreComercial": "UNIVERSIDAD CATÓLICA LOS ÁNGELES DE CHIMBOTE",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA SAN JUAN BAUTISTA",
+      "nombreComercial": "UNIVERSIDAD PRIVADA SAN JUAN BAUTISTA SOCIEDAD ANÓNIMA CERRADA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD CONTINENTAL",
+      "nombreComercial": "UNIVERSIDAD CONTINENTAL",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD JOSE CARLOS MARIATEGUI",
+      "nombreComercial": "UNIVERSIDAD JOSÉ CARLOS MARIÁTEGUI",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD AUTONOMA DE ICA SAC",
+      "nombreComercial": "UNIVERSIDAD AUTONOMA DE ICA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "HIDROFILTEC S.A.C.",
+      "nombreComercial": "ESCUELA SUPERIOR DE GUERRA AEREA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA DE LA SELVA PERUANA",
+      "nombreComercial": "UNIVERSIDAD PRIVADA DE LA SELVA PERUANA",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ASOCIACION CULTURAL ORIENTE PERUANO ACOP",
+      "nombreComercial": "ASOCIACION CULTURAL ORIENTE PERUANO ACOP",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ASOCIACION CIVIL PROMOTORA DE LA UNIVERSIDAD PRIVADA DE TACNA",
+      "nombreComercial": "ASOCIACION CIVIL PROMOTORA DE LA UNIVERSIDAD PRIVADA DE TACNA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "AMERICAN PONTIFICAL CATHOLIC UNIVERSITY PERÚ S.A.C.",
+      "nombreComercial": "AMERICAN PONTIFICAL CATHOLIC UNIVERSITY PERÚ S.A.C.",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD POLITÉCNICA AMAZÓNICA S.A.C.",
+      "nombreComercial": "UNIVERSIDAD POLITÉCNICA AMAZÓNICA S.A.C.",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "APC UNIVERSITY AYACUCHO",
+      "nombreComercial": "APC UNIVERSITY AYACUCHO S.A.C.",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ASOCIACIÓN DE PROMOTRES DE SERVICIOS EDUCATIVOS VECKOR",
+      "nombreComercial": "ASOCIACION DE PROMOTORES DE SERVICIOS EDUCATIVOS VECKOR",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "CONSORCIO EDUCATIVO LOS ARCANGELES S.A.C.",
+      "nombreComercial": "CONSORCIO EDUCATIVO LOS ARCANGELES S.A.C.",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA DEL NORTE",
+      "nombreComercial": "UNIVERSIDAD PRIVADA DEL NORTE S.A.C.",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ASOCIACIÓN EDUCATIVA GRENDAL COLLEGE",
+      "nombreComercial": "ASOCIACIÓN EDUCATIVA GRENDAL COLLEGE",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "APC UNIVERSITY PONTIFICIA UNIVERSIDAD CATOLICA AMERICANA S.A.C",
+      "nombreComercial": "APC UNIVERSITY PONTIFICIA UNIVERSIDAD CATOLICA AMERICANA S.A.C",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "GRUPO EDUCATIVO UNIVERSIDAD PRIVADA DE ICA S.A.C.",
+      "nombreComercial": "GRUPO EDUCATIVO UNIVERSIDAD PRIVADA DE ICA S.A.C.",
+      "estado": "Licencia denegada",
+      "activo": true
+    },
+    {
+      "razonSocial": "CENTRO PERUANO DE FORMACIÓN E INVESTIGACIÓN CONTINUA",
+      "nombreComercial": "CENTRO PERUANO DE FORMACIÓN E INVESTIGACIÓN CONTINUA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD CESAR VALLEJO",
+      "nombreComercial": "UNIVERSIDAD CÉSAR VALLEJO S.A.C.",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE POSGRADO NEWMAN S.A.C",
+      "nombreComercial": "ESCUELA DE POSGRADO NEWMAN S.A.C",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ASOCIACIÓN PERUANA DE CIENCIAS JURÍDICAS Y CONCILIACIÓN",
+      "nombreComercial": "Asociación Peruana de Ciencias Jurídicas y Conciliación",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "CORPORACION ESPECIALIZADA EN EDUCACION, TECNOLOGIA, EMPRESARIADO Y ETICA D S.A.C.",
+      "nombreComercial": "Asociación Peruana de Ciencias Jurídicas y Conciliación",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ASOCIACIÓN POR LA EDUCACIÓN GRENDAL COLLEGE AND UNIVERSITY",
+      "nombreComercial": "ASOCIACIÓN POR LA EDUCACIÓN GRENDAL COLLEGE AND UNIVERSITY",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ASOCIACIÓN CIVIL DEL INSTITUTO TECNOLOGICO Y DE ESTUDIOS SUPERIORES DE MONTERREY",
+      "nombreComercial": "ASOCIACIÓN CIVIL DEL INSTITUTO TECNOLOGICO Y DE ESTUDIOS SUPERIORES DE MONTERREY",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACION  SUPERIOR PEDAGOGICA PUBLICA MONTERRICO",
+      "nombreComercial": "ESCUELA DE EDUCACION  SUPERIOR PEDAGOGICA PUBLICA MONTERRICO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR TECNOLÓGICA PRIVADA TOULOUSE LAUTREC",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR TECNOLÓGICA PRIVADA TOULOUSE LAUTREC",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA NACIONAL SUPERIOR DE ARTE DRAMATICO \"GUILLERMO UGARTE CHAMORRO\"",
+      "nombreComercial": "ESCUELA NACIONAL SUPERIOR DE ARTE DRAMATICO GUILLERMO UGARTE CHAMORRO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA NACIONAL DE ARTE CARLOS BACA FLOR DE AREQUIPA",
+      "nombreComercial": "ESCUELA NACIONAL DE ARTE CARLOS BACA FLOR DE AREQUIPA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA SUPERIOR DE FORMACIÓN ARTÍSTICA PUBLICA \" SAN PEDRO DE CAJAS\"",
+      "nombreComercial": "ESCUELA SUPERIOR DE FORMACIÓN ARTÍSTICA PUBLICA SAN PEDRO DE CAJAS",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE POSTGRADO GERENS S.A.",
+      "nombreComercial": "ESCUELA DE POSTGRADO GERENS S.A.",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ZENÓN WANTUIL RIVERA CHUQUE",
+      "nombreComercial": "ZENÓN WANTUIL RIVERA CHUQUE",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "CÁMARA MINERA DEL PERÚ",
+      "nombreComercial": "CAMARA MINERA DEL PERU - CAMIPER",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA SUPERIOR DE FORMACIÓN ARTÍSTICA PÚBLICA MARIO URTEAGA ALVARADO DE CAJAMARCA",
+      "nombreComercial": "ESCUELA SUPERIOR DE FORMACIÓN ARTÍSTICA PÚBLICA MARIO URTEAGA ALVARADO DE CAJAMARCA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD PRIVADA DE AYACUCHO S.A.C.",
+      "nombreComercial": "UNIVERSIDAD PRIVADA DE AYACUCHO S.A.C.",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA NACIONAL DE CONTROL -CGR",
+      "nombreComercial": "ESCUELA NACIONAL DE CONTROL",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "INSTITUTO PALESTRA-ESCUELA IBEROAMERICANA DE DERECHO",
+      "nombreComercial": "INSTITUTO PALESTRA-ESCUELA IBEROAMERICANA DE DERECHO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR TECNOLÓGICA PRIVADA \"SAN IGNACIO DE LOYOLA -ESCUELA ISIL\"",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR TECNOLÓGICA PRIVADA \"SAN IGNACIO DE LOYOLA -ESCUELA ISIL\"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "EESTP ZEGEL IPAE",
+      "nombreComercial": "EESTP ZEGEL IPAE",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR  CENTRO DE LA IMAGEN",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR  CENTRO DE LA IMAGEN",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA \"LA INMACULADA \"",
+      "nombreComercial": "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA \"LA INMACULADA \"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACION SUPERIOR TECNOLOGICA PRIVADA LA PONTIFICIA",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR TECNOLÓGICA PRIVADA \"LA PONTIFICIA\"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA PERUANA DE EDUCACION S.A.C.",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PRIVADA \"ITS INNOVA TEACHING SCHOOL\"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA CHIMBOTE",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA CHIMBOTE",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA “AREQUIPA”",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA “AREQUIPA”",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGOGICA PUKLLASUNCHIS",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGOGICA PUKLLASUNCHIS",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"PIURA\"",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"PIURA\"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA JOSE JIMENEZ BORJA",
+      "nombreComercial": "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA JOSE JIMENEZ BORJA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"SANTA ROSA\"",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"SANTA ROSA\"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA “TARAPOTO”",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"TARAPOTO\"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"EMILIA BARCIA BONIFFATTI\"",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"EMILIA BARCIA BONIFFATTI\"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"JOSÉ SALVADOR CAVERO OVALLE\"",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"JOSÉ SALVADOR CAVERO OVALLE\"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA LAMAS",
+      "nombreComercial": "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA LAMAS",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"VÍCTOR ANDRÉS BELAUNDE\"",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"VÍCTOR ANDRÉS BELAUNDE\"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA GAMANIEL BLANCO MURILLO",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA GAMANIEL BLANCO MURILLO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA NUESTRA SEÑORA DE CHOTA",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA NUESTRA SEÑORA DE CHOTA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA ARÍSTIDES MERINO MERINO",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA ARÍSTIDES MERINO MERINO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"LA SALLE\" DE ABANCAY",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"LA SALLE\" DE ABANCAY",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"TÚPAC AMARU\"",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"TÚPAC AMARU\"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA GENERALÍSIMO JOSÉ DE SAN MARTÍN",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA GENERALÍSIMO JOSÉ DE SAN MARTÍN",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA IGNACIO AMADEO RAMOS OLIVERA",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA IGNACIO AMADEO RAMOS OLIVERA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PRIVADA MARÍA MONTESSORI",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PRIVADA MARÍA MONTESSORI",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA DAVID SÁNCHEZ INFANTE",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA DAVID SÁNCHEZ INFANTE",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PRIVADA \"CALIDAD EN REDES DE APRENDIZAJE\" - CREA",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PRIVADA \"CALIDAD EN REDES DE APRENDIZAJE\" - CREA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "INSTITUTO DE EDUCACIÓN SUPERIOR PEDAGÓGICO PÚBLICO \"MARCOS DURÁN MARTEL\"",
+      "nombreComercial": "INSTITUTO DE EDUCACIÓN SUPERIOR PEDAGÓGICO PÚBLICO \"MARCOS DURÁN MARTEL\"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PUBLICO LORETO",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PUBLICA LORETO",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"SAN FRANCISCO DE ASÍS\"",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"SAN FRANCISCO DE ASÍS\"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"INDOAMÉRICA\"",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"INDOAMÉRICA\"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA JULIACA",
+      "nombreComercial": "ESCUELA DE EDUCACION SUPERIOR PEDAGOGICA PUBLICA JULIACA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA SUPERIOR PEDAGÓGICA PUBLICA MONSEÑOR FRANCISCO GONZALES BURGA",
+      "nombreComercial": "ESCUELA SUPERIOR PEDAGÓGICA PUBLICA MONSEÑOR FRANCISCO GONZALES BURGA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "UNIVERSIDAD NACIONAL TECNOLÓGICA DE FRONTERA SAN IGNACIO DE LOYOLA",
+      "nombreComercial": "UNIVERSIDAD NACIONAL TECNOLÓGICA DE FRONTERA SAN IGNACIO DE LOYOLA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR TECNOLÓGICA PRIVADA KHIPU",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR TECNOLÓGICA PRIVADA KHIPU",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "INSTITUTO DE EDUCACION SUPERIOR PEDAGOGICO PUBLICO \"MONSEÑOR ELIAS OLAZAR\"",
+      "nombreComercial": "Escuela de Educación Superior Pedagógica Pública \"Monseñor Elías Olázar\"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA \"MERCEDES CABELLO DE CARBONERA\"",
+      "nombreComercial": "Escuela de Educación Superior Pedagógica Pública \"Mercedes Cabello de Carbonera\"",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA TEODORO PEÑALOZA",
+      "nombreComercial": "ESCUELA DE EDUCACIÓN SUPERIOR PEDAGÓGICA PÚBLICA TEODORO PEÑALOZA",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "INSTITUTO EUROPEO ZAHNARTZ SRL",
+      "nombreComercial": "INSTITUTO EUROPEO ZAHNARTZ SRL",
+      "estado": "Licenciada",
+      "activo": true
+    },
+    {
+      "razonSocial": "ACADEMIA DE LA MAGISTRATURA",
+      "nombreComercial": "ACADEMIA DE LA MAGISTRATURA",
+      "estado": "Licenciada",
+      "activo": true
+    }
+  ]
+}
