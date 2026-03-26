@@ -4,3 +4,14 @@ test-results/
 allure-results/
 allure-report/
 .env
+.env.k6.local
+reportes/.grafana-secrets.json
+
+# Runtime artifacts
+.tmp-*.log
+reportes/*.exit
+reportes/*spawn*.log
+reportes/*clean*.log
+reportes/*.out.log
+reportes/*.err.log
+screenshots/02-REGISTRAR_SANCION_DETALLE_*_VENTANA.png
