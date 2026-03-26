@@ -1,0 +1,73 @@
+version: 0.2
+
+env:
+  variables:
+    TEST_TYPE: functional
+    CASE_TARGET: suite
+    PW_WORKERS: "3"
+    PW_REPEAT_EACH: "3"
+    PW_PROJECT: chromium
+    REGINSA_CASO04_SKIP_EXHAUSTED_PAGES: "1"
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "[install] npm ci"
+      - npm ci
+      - echo "[install] playwright chromium"
+      - npx playwright install chromium
+
+  pre_build:
+    commands:
+      - echo "[pre_build] TEST_TYPE=$TEST_TYPE CASE_TARGET=$CASE_TARGET"
+      - |
+        if [ -z "$REGINSA_URL" ]; then
+          echo "ERROR: REGINSA_URL no definido";
+          exit 1;
+        fi
+
+  build:
+    commands:
+      - echo "[build] Ejecutando suite funcional"
+      - |
+        if [ "$TEST_TYPE" != "functional" ]; then
+          echo "ERROR: TEST_TYPE soportado en este buildspec es functional";
+          exit 1;
+        fi
+      - |
+        case "$CASE_TARGET" in
+          01)
+            npx playwright test --grep="01-AGREGAR ADMINISTRADO" --workers="$PW_WORKERS" --repeat-each="$PW_REPEAT_EACH" --project="$PW_PROJECT"
+            ;;
+          02)
+            npx playwright test --grep="02-REGISTRAR SANCIÓN" --workers="$PW_WORKERS" --repeat-each="$PW_REPEAT_EACH" --project="$PW_PROJECT"
+            ;;
+          03)
+            npx playwright test --grep="03-RECONSIDERAR SIN SANCIONES" --workers="$PW_WORKERS" --repeat-each="$PW_REPEAT_EACH" --project="$PW_PROJECT"
+            ;;
+          04)
+            npx playwright test --grep="04-RECONSIDERAR CON SANCIONES" --workers="$PW_WORKERS" --repeat-each="$PW_REPEAT_EACH" --project="$PW_PROJECT"
+            ;;
+          suite)
+            npx playwright test --grep="01-AGREGAR ADMINISTRADO|02-REGISTRAR SANCIÓN|03-RECONSIDERAR SIN SANCIONES|04-RECONSIDERAR CON SANCIONES" --workers="$PW_WORKERS" --repeat-each="$PW_REPEAT_EACH" --project="$PW_PROJECT"
+            ;;
+          *)
+            echo "ERROR: CASE_TARGET inválido: $CASE_TARGET";
+            exit 1;
+            ;;
+        esac
+
+  post_build:
+    commands:
+      - echo "[post_build] Resultado finalizado"
+
+artifacts:
+  files:
+    - playwright-report/**/*
+    - allure-report/**/*
+    - allure-results/**/*
+    - test-results/**/*
+    - reportes/**/*
+  discard-paths: no

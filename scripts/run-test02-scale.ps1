@@ -9,7 +9,11 @@ $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
 $env:SKIP_SCREENSHOTS = '1'
+$env:REGINSA_EXECUTION_MODE = 'scale'
 $env:REGINSA_SCALE_MODE = '1'
+if (-not $env:TEST_RUN_ID) {
+  $env:TEST_RUN_ID = "reginsa-caso02-$([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())"
+}
 if (-not $env:REGINSA_STRICT_VERIFY) {
   $env:REGINSA_STRICT_VERIFY = '1'
 }
@@ -136,7 +140,23 @@ if (-not $isCi -and -not $allowOvercommit -and $requestedWorkers -gt $maxWorkers
 $sanitizedArgs = Remove-WorkersArgs -InputArgs $PlaywrightArgs
 $sanitizedArgs += "--workers=$effectiveWorkers"
 
+$repeatEachValue = 1
+for ($i = 0; $i -lt $sanitizedArgs.Count; $i++) {
+  $arg = [string]$sanitizedArgs[$i]
+  if ($arg -like '--repeat-each=*') {
+    [int]::TryParse(($arg -replace '^--repeat-each=', ''), [ref]$repeatEachValue) | Out-Null
+    continue
+  }
+  if ($arg -eq '--repeat-each' -and $i + 1 -lt $sanitizedArgs.Count) {
+    [int]::TryParse([string]$sanitizedArgs[$i + 1], [ref]$repeatEachValue) | Out-Null
+    continue
+  }
+}
+
+$env:REGINSA_REPEAT_EACH = [string]([Math]::Max(1, $repeatEachValue))
+
 Write-Host "Workers solicitados: $requestedWorkers | Workers efectivos: $effectiveWorkers" -ForegroundColor Cyan
+Write-Host "RunId Caso 02: $($env:TEST_RUN_ID) | RepeatEach: $($env:REGINSA_REPEAT_EACH)" -ForegroundColor Cyan
 
 if ($requestedWorkers -ge 8) {
   Set-MinIntEnv -Name 'REGINSA_REGISTRO_TIMEOUT_MS' -Min 120000
@@ -192,7 +212,7 @@ try {
 } catch {}
 
 Write-Host 'Ejecutando Caso 02 en modo scale...'
-& npx playwright test --grep '02-REGISTRAR SANCI.N' --retries=$retries @sanitizedArgs
+& npx playwright test tests/casos-prueba/02-registrar-sancion.spec.ts --retries=$retries @sanitizedArgs
 $testExitCode = $LASTEXITCODE
 
 if ($env:REGINSA_SKIP_POST_REPORTS -eq '1') {

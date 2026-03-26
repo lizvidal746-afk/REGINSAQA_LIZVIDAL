@@ -32,7 +32,7 @@ Write-Host "  Endpoint: $BaseApi$Endpoint" -ForegroundColor Gray
 Write-Host "  Low/Mid/High rpm: $LowRpm/$MidRpm/$HighRpm" -ForegroundColor Gray
 Write-Host "  StageSeconds: $StageSeconds" -ForegroundColor Gray
 
-k6 run tests/performance/k6/templates/k6_rate_limit_case02_template.js `
+k6 run tests/performance/k6-grafana/templates/k6_rate_limit_case02_template.js `
   --env "BASE_API=$BaseApi" `
   --env "RL_ENDPOINT=$Endpoint" `
   --env "RL_LOW_RPM=$LowRpm" `

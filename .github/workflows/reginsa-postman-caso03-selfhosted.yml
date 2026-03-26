@@ -38,7 +38,7 @@ jobs:
       - name: Run Newman Caso 03
         run: |
           if not exist reportes\newman mkdir reportes\newman
-          npx newman run API_TEST/postman/reginsa-caso03-api-test.collection.json -e API_TEST/postman/reginsa-caso01-api-test.environment.json --env-var base_api=%REGINSA_API_BASE% --env-var usuario=%REGINSA_USER% --env-var contrasena=%REGINSA_PASS% --reporters cli,junit --reporter-junit-export reportes/newman/caso03-api-test.xml
+          npx newman run API_TEST/postman/reginsa-caso03-api-test.collection.json -e API_TEST/postman/reginsa-caso03-api-test.environment.json --env-var base_api=%REGINSA_API_BASE% --env-var usuario=%REGINSA_USER% --env-var contrasena=%REGINSA_PASS% --reporters cli,junit --reporter-junit-export reportes/newman/caso03-api-test.xml
 
       - name: Upload artifacts
         if: always() && github.event.inputs.upload_artifacts == 'true'

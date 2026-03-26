@@ -1,0 +1,636 @@
+{
+  "runId": "reginsa-caso04-1774488933552",
+  "cases": {
+    "caso04-con-sanciones": {
+      "candidates": [
+        {
+          "key": "fa17expn17372024fa17resn15262024",
+          "expediente": "FA 17 EXP N° 1737-2024",
+          "resolucion": "FA 17 RES N° 1526-2024",
+          "page": 1,
+          "row": 1,
+          "status": "invalid",
+          "attempts": 1,
+          "updatedAt": "2026-03-26T01:36:43.326Z",
+          "reason": "candidate-not-found-ui"
+        },
+        {
+          "key": "fa17expn85202026fa17resn83022026",
+          "expediente": "FA 17 EXP N° 8520-2026",
+          "resolucion": "FA 17 RES N° 8302-2026",
+          "page": 1,
+          "row": 2,
+          "status": "claimed",
+          "attempts": 1,
+          "updatedAt": "2026-03-26T01:36:43.327Z",
+          "claimedBy": "w2-r2-s2",
+          "leaseUntil": "2026-03-26T01:37:43.327Z"
+        },
+        {
+          "key": "fa17expn49652024fa17resn31332024",
+          "expediente": "FA 17 EXP N° 4965-2024",
+          "resolucion": "FA 17 RES N° 3133-2024",
+          "page": 1,
+          "row": 3,
+          "status": "claimed",
+          "attempts": 1,
+          "updatedAt": "2026-03-26T01:37:14.563Z",
+          "claimedBy": "w0-r0-s0",
+          "leaseUntil": "2026-03-26T01:38:14.563Z"
+        },
+        {
+          "key": "fa17expn91922025fa17resn24642025",
+          "expediente": "FA 17 EXP N° 9192-2025",
+          "resolucion": "FA 17 RES N° 2464-2025",
+          "page": 1,
+          "row": 4,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa17expn31862024fa17resn52372024",
+          "expediente": "FA 17 EXP N° 3186-2024",
+          "resolucion": "FA 17 RES N° 5237-2024",
+          "page": 1,
+          "row": 5,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa17expn75292026fa17resn50012026",
+          "expediente": "FA 17 EXP N° 7529-2026",
+          "resolucion": "FA 17 RES N° 5001-2026",
+          "page": 1,
+          "row": 6,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa17expn8642025fa17resn62782025",
+          "expediente": "FA 17 EXP N° 864-2025",
+          "resolucion": "FA 17 RES N° 6278-2025",
+          "page": 1,
+          "row": 7,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa17expn72762024fa17resn37892024",
+          "expediente": "FA 17 EXP N° 7276-2024",
+          "resolucion": "FA 17 RES N° 3789-2024",
+          "page": 1,
+          "row": 8,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa17expn37002024fa17resn76422024",
+          "expediente": "FA 17 EXP N° 3700-2024",
+          "resolucion": "FA 17 RES N° 7642-2024",
+          "page": 1,
+          "row": 9,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa16expn92222026fa16resn66082026",
+          "expediente": "FA 16 EXP N° 9222-2026",
+          "resolucion": "FA 16 RES N° 6608-2026",
+          "page": 1,
+          "row": 10,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa16expn36992026fa16resn37752026",
+          "expediente": "FA 16 EXP N° 3699-2026",
+          "resolucion": "FA 16 RES N° 3775-2026",
+          "page": 2,
+          "row": 3,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa16expn33882026fa16resn47172026",
+          "expediente": "FA 16 EXP N° 3388-2026",
+          "resolucion": "FA 16 RES N° 4717-2026",
+          "page": 2,
+          "row": 4,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa16expn25902025fa16resn17752025",
+          "expediente": "FA 16 EXP N° 2590-2025",
+          "resolucion": "FA 16 RES N° 1775-2025",
+          "page": 2,
+          "row": 5,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa16expn67862026fa16resn73742026",
+          "expediente": "FA 16 EXP N° 6786-2026",
+          "resolucion": "FA 16 RES N° 7374-2026",
+          "page": 2,
+          "row": 6,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa16expn51022025fa16resn11202025",
+          "expediente": "FA 16 EXP N° 5102-2025",
+          "resolucion": "FA 16 RES N° 1120-2025",
+          "page": 2,
+          "row": 7,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa16expn94922025fa16resn46902025",
+          "expediente": "FA 16 EXP N° 9492-2025",
+          "resolucion": "FA 16 RES N° 4690-2025",
+          "page": 2,
+          "row": 8,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa15expn12962026fa15resn88292026",
+          "expediente": "FA 15 EXP N° 1296-2026",
+          "resolucion": "FA 15 RES N° 8829-2026",
+          "page": 2,
+          "row": 9,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa15expn34102024fa15resn13782024",
+          "expediente": "FA 15 EXP N° 3410-2024",
+          "resolucion": "FA 15 RES N° 1378-2024",
+          "page": 2,
+          "row": 10,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa16expn9652025fa16resn85882025",
+          "expediente": "FA 16 EXP N° 965-2025",
+          "resolucion": "FA 16 RES N° 8588-2025",
+          "page": 3,
+          "row": 1,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa16expn67642025fa16resn4212025",
+          "expediente": "FA 16 EXP N° 6764-2025",
+          "resolucion": "FA 16 RES N° 421-2025",
+          "page": 3,
+          "row": 2,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa15expn24072026fa15resn27032026",
+          "expediente": "FA 15 EXP N° 2407-2026",
+          "resolucion": "FA 15 RES N° 2703-2026",
+          "page": 3,
+          "row": 3,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa15expn89582025fa15resn78352025",
+          "expediente": "FA 15 EXP N° 8958-2025",
+          "resolucion": "FA 15 RES N° 7835-2025",
+          "page": 3,
+          "row": 4,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa15expn18282026fa15resn11422026",
+          "expediente": "FA 15 EXP N° 1828-2026",
+          "resolucion": "FA 15 RES N° 1142-2026",
+          "page": 3,
+          "row": 5,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa15expn85762025fa15resn64122025",
+          "expediente": "FA 15 EXP N° 8576-2025",
+          "resolucion": "FA 15 RES N° 6412-2025",
+          "page": 3,
+          "row": 6,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa12expn39722026fa12resn32842026",
+          "expediente": "FA 12 EXP N° 3972-2026",
+          "resolucion": "FA 12 RES N° 3284-2026",
+          "page": 5,
+          "row": 7,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa11expn6682024fa11resn29132024",
+          "expediente": "FA 11 EXP N° 668-2024",
+          "resolucion": "FA 11 RES N° 2913-2024",
+          "page": 6,
+          "row": 9,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa11expn9362024fa11resn35472024",
+          "expediente": "FA 11 EXP N° 936-2024",
+          "resolucion": "FA 11 RES N° 3547-2024",
+          "page": 6,
+          "row": 10,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa11expn30532025fa11resn52192025",
+          "expediente": "FA 11 EXP N° 3053-2025",
+          "resolucion": "FA 11 RES N° 5219-2025",
+          "page": 7,
+          "row": 1,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa10expn65792026fa10resn38002026",
+          "expediente": "FA 10 EXP N° 6579-2026",
+          "resolucion": "FA 10 RES N° 3800-2026",
+          "page": 7,
+          "row": 2,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa10expn77332026fa10resn85262026",
+          "expediente": "FA 10 EXP N° 7733-2026",
+          "resolucion": "FA 10 RES N° 8526-2026",
+          "page": 7,
+          "row": 3,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa10expn80792024fa10resn59062024",
+          "expediente": "FA 10 EXP N° 8079-2024",
+          "resolucion": "FA 10 RES N° 5906-2024",
+          "page": 7,
+          "row": 4,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa10expn41312026fa10resn94892026",
+          "expediente": "FA 10 EXP N° 4131-2026",
+          "resolucion": "FA 10 RES N° 9489-2026",
+          "page": 7,
+          "row": 5,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa10expn67822025fa10resn98122025",
+          "expediente": "FA 10 EXP N° 6782-2025",
+          "resolucion": "FA 10 RES N° 9812-2025",
+          "page": 7,
+          "row": 6,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa10expn60542025fa10resn21182025",
+          "expediente": "FA 10 EXP N° 6054-2025",
+          "resolucion": "FA 10 RES N° 2118-2025",
+          "page": 7,
+          "row": 7,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa10expn67552024fa10resn83852024",
+          "expediente": "FA 10 EXP N° 6755-2024",
+          "resolucion": "FA 10 RES N° 8385-2024",
+          "page": 7,
+          "row": 8,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa10expn90662025fa10resn64772025",
+          "expediente": "FA 10 EXP N° 9066-2025",
+          "resolucion": "FA 10 RES N° 6477-2025",
+          "page": 7,
+          "row": 9,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa10expn57402024fa10resn90132024",
+          "expediente": "FA 10 EXP N° 5740-2024",
+          "resolucion": "FA 10 RES N° 9013-2024",
+          "page": 7,
+          "row": 10,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa08expn62062024fa08resn58472024",
+          "expediente": "FA 08 EXP N° 6206-2024",
+          "resolucion": "FA 08 RES N° 5847-2024",
+          "page": 8,
+          "row": 1,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa09expn97432025fa09resn16212025",
+          "expediente": "FA 09 EXP N° 9743-2025",
+          "resolucion": "FA 09 RES N° 1621-2025",
+          "page": 8,
+          "row": 2,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa07expn16422025fa07resn33972025",
+          "expediente": "FA 07 EXP N° 1642-2025",
+          "resolucion": "FA 07 RES N° 3397-2025",
+          "page": 8,
+          "row": 3,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa06expn26662025fa06resn9132025",
+          "expediente": "FA 06 EXP N° 2666-2025",
+          "resolucion": "FA 06 RES N° 913-2025",
+          "page": 8,
+          "row": 4,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa05expn94562026fa05resn59312026",
+          "expediente": "FA 05 EXP N° 9456-2026",
+          "resolucion": "FA 05 RES N° 5931-2026",
+          "page": 8,
+          "row": 5,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa03expn44822025fa03resn68552025",
+          "expediente": "FA 03 EXP N° 4482-2025",
+          "resolucion": "FA 03 RES N° 6855-2025",
+          "page": 8,
+          "row": 6,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa01expn232025fa01resn33952025",
+          "expediente": "FA 01 EXP N° 23-2025",
+          "resolucion": "FA 01 RES N° 3395-2025",
+          "page": 8,
+          "row": 7,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa04expn78932026fa04resn33422026",
+          "expediente": "FA 04 EXP N° 7893-2026",
+          "resolucion": "FA 04 RES N° 3342-2026",
+          "page": 8,
+          "row": 8,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "fa02expn45902024fa02resn61252024",
+          "expediente": "FA 02 EXP N° 4590-2024",
+          "resolucion": "FA 02 RES N° 6125-2024",
+          "page": 8,
+          "row": 9,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "faexpn45692026faresn89302026",
+          "expediente": "FA EXP N° 4569-2026",
+          "resolucion": "FA RES N° 8930-2026",
+          "page": 8,
+          "row": 10,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "faexpn16932025faresn32792025",
+          "expediente": "FA EXP N° 1693-2025",
+          "resolucion": "FA RES N° 3279-2025",
+          "page": 9,
+          "row": 1,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "faexpn34552025faresn82352025",
+          "expediente": "FA EXP N° 3455-2025",
+          "resolucion": "FA RES N° 8235-2025",
+          "page": 9,
+          "row": 2,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "faexpn24502026faresn89482026",
+          "expediente": "FA EXP N° 2450-2026",
+          "resolucion": "FA RES N° 8948-2026",
+          "page": 9,
+          "row": 3,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "faexpn39172026faresn84342026",
+          "expediente": "FA EXP N° 3917-2026",
+          "resolucion": "FA RES N° 8434-2026",
+          "page": 9,
+          "row": 4,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "faexpn45712026faresn4032026",
+          "expediente": "FA EXP N° 4571-2026",
+          "resolucion": "FA RES N° 403-2026",
+          "page": 9,
+          "row": 5,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "faexpn56912024faresn31432024",
+          "expediente": "FA EXP N° 5691-2024",
+          "resolucion": "FA RES N° 3143-2024",
+          "page": 9,
+          "row": 6,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "faexpn52992026faresn41592026",
+          "expediente": "FA EXP N° 5299-2026",
+          "resolucion": "FA RES N° 4159-2026",
+          "page": 9,
+          "row": 7,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "faexpn96152025faresn62462025",
+          "expediente": "FA EXP N° 9615-2025",
+          "resolucion": "FA RES N° 6246-2025",
+          "page": 9,
+          "row": 8,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "faexpn16432025faresn61782025",
+          "expediente": "FA EXP N° 1643-2025",
+          "resolucion": "FA RES N° 6178-2025",
+          "page": 9,
+          "row": 9,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "faexpn92332026faresn36532026",
+          "expediente": "FA EXP N° 9233-2026",
+          "resolucion": "FA RES N° 3653-2026",
+          "page": 9,
+          "row": 10,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "faexpn37602024faresn53642024",
+          "expediente": "FA EXP N° 3760-2024",
+          "resolucion": "FA RES N° 5364-2024",
+          "page": 11,
+          "row": 1,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "faexpn19982026faresn11182026",
+          "expediente": "FA EXP N° 1998-2026",
+          "resolucion": "FA RES N° 1118-2026",
+          "page": 11,
+          "row": 2,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "faexpn11192024faresn4822024",
+          "expediente": "FA EXP N° 1119-2024",
+          "resolucion": "FA RES N° 482-2024",
+          "page": 12,
+          "row": 2,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "k602exp010012026k602res010012026",
+          "expediente": "K6-02 EXP-01001-2026",
+          "resolucion": "K6-02 RES-01001-2026",
+          "page": 15,
+          "row": 1,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:36:13.985Z"
+        },
+        {
+          "key": "faexpn89892025faresn44012025",
+          "expediente": "FA EXP N° 8989-2025",
+          "resolucion": "FA RES N° 4401-2025",
+          "page": 10,
+          "row": 3,
+          "status": "pending",
+          "attempts": 0,
+          "updatedAt": "2026-03-26T01:37:14.559Z"
+        }
+      ],
+      "updatedAt": "2026-03-26T01:37:14.563Z"
+    }
+  },
+  "updatedAt": "2026-03-26T01:37:14.563Z"
+}

@@ -387,6 +387,894 @@
 				"--list"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "tmp-run-caso2-fast",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:02:fast",
+				"--",
+				"--project=chromium",
+				"--workers=1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-run-caso1-fast-headed-line",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npm run test:01:fast -- --headed --project=chromium --workers=1 --reporter=line"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-list-caso2-validaciones",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npx playwright test tests/casos-prueba/02-registrar-sancion-validaciones.plantilla.spec.ts --list"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-run-caso1-fast-confirm",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npm run test:01:fast -- --project=chromium --workers=1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-run-caso2-fast-headed",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npm run test:02:fast -- --headed --project=chromium --workers=1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-run-caso2-fast-headed-after-fix",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npm run test:02:fast -- --headed --project=chromium --workers=1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-validate-case1-fast-after-nav-fix",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npm run test:01:fast -- --project=chromium --workers=1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-validate-case1-fast-after-nav-fix",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npm run test:01:fast -- --project=chromium --workers=1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-run-caso2-fast-headed-after-open-fix",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npm run test:02:fast -- --headed --project=chromium --workers=1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-validate-test04-fast-script",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npm run test:04:fast -- --list"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-list-test04-fast-functional-only",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npm run test:04:fast -- --list"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-list-test04-validaciones-only",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"npm run test:04:validaciones -- --list"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-run-owasp-full",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:security:full"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-run-owasp-full-with-target",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/run-owasp-baseline-and-translate.ps1",
+				"-Target",
+				"https://reginsaqa.sunedu.gob.pe",
+				"-OutputDir",
+				"reportes/security"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-normalize-owasp-md-current",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/normalize-owasp-markdown.ps1",
+				"-InputPath",
+				"reportes/security/zap-baseline-report.md"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-normalize-owasp-md-es",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/normalize-owasp-markdown.ps1",
+				"-InputPath",
+				"reportes/security/zap-baseline-report.es.md"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-normalize-owasp-provisional-es",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/normalize-owasp-markdown.ps1",
+				"-InputPath",
+				"reportes/security/owasp-reporte-provisional-es.md"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-markdownlint-owasp-md",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"markdownlint-cli",
+				"reportes/security/zap-baseline-report.md",
+				"reportes/security/zap-baseline-report.es.md",
+				"reportes/security/owasp-reporte-provisional-es.md"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-markdownlint-owasp-md-yes",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"--yes",
+				"markdownlint-cli",
+				"reportes/security/zap-baseline-report.md",
+				"reportes/security/zap-baseline-report.es.md",
+				"reportes/security/owasp-reporte-provisional-es.md"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-normalize-all-owasp-md-after-extend",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"./scripts/security/normalize-owasp-markdown.ps1 -InputPath reportes/security/zap-baseline-report.md; ./scripts/security/normalize-owasp-markdown.ps1 -InputPath reportes/security/zap-baseline-report.es.md; ./scripts/security/normalize-owasp-markdown.ps1 -InputPath reportes/security/owasp-reporte-provisional-es.md"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-markdownlint-owasp-md-final",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"--yes",
+				"markdownlint-cli",
+				"reportes/security/zap-baseline-report.md",
+				"reportes/security/zap-baseline-report.es.md",
+				"reportes/security/owasp-reporte-provisional-es.md"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-reapply-normalize-and-lint",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"./scripts/security/normalize-owasp-markdown.ps1 -InputPath reportes/security/zap-baseline-report.md; ./scripts/security/normalize-owasp-markdown.ps1 -InputPath reportes/security/zap-baseline-report.es.md; ./scripts/security/normalize-owasp-markdown.ps1 -InputPath reportes/security/owasp-reporte-provisional-es.md; npx --yes markdownlint-cli reportes/security/zap-baseline-report.md reportes/security/zap-baseline-report.es.md reportes/security/owasp-reporte-provisional-es.md"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-markdownlint-single-zap",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"--yes",
+				"markdownlint-cli",
+				"reportes/security/zap-baseline-report.md"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-markdownlint-to-file",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"npx --yes markdownlint-cli reportes/security/zap-baseline-report.md reportes/security/zap-baseline-report.es.md reportes/security/owasp-reporte-provisional-es.md *> .tmp-markdownlint-owasp.log; if ($LASTEXITCODE -eq 0) { 'OK' | Set-Content .tmp-markdownlint-owasp.exit } else { \"FAIL:$LASTEXITCODE\" | Set-Content .tmp-markdownlint-owasp.exit }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-clean-markdownlint-temp",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"Remove-Item -ErrorAction SilentlyContinue .tmp-markdownlint-owasp.exit, .tmp-markdownlint-owasp.log"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "cleanup-owasp-residual-files",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$files = Get-ChildItem -Path 'reportes/security' -File | Where-Object { ($_.Name -like 'owasp-reporte-*.rtf') -or ($_.Name -like 'owasp-reporte-*.md') -or ($_.Name -eq 'owasp-comparacion-interna.md') }; if ($files) { $files | Remove-Item -Force; 'REMOVED:'; $files | ForEach-Object { $_.FullName } } else { 'NO_FILES' }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-owasp-dated-verify",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$env:REGINSA_URL='https://reginsaqa.sunedu.gob.pe/'; npm run test:security:full"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show-latest-owasp-dated-folder",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$latest = Get-ChildItem -Path 'reportes/security/owasp' -Directory | Sort-Object Name -Descending | Select-Object -First 1; if (-not $latest) { 'NO_OWASP_DIR' } else { \"LATEST=$($latest.FullName)\"; Get-ChildItem -Path $latest.FullName -File | Sort-Object Name | ForEach-Object { $_.Name } }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show-latest-owasp-dated-folder-fixed",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$latest = Get-ChildItem -Path 'reportes/security/owasp' -Directory | Sort-Object Name -Descending | Select-Object -First 1; if (-not $latest) { Write-Output 'NO_OWASP_DIR' } else { Write-Output ('LATEST=' + $latest.FullName); Get-ChildItem -Path $latest.FullName -File | Sort-Object Name | ForEach-Object { Write-Output $_.Name } }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "rerun-owasp-dated-after-path-fix",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$env:REGINSA_URL='https://reginsaqa.sunedu.gob.pe/'; npm run test:security:full"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "list-latest-owasp-dated-files-after-fix",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$latest = Get-ChildItem -Path 'reportes/security/owasp' -Directory | Sort-Object Name -Descending | Select-Object -First 1; if (-not $latest) { Write-Output 'NO_OWASP_DIR' } else { Write-Output ('LATEST=' + $latest.FullName); Get-ChildItem -Path $latest.FullName -File | Sort-Object Name | ForEach-Object { Write-Output $_.Name } }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "owasp-dated-clean-verification-log",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$env:REGINSA_URL='https://reginsaqa.sunedu.gob.pe/'; npm run test:security:full *> .tmp-owasp-dated.log; if ($LASTEXITCODE -eq 0) { 'OK' | Set-Content .tmp-owasp-dated.exit } else { ('FAIL:' + $LASTEXITCODE) | Set-Content .tmp-owasp-dated.exit }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "owasp-dated-run-direct-npm",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:security:full"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "cleanup-failed-owasp-dated-folders",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$base = 'reportes/security/owasp'; if (-not (Test-Path $base)) { Write-Output 'NO_BASE_DIR'; exit 0 }; $dirs = Get-ChildItem -Path $base -Directory | Sort-Object Name; $removed = @(); $kept = @(); foreach ($d in $dirs) { $required = @('zap-baseline-report.json','zap-baseline-report.html','owasp-resumen-estructurado.json','owasp-reporte-provisional-es.docx','owasp-reporte-provisional-en.docx','owasp-reporte-ejecutivo-es.docx','owasp-reporte-ejecutivo-en.docx'); $missing = @($required | Where-Object { -not (Test-Path (Join-Path $d.FullName $_)) }); if ($missing.Count -gt 0) { Remove-Item -Path $d.FullName -Recurse -Force; $removed += [PSCustomObject]@{Folder=$d.Name;Reason='incomplete'} } else { $kept += [PSCustomObject]@{Folder=$d.Name;Reason='complete'} } }; 'REMOVED'; if ($removed.Count -eq 0) { 'NONE' } else { $removed | ForEach-Object { \"$($_.Folder)|$($_.Reason)\" } }; 'KEPT'; if ($kept.Count -eq 0) { 'NONE' } else { $kept | ForEach-Object { \"$($_.Folder)|$($_.Reason)\" } }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-owasp-dated-language-folders",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$env:REGINSA_URL='https://reginsaqa.sunedu.gob.pe/'; npm run test:security:full"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "list-latest-owasp-dated-tree",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$latest = Get-ChildItem -Path 'reportes/security/owasp' -Directory | Sort-Object Name -Descending | Select-Object -First 1; Write-Output ('LATEST=' + $latest.FullName); Get-ChildItem -Path $latest.FullName -Recurse | ForEach-Object { $_.FullName.Replace((Get-Location).Path + '\\\\','') }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-sonar-dated-lang-split",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"report:sonar:dated"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "list-latest-sonar-dated-structure",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$latest = Get-ChildItem -Path 'reportes/security/sonar' -Directory | Sort-Object Name -Descending | Select-Object -First 1; Write-Output ('LATEST=' + $latest.FullName); Get-ChildItem -Path $latest.FullName -Recurse | ForEach-Object { $_.FullName.Replace((Get-Location).Path + '\\\\','') }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-postman-master-punku",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"powershell -ExecutionPolicy Bypass -File scripts/postman/run-newman-completo.ps1 -Caso master -PunkuCode DEMO -PunkuCodeChallenge DEMO"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-run-newman-all-log",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\postman\\run-newman-completo.ps1 -Caso all > .tmp-newman-all.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-sonar-dated-rerun-log",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"set SONAR_HOST_URL=http://localhost:9000 && set SONAR_TOKEN=squ_c816f26dbc3d72b5585736d52129b00d5fdefe38 && npm run report:sonar:dated > .tmp-sonar-dated-rerun.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-sonar-dated-rerun-log-2",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"set SONAR_HOST_URL=http://localhost:9000 && set SONAR_TOKEN=squ_c816f26dbc3d72b5585736d52129b00d5fdefe38 && npm run report:sonar:dated > .tmp-sonar-dated-rerun-2.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-sonar-auth-precheck-log",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"set SONAR_HOST_URL=http://localhost:9000 && set SONAR_TOKEN=squ_c816f26dbc3d72b5585736d52129b00d5fdefe38 && npm run report:sonar:dated > .tmp-sonar-auth-precheck.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-sonar-dated-rerun-log-3",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"set SONAR_HOST_URL=http://localhost:9000 && set SONAR_TOKEN=mi token && npm run report:sonar:dated > .tmp-sonar-dated-rerun-3.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-sonar-dated-rerun-log-4",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"set SONAR_HOST_URL=http://localhost:9000 && set SONAR_TOKEN=squ_fbe5e4b8d7a4fe2a3c5f47f266cb787754cb6241 && npm run report:sonar:dated > .tmp-sonar-dated-rerun-4.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-copy-k6-grafana",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"copy /y tests\\performance\\k6\\*.js tests\\performance\\k6-grafana\\ > nul && dir /b tests\\performance\\k6-grafana"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-run-k6-02-debug-fresh",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"set K6_DEBUG_ERRORS=1 && set K6_DEBUG_ERRORS_MAX=20 && npm run k6:02 -- --cantidad=1 > .tmp-k6-02-fresh.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-k6-02-verify-sancion-create",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"set K6_DEBUG_ERRORS=1 && set K6_DEBUG_ERRORS_MAX=30 && powershell -ExecutionPolicy Bypass -File scripts/run-caso02-local.ps1 -Mode k6 -K6Output local -K6Cantidad 1 -K6SleepSeconds 0 -K6ForceSingleSancion 0 > .tmp-k6-02-verify.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-k6-02-debug-payloads",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"set K6_DEBUG_ERRORS=1 && set K6_DEBUG_ERRORS_MAX=50 && npm run k6:02 -- --cantidad=1 > .tmp-k6-02-5xx-debug.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-k6-caso02-cantidad1",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:02",
+				"--",
+				"--cantidad=1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-k6-caso02-cantidad10-local-path",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:02",
+				"--",
+				"--cantidad=10"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-k6-caso01-cleanup",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:01",
+				"--",
+				"--cantidad=2",
+				"--skipprewarm",
+				"--skipdataset"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-k6-caso01-cleanup-fresh",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:01",
+				"--",
+				"--cantidad=2",
+				"--skipprewarm"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-k6-caso01-cleanup-fresh",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:01",
+				"--",
+				"--cantidad=2",
+				"--skipprewarm"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-k6-caso02-cantidad10-local-path",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:02",
+				"--",
+				"--cantidad=10"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-caso01-grafana-cloud",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:01:grafana",
+				"--",
+				"--cantidad=10"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-caso02-grafana-cloud",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:02:grafana",
+				"--",
+				"--cantidad=10"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-caso01-check-alignment",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:01",
+				"--",
+				"--cantidad=10",
+				"--skipprewarm"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-caso01-ready-now",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:01",
+				"--",
+				"--cantidad=2",
+				"--skipprewarm"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-caso01-original-messages-now",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:01",
+				"--",
+				"--cantidad=2",
+				"--skipprewarm"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-caso01-compact-output",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:01",
+				"--",
+				"--cantidad=10",
+				"--skipprewarm"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-caso01-style-restored",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:01",
+				"--",
+				"--cantidad=2",
+				"--skipprewarm"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-k6-03-postfix",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:03",
+				"--",
+				"--cantidad=5"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-validate-test04-fast-list",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:04:fast",
+				"--",
+				"--list"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-caso04-func-login-fix",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:04:fast",
+				"--",
+				"--project=chromium",
+				"--workers=3",
+				"--repeat-each=2",
+				"--reporter=line"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-k6-caso04-short",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:04",
+				"--",
+				"--cantidad=2"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-git-diff-caso04-file",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"diff",
+				"--",
+				"tests/casos-prueba/04-reconsiderar-con-sanciones.spec.ts"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-git-diff-caso04-u0",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"diff",
+				"-U0",
+				"--",
+				"tests/casos-prueba/04-reconsiderar-con-sanciones.spec.ts"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-validate-caso04-fast-3x9-coverage",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:04:fast",
+				"--",
+				"--project=chromium",
+				"--workers=3",
+				"--repeat-each=9",
+				"--reporter=line"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-caso04-fast-3x9-filtered",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"Set-Location 'D:\\SUNEDU\\AUTOMATIZACION\\REGINSA'; New-Item -ItemType Directory -Force 'reportes\\temp' | Out-Null; npm run test:04:fast -- --project=chromium --workers=3 --repeat-each=9 --reporter=line *>&1 | Tee-Object -FilePath 'reportes\\temp\\caso04-fast-3x9-full.log' | Select-String -Pattern 'Running 9 tests|TRAZA_SELECCION_C04|REGISTRO ASIGNADO|passed|failed|slot='"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-validate-caso04-after-dynamic",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:04:fast",
+				"--",
+				"--project=chromium",
+				"--workers=3",
+				"--repeat-each=9",
+				"--reporter=line"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-validate-caso02-after-pattern-update",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:02:fast",
+				"--",
+				"--project=chromium",
+				"--workers=3",
+				"--repeat-each=9",
+				"--reporter=line"
+			],
+			"isBackground": false
 		}
 	]
 }

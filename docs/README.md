@@ -25,7 +25,7 @@ Nota operativa:
 - Plan de migración Casos 02/03/04: [PLAN_MIGRACION_CASOS_02_03_04.md](PLAN_MIGRACION_CASOS_02_03_04.md)
 - Prompt operativo del agente: [prompts/AGENTE_QA_DEVSECOPS_REGINSA.md](prompts/AGENTE_QA_DEVSECOPS_REGINSA.md)
 - Pipeline Azure plantilla: [plantillas/azure-pipelines.qa-devsecops.yml](plantillas/azure-pipelines.qa-devsecops.yml)
-- K6 smoke plantilla: [plantillas/k6_smoke_reginsa.js](plantillas/k6_smoke_reginsa.js)
+- K6 smoke oficial: [../tests/performance/k6-grafana/reginsa-smoke.js](../tests/performance/k6-grafana/reginsa-smoke.js)
 - Checklist PR QA/Seguridad: [plantillas/CHECKLIST_PR_QA_SEGURIDAD.md](plantillas/CHECKLIST_PR_QA_SEGURIDAD.md)
 - Variables seguras de ejemplo: [plantillas/.env.example](plantillas/.env.example)
 - Usuarios y credenciales: [USUARIOS_CREDENCIALES.md](USUARIOS_CREDENCIALES.md)

@@ -165,10 +165,26 @@ En **Settings** > **Secrets and variables** > **Actions**, definir:
 - `REGINSA_USER_1` ... `REGINSA_USER_8`
 - `REGINSA_PASS_1` ... `REGINSA_PASS_8`
 
+Para escalar más allá de slots fijos, definir además (opcional):
+
+- `REGINSA_CREDENTIALS_JSON`
+Formato sugerido: `[ {"usuario":"u1","contrasena":"p1"}, {"usuario":"u2","contrasena":"p2"} ]`
+
 Opcional:
 
 - `REGINSA_USER`
 - `REGINSA_PASS`
+
+Precedencia aplicada en workflows (institucional):
+
+1. Input manual de `workflow_dispatch` (override temporal).
+2. Variables (`vars`) de repositorio/ambiente.
+3. `secrets` (fuente base).
+
+Recomendación:
+
+- Mantener operación normal sin inputs sensibles.
+- Usar inputs solo en contingencia y volver luego a `secrets`.
 
 ---
 

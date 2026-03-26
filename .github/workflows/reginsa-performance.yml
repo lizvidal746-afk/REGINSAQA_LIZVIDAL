@@ -31,7 +31,7 @@ jobs:
 
       - name: Run k6 smoke
         run: >-
-          k6 run tests/performance/k6/reginsa-smoke.js
+          k6 run tests/performance/k6-grafana/reginsa-smoke.js
           --env BASE_URL=${{ env.BASE_URL }}
           --vus ${{ github.event.inputs.vus || '10' }}
           --duration ${{ github.event.inputs.duration || '60s' }}

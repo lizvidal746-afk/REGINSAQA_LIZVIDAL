@@ -17,6 +17,9 @@ function parseIntEnv(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+const LIST_PAGE_SIZE = Math.max(10, parseIntEnv(__ENV.K6_CASO03_PAGE_SIZE || __ENV.K6_LIST_PAGE_SIZE, 100));
+const DETAIL_PAGE_SIZE = Math.max(10, parseIntEnv(__ENV.K6_CASO03_DETAIL_PAGE_SIZE || LIST_PAGE_SIZE, LIST_PAGE_SIZE));
+
 const EXPECT_RATE_LIMIT = (__ENV.K6_EXPECT_RATE_LIMIT || '0') === '1';
 const AUTO_LOGIN_ENABLED = (__ENV.K6_AUTO_LOGIN || '1') === '1';
 const AUTH_ENDPOINT = String(__ENV.REGINSA_AUTH_ENDPOINT || __ENV.K6_AUTH_LOGIN_ENDPOINT || '/Auth/Login').trim();
@@ -276,7 +279,7 @@ function pickCabeceraId(listResponse) {
 export default function () {
   const listarResp = postJson(ENDPOINT_LISTAR_CABECERA, {
     nPageNumber: 1,
-    nPageSize: 20,
+    nPageSize: LIST_PAGE_SIZE,
     sinSanciones: true,
     reconsideracionPendiente: true
   });
@@ -298,7 +301,7 @@ export default function () {
 
   const detalleResp = postJson(ENDPOINT_LISTAR_DETALLE, {
     nPageNumber: 1,
-    nPageSize: 20,
+    nPageSize: DETAIL_PAGE_SIZE,
     idCabeceraInfraccionSancion: cabeceraId,
     sinSanciones: true
   });

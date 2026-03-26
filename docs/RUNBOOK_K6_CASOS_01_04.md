@@ -13,10 +13,10 @@ Incluye modos:
 
 ## 1. Scripts k6 oficiales
 
-- `tests/performance/k6/k6_caso_01_agregar_administrado.js`
-- `tests/performance/k6/k6_caso_02_registrar_sancion.js`
-- `tests/performance/k6/k6_caso_03_reconsiderar_sin_sanciones.js`
-- `tests/performance/k6/k6_caso_04_reconsiderar_con_sanciones.js`
+- `tests/performance/k6-grafana/k6_caso_01_agregar_administrado.js`
+- `tests/performance/k6-grafana/k6_caso_02_registrar_sancion.js`
+- `tests/performance/k6-grafana/k6_caso_03_reconsiderar_sin_sanciones.js`
+- `tests/performance/k6-grafana/k6_caso_04_reconsiderar_con_sanciones.js`
 
 ## 2. Pipelines performance
 
@@ -70,8 +70,6 @@ Recomendacion:
 ## 5. Variables base (terminal)
 
 ```powershell
-$env:K6_CLOUD_TOKEN="TU_K6_CLOUD_TOKEN"
-$env:K6_CLOUD_PROJECT_ID="6803756"
 $env:BASE_API="https://reginsaapiqa.sunedu.gob.pe/api"
 $env:BASE_URL=$env:BASE_API
 ```
@@ -121,7 +119,7 @@ $env:SIZE="100"
 $env:VUS="8"
 $env:SLEEP="0.2"
 
-k6 run -o cloud tests/performance/k6/k6_caso_02_registrar_sancion.js `
+k6 run tests/performance/k6-grafana/k6_caso_02_registrar_sancion.js `
   --tag test_type=burst --tag profile=operativo --tag case=caso02 --tag mode=burst --tag size=$env:SIZE `
   --env BASE_API=$env:BASE_API --env TOKEN1=$env:TOKEN1 `
   --env K6_RUN_ID=$env:RUNID --env K6_BURST_MODE=1 --env K6_FIXED_VUS=$env:VUS `
@@ -149,7 +147,7 @@ $env:SLEEP="0.2"
 # Dataset requerido por STRICT_UNIQUE
 node scripts/generar-k6-caso01-dataset.js --strategy=fresh --size=$env:SIZE --fail-fast=1
 
-k6 run -o cloud tests/performance/k6/k6_caso_01_agregar_administrado.js `
+k6 run tests/performance/k6-grafana/k6_caso_01_agregar_administrado.js `
   --tag test_type=burst --tag profile=operativo --tag case=caso01 --tag mode=burst --tag size=$env:SIZE `
   --env BASE_URL=$env:BASE_URL --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER `
   --env REGINSA_USER=$env:REGINSA_USER --env REGINSA_PASS=$env:REGINSA_PASS --env K6_AUTO_LOGIN=1 `
@@ -164,25 +162,25 @@ k6 run -o cloud tests/performance/k6/k6_caso_01_agregar_administrado.js `
 ### 6.1 Caso 02 - token + sleep 0
 
 ```powershell
-k6 run -o cloud tests/performance/k6/k6_caso_02_registrar_sancion.js --tag case=caso02 --tag mode=burst --env BASE_API=$env:BASE_API --env TOKEN1=$env:TOKEN1 --env K6_BURST_MODE=1 --env K6_FIXED_VUS=20 --env K6_FIXED_ITERATIONS=500 --env K6_TOTAL_REGISTROS=500 --env K6_SLEEP_SECONDS=0 --summary-export reportes/k6-caso02-zero-token.json
+k6 run tests/performance/k6-grafana/k6_caso_02_registrar_sancion.js --tag case=caso02 --tag mode=burst --env BASE_API=$env:BASE_API --env TOKEN1=$env:TOKEN1 --env K6_BURST_MODE=1 --env K6_FIXED_VUS=20 --env K6_FIXED_ITERATIONS=500 --env K6_TOTAL_REGISTROS=500 --env K6_SLEEP_SECONDS=0 --summary-export reportes/k6-caso02-zero-token.json
 ```
 
 ### 6.2 Caso 02 - auto + sleep minimo
 
 ```powershell
-k6 run -o cloud tests/performance/k6/k6_caso_02_registrar_sancion.js --tag case=caso02 --tag mode=burst --env BASE_API=$env:BASE_API --env REGINSA_USER=$env:REGINSA_USER --env REGINSA_PASS=$env:REGINSA_PASS --env K6_AUTO_LOGIN=1 --env K6_BURST_MODE=1 --env K6_FIXED_VUS=8 --env K6_FIXED_ITERATIONS=100 --env K6_TOTAL_REGISTROS=100 --env K6_SLEEP_SECONDS=0.2 --summary-export reportes/k6-caso02-min-auto.json
+k6 run tests/performance/k6-grafana/k6_caso_02_registrar_sancion.js --tag case=caso02 --tag mode=burst --env BASE_API=$env:BASE_API --env REGINSA_USER=$env:REGINSA_USER --env REGINSA_PASS=$env:REGINSA_PASS --env K6_AUTO_LOGIN=1 --env K6_BURST_MODE=1 --env K6_FIXED_VUS=8 --env K6_FIXED_ITERATIONS=100 --env K6_TOTAL_REGISTROS=100 --env K6_SLEEP_SECONDS=0.2 --summary-export reportes/k6-caso02-min-auto.json
 ```
 
 ### 6.3 Caso 03 - auto + sleep minimo
 
 ```powershell
-k6 run -o cloud tests/performance/k6/k6_caso_03_reconsiderar_sin_sanciones.js --tag case=caso03 --tag mode=burst --env BASE_API=$env:BASE_API --env REGINSA_USER=$env:REGINSA_USER --env REGINSA_PASS=$env:REGINSA_PASS --env K6_AUTO_LOGIN=1 --env K6_BURST_MODE=1 --env K6_FIXED_VUS=8 --env K6_FIXED_ITERATIONS=100 --env K6_TOTAL_REGISTROS=100 --env K6_SLEEP_SECONDS=0.2 --summary-export reportes/k6-caso03-min-auto.json
+k6 run tests/performance/k6-grafana/k6_caso_03_reconsiderar_sin_sanciones.js --tag case=caso03 --tag mode=burst --env BASE_API=$env:BASE_API --env REGINSA_USER=$env:REGINSA_USER --env REGINSA_PASS=$env:REGINSA_PASS --env K6_AUTO_LOGIN=1 --env K6_BURST_MODE=1 --env K6_FIXED_VUS=8 --env K6_FIXED_ITERATIONS=100 --env K6_TOTAL_REGISTROS=100 --env K6_SLEEP_SECONDS=0.2 --summary-export reportes/k6-caso03-min-auto.json
 ```
 
 ### 6.4 Caso 04 - token + sleep 0
 
 ```powershell
-k6 run -o cloud tests/performance/k6/k6_caso_04_reconsiderar_con_sanciones.js --tag case=caso04 --tag mode=burst --env BASE_API=$env:BASE_API --env TOKEN1=$env:TOKEN1 --env K6_BURST_MODE=1 --env K6_FIXED_VUS=10 --env K6_FIXED_ITERATIONS=200 --env K6_TOTAL_REGISTROS=200 --env K6_SLEEP_SECONDS=0 --summary-export reportes/k6-caso04-zero-token.json
+k6 run tests/performance/k6-grafana/k6_caso_04_reconsiderar_con_sanciones.js --tag case=caso04 --tag mode=burst --env BASE_API=$env:BASE_API --env TOKEN1=$env:TOKEN1 --env K6_BURST_MODE=1 --env K6_FIXED_VUS=10 --env K6_FIXED_ITERATIONS=200 --env K6_TOTAL_REGISTROS=200 --env K6_SLEEP_SECONDS=0 --summary-export reportes/k6-caso04-zero-token.json
 ```
 
 ## 8. Pipeline: parametros recomendados
@@ -231,7 +229,7 @@ Mapeo:
 ### 4. Sin datos en reporte
 
 - Verificar `--summary-export`
-- Validar subida a cloud (`K6_CLOUD_TOKEN`, `K6_CLOUD_PROJECT_ID`)
+- Validar salida de summary local en carpeta `reportes/`
 
 ## 11. Version ultra-corta (operacion diaria)
 

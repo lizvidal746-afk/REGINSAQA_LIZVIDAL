@@ -16,7 +16,7 @@ on:
         required: false
         default: "0.60"
       max_newman_failed:
-        description: "Max failed assertions in reportes/newman/*.xml"
+        description: "Max failed assertions in reportes/newman/**/*.xml"
         required: false
         default: "0"
 
@@ -94,18 +94,18 @@ jobs:
             Write-Host 'K6 summary not found (se omite)'
           }
 
-          $newmanFiles = Get-ChildItem -Path 'reportes/newman' -Filter '*.xml' -ErrorAction SilentlyContinue
+          $newmanFiles = Get-ChildItem -Path 'reportes/newman' -Filter '*.xml' -File -Recurse -ErrorAction SilentlyContinue
           if ($newmanFiles) {
             foreach ($nf in $newmanFiles) {
               [xml]$xml = Get-Content $nf.FullName -Raw
               $failed = 0
               if ($xml.testsuite -and $xml.testsuite.failures) { $failed = [int]$xml.testsuite.failures }
               if ($xml.testsuite -and $xml.testsuite.errors) { $failed += [int]$xml.testsuite.errors }
-              Write-Host "Newman file=$($nf.Name) failed=$failed"
-              if ($failed -gt $maxNewmanFailed) { $gateErrors += "Newman $($nf.Name) failed=$failed > $maxNewmanFailed" }
+              Write-Host "Newman file=$($nf.FullName) failed=$failed"
+              if ($failed -gt $maxNewmanFailed) { $gateErrors += "Newman $($nf.FullName) failed=$failed > $maxNewmanFailed" }
             }
           } else {
-            Write-Host 'Newman XML not found in reportes/newman (se omite)'
+            Write-Host 'Newman XML not found in reportes/newman recursively (se omite)'
           }
 
           if ($gateErrors.Count -gt 0) {

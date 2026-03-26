@@ -1,0 +1,85 @@
+version: 0.2
+
+env:
+  variables:
+    TEST_TYPE: k6
+    K6_CASE_TARGET: "02"
+    K6_OUTPUT: local
+    K6_CANTIDAD: "10"
+    K6_VUS: "1"
+    K6_PERF_DURATION: "2m"
+    K6_SLEEP_SECONDS: "0"
+    K6_EXPECT_RATE_LIMIT: "1"
+    K6_ENFORCE_OK_RATE: "0"
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "[install] npm ci"
+      - npm ci
+      - echo "[install] install k6"
+      - |
+        if ! command -v k6 >/dev/null 2>&1; then
+          curl -fsSL https://dl.k6.io/key.gpg | gpg --dearmor > /tmp/k6.gpg
+          sudo mv /tmp/k6.gpg /usr/share/keyrings/k6-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+        fi
+      - k6 version
+      - echo "[install] verify powershell"
+      - |
+        if ! command -v pwsh >/dev/null 2>&1; then
+          echo "ERROR: pwsh no disponible en el ambiente de CodeBuild."
+          echo "Instala PowerShell en la imagen o usa una imagen custom con pwsh."
+          exit 1
+        fi
+
+  pre_build:
+    commands:
+      - echo "[pre_build] TEST_TYPE=$TEST_TYPE K6_CASE_TARGET=$K6_CASE_TARGET K6_OUTPUT=$K6_OUTPUT"
+      - |
+        if [ "$TEST_TYPE" != "k6" ]; then
+          echo "ERROR: TEST_TYPE soportado en este buildspec es k6"
+          exit 1
+        fi
+
+  build:
+    commands:
+      - echo "[build] Ejecutando k6 por caso"
+      - |
+        case "$K6_CASE_TARGET" in
+          00)
+            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso00-login.ps1 -K6Output "$K6_OUTPUT" -K6Cantidad "$K6_CANTIDAD" -K6Vus "$K6_VUS" -PerfDuration "$K6_PERF_DURATION" -K6SleepSeconds "$K6_SLEEP_SECONDS" -GrafanaProjectId "$K6_CLOUD_PROJECT_ID" -GrafanaToken "$K6_CLOUD_TOKEN"
+            ;;
+          01)
+            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso01-local.ps1 -Mode k6 -K6Output "$K6_OUTPUT" -K6Cantidad "$K6_CANTIDAD" -K6Vus "$K6_VUS" -PerfDuration "$K6_PERF_DURATION" -K6SleepSeconds "$K6_SLEEP_SECONDS" -GrafanaProjectId "$K6_CLOUD_PROJECT_ID" -GrafanaToken "$K6_CLOUD_TOKEN"
+            ;;
+          02)
+            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso02-local.ps1 -Mode k6 -K6Output "$K6_OUTPUT" -K6Cantidad "$K6_CANTIDAD" -K6Vus "$K6_VUS" -PerfDuration "$K6_PERF_DURATION" -K6SleepSeconds "$K6_SLEEP_SECONDS" -K6ExpectRateLimit "$K6_EXPECT_RATE_LIMIT" -K6EnforceOkRate "$K6_ENFORCE_OK_RATE" -GrafanaProjectId "$K6_CLOUD_PROJECT_ID" -GrafanaToken "$K6_CLOUD_TOKEN"
+            ;;
+          03)
+            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso03-local.ps1 -Mode k6 -K6Output "$K6_OUTPUT" -K6Cantidad "$K6_CANTIDAD" -K6Vus "$K6_VUS" -PerfDuration "$K6_PERF_DURATION" -K6SleepSeconds "$K6_SLEEP_SECONDS" -K6ExpectRateLimit "$K6_EXPECT_RATE_LIMIT" -K6EnforceOkRate "$K6_ENFORCE_OK_RATE" -GrafanaProjectId "$K6_CLOUD_PROJECT_ID" -GrafanaToken "$K6_CLOUD_TOKEN"
+            ;;
+          04)
+            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 -K6Output "$K6_OUTPUT" -K6Cantidad "$K6_CANTIDAD" -K6Vus "$K6_VUS" -PerfDuration "$K6_PERF_DURATION" -K6SleepSeconds "$K6_SLEEP_SECONDS" -K6ExpectRateLimit "$K6_EXPECT_RATE_LIMIT" -K6EnforceOkRate "$K6_ENFORCE_OK_RATE" -GrafanaProjectId "$K6_CLOUD_PROJECT_ID" -GrafanaToken "$K6_CLOUD_TOKEN"
+            ;;
+          *)
+            echo "ERROR: K6_CASE_TARGET invalido: $K6_CASE_TARGET"
+            exit 1
+            ;;
+        esac
+
+  post_build:
+    commands:
+      - echo "[post_build] k6 finalizado"
+
+artifacts:
+  files:
+    - reportes/**/*.json
+    - reportes/*.json
+    - allure-results/**/*
+    - allure-report/**/*
+  discard-paths: no

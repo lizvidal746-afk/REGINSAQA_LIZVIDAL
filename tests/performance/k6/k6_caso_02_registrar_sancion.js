@@ -355,7 +355,10 @@ function isBusinessSuccess(response, requireData = false) {
   return json.oData !== null && json.oData !== undefined;
 }
 
-function sancionesPorRegistro(totalRegistros) {
+function sancionesPorRegistro(totalRegistros, globalIdx) {
+  if (totalRegistros === 3) {
+    return (Math.max(0, globalIdx) % 2 === 0) ? 2 : 1;
+  }
   if (FORCE_SINGLE_SANCION) return 1;
   const configured = Number.parseInt(__ENV.K6_SANCIONES_POR_REGISTRO || '1', 10);
   if (Number.isFinite(configured) && configured > 0) {
@@ -442,7 +445,7 @@ function normalizarTextoCabecera(value) {
 
 function generarPayload(globalIdx) {
   const totalRegistros = Number.parseInt(__ENV.K6_TOTAL_REGISTROS || __ENV.K6_FIXED_ITERATIONS || '1', 10);
-  const cantidadSanciones = sancionesPorRegistro(Number.isFinite(totalRegistros) ? totalRegistros : 1);
+  const cantidadSanciones = sancionesPorRegistro(Number.isFinite(totalRegistros) ? totalRegistros : 1, globalIdx);
   const cantidadMedidas = medidasPorRegistro();
   const totalObjetivo = Number.isFinite(totalRegistros) ? Math.max(1, totalRegistros) : 1;
 
@@ -456,9 +459,9 @@ function generarPayload(globalIdx) {
   let casosSeleccionados = [];
 
   if (SANCION_MODE === 'sequence' && seqSanciones.length > 0) {
-    const selectedKey = seqSanciones[Math.max(0, globalIdx) % seqSanciones.length];
-    const found = casos.find((item) => item.key === selectedKey) || casos[0];
-    casosSeleccionados = [found];
+    const start = Math.max(0, globalIdx) % seqSanciones.length;
+    const selectedKeys = Array.from({ length: Math.max(1, cantidadSanciones) }, (_, i) => seqSanciones[(start + i) % seqSanciones.length]);
+    casosSeleccionados = selectedKeys.map((key) => casos.find((item) => item.key === key) || casos[0]);
   } else {
     casosSeleccionados = casos
       .sort(() => Math.random() - 0.5)

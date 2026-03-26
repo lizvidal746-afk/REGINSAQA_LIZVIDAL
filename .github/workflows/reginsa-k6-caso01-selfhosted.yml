@@ -4,11 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       auth_mode:
-        description: "Auth mode: token|auto"
+        description: "Auth mode: auto|token (default auto)"
         required: false
-        default: "token"
+        default: "auto"
       k6_auth_header:
         description: "Bearer token when auth_mode=token"
+        required: false
+        default: ""
+      token1:
+        description: "Alias token when auth_mode=token (equivale a TOKEN1 en terminal)"
         required: false
         default: ""
       sleep_mode:
@@ -102,8 +106,9 @@ jobs:
 
       - name: Run K6 Caso 01
         env:
-          AUTH_MODE: ${{ github.event.inputs.auth_mode || 'token' }}
+          AUTH_MODE: ${{ github.event.inputs.auth_mode || 'auto' }}
           AUTH_HEADER_INPUT: ${{ github.event.inputs.k6_auth_header }}
+          TOKEN1_INPUT: ${{ github.event.inputs.token1 }}
           PACK_INPUT: ${{ github.event.inputs.pack || 'none' }}
           PACK_STEP_INPUT: ${{ github.event.inputs.pack_step || '1' }}
           SLEEP_MODE: ${{ github.event.inputs.sleep_mode || 'min' }}
@@ -201,6 +206,7 @@ jobs:
           set AUTH_FLAGS=
           if /I "%AUTH_MODE%"=="token" (
             if not "%AUTH_HEADER_INPUT%"=="" set AUTH_FLAGS= --env K6_AUTH_HEADER=%AUTH_HEADER_INPUT%
+            if "%AUTH_HEADER_INPUT%"=="" if not "%TOKEN1_INPUT%"=="" set AUTH_FLAGS= --env TOKEN1=%TOKEN1_INPUT%
           )
           if /I "%AUTH_MODE%"=="auto" (
             set AUTH_FLAGS= --env K6_AUTO_LOGIN=1 --env REGINSA_USER=%REGINSA_USER% --env REGINSA_PASS=%REGINSA_PASS%
@@ -212,7 +218,7 @@ jobs:
           set BURST_FLAGS=
           if /I "%BURST_MODE_INPUT%"=="true" set BURST_FLAGS= --env K6_BURST_MODE=1 --env K6_BURST_ITER_PER_VU=%BURST_ITER_INPUT%
 
-          k6 run tests/performance/k6/k6_caso_01_agregar_administrado.js --env BASE_URL=%BASE_API_URL% --env K6_FIXED_VUS=%FIXED_VUS_INPUT% --env K6_FIXED_ITERATIONS=%FIXED_ITER_INPUT% --env K6_TOTAL_REGISTROS=%FIXED_ITER_INPUT% --env K6_STRICT_UNIQUE=%STRICT_UNIQUE_INPUT% --env K6_SLEEP_SECONDS=%RUN_SLEEP% --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 %AUTH_FLAGS% %BURST_FLAGS% --summary-export reportes/k6-caso01-selfhosted-summary.json
+          k6 run tests/performance/k6-grafana/k6_caso_01_agregar_administrado.js --env BASE_URL=%BASE_API_URL% --env K6_FIXED_VUS=%FIXED_VUS_INPUT% --env K6_FIXED_ITERATIONS=%FIXED_ITER_INPUT% --env K6_TOTAL_REGISTROS=%FIXED_ITER_INPUT% --env K6_STRICT_UNIQUE=%STRICT_UNIQUE_INPUT% --env K6_SLEEP_SECONDS=%RUN_SLEEP% --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 %AUTH_FLAGS% %BURST_FLAGS% --summary-export reportes/k6-caso01-selfhosted-summary.json
 
       - name: Upload artifacts
         if: always() && github.event.inputs.upload_artifacts == 'true'

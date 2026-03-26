@@ -90,17 +90,33 @@ En el repositorio, crear:
 
 ### 5.2 Variables/secretos (Settings > Secrets and variables > Actions)
 
-Configurar:
+Configurar (base obligatoria):
 
 - `REGINSA_URL`
 - `REGINSA_USER_1` ... `REGINSA_USER_8`
 - `REGINSA_PASS_1` ... `REGINSA_PASS_8`
+
+Escalamiento recomendado para muchos usuarios (opcional):
+
+- `REGINSA_CREDENTIALS_JSON` (secret) con arreglo JSON:
+  - `[ {"usuario":"u1","contrasena":"p1"}, {"usuario":"u2","contrasena":"p2"} ]`
 
 Variables no secretas sugeridas:
 
 - `POOL_TARGET` (ej. `600`)
 - `PW_WORKERS` (ej. `6`)
 - `PW_REPEAT_EACH` (ej. `10`)
+
+Política institucional (precedencia de configuración):
+
+1. `workflow_dispatch inputs` (solo override temporal y controlado).
+2. `Repository/Environment Variables` (`vars`) para parámetros no sensibles por ambiente.
+3. `Secrets` como fuente base/estable de URL y credenciales.
+
+Nota operativa:
+
+- Si no envías inputs, el workflow usa `vars`/`secrets` automáticamente.
+- No ingresar usuario/contraseña manualmente en cada ejecución salvo contingencia.
 
 ### 5.3 Flujo funcional (resumen)
 
@@ -184,6 +200,15 @@ Para performance k6:
 - `VUs` (usuarios virtuales)
 - `duration` / `stages`
 - dataset input (desde pool)
+
+## 8.1 Gobierno de secretos y overrides
+
+Regla de seguridad para GitHub Actions:
+
+1. Credenciales siempre en `secrets`.
+2. URL por defecto en `secrets` (o `vars` por ambiente si se requiere rotación no sensible).
+3. Inputs (`reginsa_url`, `credentials_json`) solo para pruebas excepcionales y con auditoría.
+4. Si se usa `credentials_json` por input, remover ese valor en la siguiente corrida y volver al modo base por `secrets`.
 
 ## 9) Comandos de referencia rápida
 

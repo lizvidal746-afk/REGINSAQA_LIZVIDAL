@@ -39,6 +39,9 @@ const reservadosPath = path.join(__dirname, '../../reportes/administrados-reserv
 const reservadosLockPath = path.join(__dirname, '../../reportes/administrados-reservados.lock');
 const runMarkerPath = path.join(__dirname, '../../reportes/administrados-run.json');
 const runLockPath = path.join(__dirname, '../../reportes/administrados-run.lock');
+const funcionalSecuenciaPath = path.join(__dirname, '../../reportes/funcional-caso01-secuencia.json');
+const funcionalSecuenciaStatePath = path.join(__dirname, '../../reportes/funcional-caso01-secuencia-state.json');
+const funcionalSecuenciaLockPath = path.join(__dirname, '../../reportes/funcional-caso01-secuencia.lock');
 const poolPath = path.join(__dirname, '../../reportes/administrados-pool.json');
 const poolLockPath = path.join(__dirname, '../../reportes/administrados-pool.lock');
 const historicoAdministradosPath = path.join(__dirname, '../../reportes/historico/administrados-historico.json');
@@ -141,6 +144,8 @@ interface RegistroPoolAdministrado {
   nombreComercial: string;
   creadoEn: string;
 }
+
+let funcionalPrefixLabelCache: string | null = null;
 
 // ===============================
 // FUNCIONES AUXILIARES
@@ -295,6 +300,61 @@ function withFileLock<T>(lockPath: string, fn: () => T, timeoutMs = 15000, retry
   }
 }
 
+function readJsonObject(filePath: string): Record<string, unknown> {
+  if (!fs.existsSync(filePath)) return {};
+  try {
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    if (!raw.trim()) return {};
+    const data = JSON.parse(raw);
+    return data && typeof data === 'object' ? data as Record<string, unknown> : {};
+  } catch {
+    return {};
+  }
+}
+
+function resolveFuncRunId(): string {
+  const envRunId = String(process.env.REGINSA_FUNC_RUN_ID || process.env.TEST_RUN_ID || '').trim();
+  if (envRunId) return envRunId;
+  return `manual-${new Date().toISOString().slice(0, 19)}`;
+}
+
+function getFunctionalPrefixLabel(): string {
+  if (funcionalPrefixLabelCache) return funcionalPrefixLabelCache;
+
+  asegurarDirectorioReportes();
+  const runId = resolveFuncRunId();
+
+  const label = withFileLock<string>(funcionalSecuenciaLockPath, () => {
+    const seqObj = readJsonObject(funcionalSecuenciaPath);
+    const stateObj = readJsonObject(funcionalSecuenciaStatePath);
+
+    const last = Number(seqObj.last || 0);
+    const stateRunId = String(stateObj.runId || '').trim();
+    const stateSeq = Number(stateObj.sequence || 0);
+
+    let sequence = Number.isFinite(stateSeq) && stateSeq > 0 ? stateSeq : 0;
+    if (!stateRunId || stateRunId !== runId || sequence <= 0) {
+      sequence = Math.max(1, (Number.isFinite(last) ? last : 0) + 1);
+      fs.writeFileSync(funcionalSecuenciaPath, JSON.stringify({ last: sequence, updatedAt: new Date().toISOString() }, null, 2));
+      fs.writeFileSync(funcionalSecuenciaStatePath, JSON.stringify({ runId, sequence, updatedAt: new Date().toISOString() }, null, 2));
+    }
+
+    return `F ${String(sequence).padStart(2, '0')}`;
+  });
+
+  funcionalPrefixLabelCache = label;
+  return label;
+}
+
+function aplicarPrefijoFuncional(value: string): string {
+  const texto = String(value || '').trim();
+  const label = getFunctionalPrefixLabel();
+  if (!texto) return `${label} SIN-NOMBRE`;
+  const normalized = normalizarTexto(texto);
+  if (normalized.startsWith(`${label} `)) return texto;
+  return `${label} ${texto}`;
+}
+
 function leerReservados(): RegistroReservado[] {
   if (!fs.existsSync(reservadosPath)) return [];
   try {
@@ -405,22 +465,24 @@ function tomarDatoUnicoDesdePool(
     if (!candidato) return null;
 
     const rucNorm = normalizarTexto(normalizarRuc(candidato.ruc));
-    const razonNorm = normalizarTexto(candidato.razonSocial);
-    const nombreNorm = normalizarTexto(candidato.nombreComercial);
+    const razonSocial = aplicarPrefijoFuncional(candidato.razonSocial);
+    const nombreComercial = aplicarPrefijoFuncional(candidato.nombreComercial || quitarSufijoEmpresa(razonSocial));
+    const razonNorm = normalizarTexto(razonSocial);
+    const nombreNorm = normalizarTexto(nombreComercial);
 
     if (rucsRegistrados.has(rucNorm) || razonesRegistradas.has(razonNorm) || razonesRegistradas.has(nombreNorm)) {
       continue;
     }
 
-    const reservado = reservarAdministrado(candidato.ruc, candidato.razonSocial);
+    const reservado = reservarAdministrado(candidato.ruc, razonSocial);
     if (!reservado) {
       continue;
     }
 
     return {
       ruc: candidato.ruc,
-      razonSocial: candidato.razonSocial,
-      nombreComercial: candidato.nombreComercial
+      razonSocial,
+      nombreComercial
     };
   }
   return null;
@@ -773,7 +835,7 @@ function generarRazonSocialUnica(usados: Set<string>): string {
   const prefijo = PREFIJOS_RAZON_SOCIAL[Math.floor(Math.random() * PREFIJOS_RAZON_SOCIAL.length)];
   const base = `${prefijo} COMERCIAL ${Math.floor(Math.random() * 9000) + 1000}`;
   const sufijo = SUFIJOS_EMPRESA[Math.floor(Math.random() * SUFIJOS_EMPRESA.length)];
-  const razon = `${base} ${sufijo}`;
+  const razon = aplicarPrefijoFuncional(`${base} ${sufijo}`);
   const normalizada = normalizarTexto(razon);
   if (usados.has(normalizada)) {
     return generarRazonSocialUnica(usados);
@@ -832,6 +894,7 @@ function construirRazonSocialMasiva(ruc: string, usados: Set<string>, sequenceIn
   } else {
     razon = `${prefijo} ${tipoEntidad} ${ultimos5} ${sufijo}`;
   }
+  razon = aplicarPrefijoFuncional(razon);
   const normalizada = normalizarTexto(razon);
   if (usados.has(normalizada)) {
     return generarRazonSocialUnica(usados);
@@ -1027,6 +1090,34 @@ async function seleccionarEstado(page: Page, estado: string): Promise<void> {
   const textoEstado = esInformal ? /Informal|Ley de Creaci[oó]n/i : new RegExp(estado, 'i');
   const scope = await asegurarFormularioAdministrado(page);
 
+  const leerEstadoActual = async (): Promise<string> => {
+    const candidatos = [
+      scope.locator('#estado .p-dropdown-label').first(),
+      scope.locator('.p-dropdown-label').first(),
+      scope.getByRole('combobox', { name: /Seleccione|Estado/i }).first(),
+      scope.locator('input[formcontrolname*="estado" i], input[name*="estado" i], input[aria-label*="estado" i]').first()
+    ];
+
+    for (const candidato of candidatos) {
+      const visible = await candidato.isVisible().catch(() => false);
+      if (!visible) continue;
+
+      const texto = (await candidato.innerText().catch(() => '')).trim();
+      if (texto) return texto;
+
+      const valor = (await candidato.inputValue().catch(() => '')).trim();
+      if (valor) return valor;
+    }
+
+    return '';
+  };
+
+  const estadoActual = normalizarTexto(await leerEstadoActual());
+  if (estadoActual && !/SELECCIONE|SELECT/i.test(estadoActual)) {
+    console.log(`ℹ️ Estado ya viene cargado (${estadoActual}). Se mantiene sin cambios.`);
+    return;
+  }
+
   const seleccionarDesdeOpcionesVisibles = async (): Promise<boolean> => {
     const opcionExacta = page.getByRole('option', { name: textoEstado }).first();
     if (await opcionExacta.isVisible().catch(() => false)) {
@@ -1090,16 +1181,69 @@ async function seleccionarEstado(page: Page, estado: string): Promise<void> {
 
   const triggersFallback = [
     scope.getByRole('combobox', { name: /Seleccione|Estado/i }).first(),
+    scope.getByRole('combobox').first(),
     scope.locator('[id*="estado" i][role="combobox"], [aria-label*="estado" i][role="combobox"]').first(),
-    scope.locator('.p-dropdown:has(#estado), .p-dropdown[aria-label*="estado" i], .p-select').first()
+    scope.locator('.p-dropdown:has(#estado), .p-dropdown[aria-label*="estado" i], .p-select, .p-dropdown').first(),
+    scope.locator('[aria-haspopup="listbox"]').first()
   ];
 
-  for (const trigger of triggersFallback) {
-    const visible = await trigger.isVisible().catch(() => false);
-    if (!visible) continue;
-    await trigger.click({ force: true }).catch(() => {});
+  for (let intento = 0; intento < 4; intento++) {
+    for (const trigger of triggersFallback) {
+      const visible = await trigger.isVisible().catch(() => false);
+      if (!visible) continue;
+
+      await trigger.scrollIntoViewIfNeeded().catch(() => {});
+      await trigger.click({ force: true }).catch(() => {});
+      await page.waitForTimeout(450);
+
+      if (await seleccionarDesdeOpcionesVisibles()) {
+        return;
+      }
+
+      await page.keyboard.press('ArrowDown').catch(() => {});
+      await page.waitForTimeout(120);
+      await page.keyboard.press('Enter').catch(() => {});
+      await page.waitForTimeout(200);
+
+      const textoSeleccionado = await scope
+        .locator('.p-dropdown-label, [role="combobox"], input[formcontrolname*="estado" i]')
+        .first()
+        .innerText()
+        .catch(async () => scope.locator('.p-dropdown-label, [role="combobox"], input[formcontrolname*="estado" i]').first().inputValue().catch(() => ''));
+
+      if (textoEstado.test(String(textoSeleccionado)) || (/\S+/.test(String(textoSeleccionado)) && !/seleccione/i.test(String(textoSeleccionado)))) {
+        return;
+      }
+    }
+
+    await page.keyboard.press('Escape').catch(() => {});
     await page.waitForTimeout(250);
+  }
+
+  // Fallback final: usar el bloque visual de Estado y escoger la primera opción válida.
+  const bloqueEstado = scope
+    .locator('xpath=.//*[self::label or self::span][contains(translate(normalize-space(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚ", "abcdefghijklmnopqrstuvwxyzáéíóú"), "estado")]/ancestor::*[self::div or self::td][1]')
+    .first();
+  const triggerBloque = bloqueEstado
+    .locator('.p-dropdown, .p-select, [role="combobox"], [aria-haspopup="listbox"]')
+    .first();
+
+  if (await triggerBloque.isVisible().catch(() => false)) {
+    await triggerBloque.scrollIntoViewIfNeeded().catch(() => {});
+    await triggerBloque.click({ force: true }).catch(() => {});
+    await page.waitForTimeout(450);
+
     if (await seleccionarDesdeOpcionesVisibles()) {
+      return;
+    }
+
+    const opcionGenerica = page
+      .locator('.p-dropdown-panel:visible li[role="option"], .p-dropdown-panel:visible .p-dropdown-item, [role="listbox"] [role="option"]:visible')
+      .filter({ hasText: /^(?!.*seleccione).+/i })
+      .first();
+
+    if (await opcionGenerica.isVisible({ timeout: 2500 }).catch(() => false)) {
+      await opcionGenerica.click({ force: true }).catch(() => {});
       return;
     }
   }

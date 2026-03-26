@@ -13,7 +13,9 @@ type CampoOmitir =
   | 'ninguno';
 
 const TOAST_OK = '.p-toast-message-success, .p-toast-message[aria-label*="Éxito"], .p-toast-message[style*="green"]';
+const TOAST_ERROR = '.p-toast-message-error, .p-toast-message[aria-label*="Error"], .p-toast-message[style*="red"]';
 const VALIDACION_DUPLICADO_REGEX = /ya\s*existe|duplicad|repetid|registrad|no\s*puede\s*repetirse|se\s*encuentra\s*registrad/i;
+const VALIDACION_RUC_11_DIGITOS_REGEX = /debe\s*tener\s*11\s*d[ií]gitos\s*num[eé]ricos/i;
 
 async function iniciarFormulario(page: Page, workerIndex: number) {
   await iniciarSesionYNavegar(page, 'infractor', workerIndex);
@@ -27,7 +29,7 @@ function crearDatosBase() {
   const ruc = /^\d{11}$/.test(rucGenerado)
     ? rucGenerado
     : String(Math.floor(10000000000 + Math.random() * 90000000000));
-  const razonSocial = `VALIDACION RAZON SOCIAL ${marca} S.A.C.`;
+  const razonSocial = `FA VALIDACION RAZON SOCIAL ${marca} S.A.C.`;
   const nombreComercial = `VALIDACION COMERCIAL ${marca}`;
   return { ruc, razonSocial, nombreComercial };
 }
@@ -133,6 +135,39 @@ async function intentarGuardar(page: Page): Promise<{ ok: boolean; modalSigueAbi
   return { ok, modalSigueAbierto };
 }
 
+async function obtenerBotonGuardar(page: Page): Promise<Locator> {
+  const scope = await obtenerScopeFormulario(page);
+  const btnGuardar = scope.getByRole('button', { name: /^Guardar$/i }).first();
+  await btnGuardar.waitFor({ state: 'visible', timeout: 10000 });
+  return btnGuardar;
+}
+
+async function esperarToastErrorConTexto(page: Page, regex: RegExp): Promise<boolean> {
+  const toast = page.locator(TOAST_ERROR).first();
+  const visible = await toast.isVisible({ timeout: 4000 }).catch(() => false);
+  if (!visible) return false;
+
+  const texto = (await toast.innerText().catch(() => '')).trim();
+  return regex.test(texto);
+}
+
+async function detectarMensajeValidacion(scope: Locator, regex: RegExp): Promise<boolean> {
+  const mensajeDirecto = scope.getByText(regex).first();
+  if (await mensajeDirecto.isVisible().catch(() => false)) return true;
+
+  const mensajes = scope.locator('.p-error, .invalid-feedback, .mat-error, .text-danger, .error-message, small');
+  const total = await mensajes.count().catch(() => 0);
+
+  for (let i = 0; i < total; i++) {
+    const texto = await mensajes.nth(i).innerText().catch(() => '');
+    if (regex.test(texto || '')) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 async function detectarValidacionDuplicado(page: Page): Promise<boolean> {
   const scope = await obtenerScopeFormulario(page);
 
@@ -156,6 +191,16 @@ test.describe('@validaciones AGREGAR ADMINISTRADO - Campos obligatorios y reglas
   test.describe.configure({ mode: 'serial' });
   test.setTimeout(240000);
 
+  test.afterEach(async ({ page }, testInfo) => {
+    const screenshot = await page.screenshot({ fullPage: true }).catch(() => null);
+    if (screenshot) {
+      await testInfo.attach('validacion-evidencia-ui', {
+        body: screenshot,
+        contentType: 'image/png'
+      });
+    }
+  });
+
   const obligatorios: Array<{ campo: CampoOmitir; titulo: string }> = [
     { campo: 'ruc', titulo: 'R.U.C. obligatorio' },
     { campo: 'razonSocial', titulo: 'Razón Social obligatoria' },
@@ -168,9 +213,16 @@ test.describe('@validaciones AGREGAR ADMINISTRADO - Campos obligatorios y reglas
       await iniciarFormulario(page, testInfo.workerIndex);
       await completarFormularioBase(page, item.campo);
 
+      const btnGuardar = await obtenerBotonGuardar(page);
+      const deshabilitadoAntes = !(await btnGuardar.isEnabled().catch(() => false));
+      expect(deshabilitadoAntes).toBeTruthy();
+
       const resultado = await intentarGuardar(page);
       expect(resultado.ok).toBeFalsy();
       expect(resultado.modalSigueAbierto).toBeTruthy();
+
+      const sigueDeshabilitado = !(await btnGuardar.isEnabled().catch(() => false));
+      expect(sigueDeshabilitado).toBeTruthy();
     });
   }
 
@@ -185,13 +237,24 @@ test.describe('@validaciones AGREGAR ADMINISTRADO - Campos obligatorios y reglas
       await iniciarFormulario(page, testInfo.workerIndex);
       await completarFormularioBase(page, 'ninguno', { ruc: item.valor });
 
+      const scope = await obtenerScopeFormulario(page);
+      const rucInput = await inputCampo(scope, 'ruc');
+      const razonInput = await inputCampo(scope, 'razonSocial');
+      await rucInput.blur().catch(async () => {
+        await razonInput.click({ force: true });
+      });
+      await page.waitForTimeout(400);
+
+      const msg11 = await detectarMensajeValidacion(scope, VALIDACION_RUC_11_DIGITOS_REGEX);
+      expect(msg11).toBeTruthy();
+
       const resultado = await intentarGuardar(page);
       expect(resultado.ok).toBeFalsy();
       expect(resultado.modalSigueAbierto).toBeTruthy();
     });
   }
 
-  test('valida RUC y Razón Social duplicados en segundo intento', async ({ page }, testInfo) => {
+  test('valida RUC duplicado con toast de error superior derecho', async ({ page }, testInfo) => {
     const datos = crearDatosBase();
 
     await iniciarFormulario(page, testInfo.workerIndex);
@@ -201,12 +264,43 @@ test.describe('@validaciones AGREGAR ADMINISTRADO - Campos obligatorios y reglas
 
     await abrirFormularioNuevoAdministrado(page);
     await page.waitForTimeout(700);
-    await completarFormularioBase(page, 'ninguno', datos);
+    const datosSegundo = crearDatosBase();
+    await completarFormularioBase(page, 'ninguno', {
+      ruc: datos.ruc,
+      razonSocial: datosSegundo.razonSocial,
+      nombreComercial: datosSegundo.nombreComercial
+    });
 
     const segundoGuardado = await intentarGuardar(page);
+    const toastDuplicadoRuc = await esperarToastErrorConTexto(page, /ya\s*existe.*ruc|ruc.*ya\s*existe|misma\s*ruc|entidad\s+con\s+el\s+ruc/i);
     const duplicadoDetectado = await detectarValidacionDuplicado(page);
 
     expect(segundoGuardado.ok).toBeFalsy();
-    expect(segundoGuardado.modalSigueAbierto || duplicadoDetectado).toBeTruthy();
+    expect(toastDuplicadoRuc || duplicadoDetectado || segundoGuardado.modalSigueAbierto).toBeTruthy();
+  });
+
+  test('valida Razón Social duplicada con toast de error superior derecho', async ({ page }, testInfo) => {
+    const datos = crearDatosBase();
+
+    await iniciarFormulario(page, testInfo.workerIndex);
+    await completarFormularioBase(page, 'ninguno', datos);
+    const primerGuardado = await intentarGuardar(page);
+    expect(primerGuardado.ok).toBeTruthy();
+
+    await abrirFormularioNuevoAdministrado(page);
+    await page.waitForTimeout(700);
+    const datosSegundo = crearDatosBase();
+    await completarFormularioBase(page, 'ninguno', {
+      ruc: datosSegundo.ruc,
+      razonSocial: datos.razonSocial,
+      nombreComercial: datosSegundo.nombreComercial
+    });
+
+    const segundoGuardado = await intentarGuardar(page);
+    const toastDuplicadoRazon = await esperarToastErrorConTexto(page, /misma\s*raz[oó]n\s*social|raz[oó]n\s*social.*ya\s*existe|entidad\s+con\s+la\s+misma\s+raz[oó]n/i);
+    const duplicadoDetectado = await detectarValidacionDuplicado(page);
+
+    expect(segundoGuardado.ok).toBeFalsy();
+    expect(toastDuplicadoRazon || duplicadoDetectado || segundoGuardado.modalSigueAbierto).toBeTruthy();
   });
 });

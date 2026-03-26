@@ -31,3 +31,11 @@ Separación documental:
 
 - Personal GitHub: [docs/personal/README.md](docs/personal/README.md)
 - Entorno SUNEDU: [docs/sunedu/README.md](docs/sunedu/README.md)
+
+Variables recomendadas para K6 local:
+
+- Copiar `.env.k6.example` como `.env.k6.local` y completar valores reales.
+- Cargar variables en la terminal actual con:
+  - `powershell -ExecutionPolicy Bypass -File scripts/cargar-variables-k6.ps1`
+- Si deseas persistir variables para nuevas terminales:
+  - `powershell -ExecutionPolicy Bypass -File scripts/cargar-variables-k6.ps1 -Persist`

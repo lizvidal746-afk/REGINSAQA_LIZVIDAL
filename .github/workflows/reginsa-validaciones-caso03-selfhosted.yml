@@ -23,6 +23,14 @@ on:
         description: "Upload artifacts (true/false)"
         required: false
         default: "true"
+      reginsa_url:
+        description: "Override URL REGINSA (optional)"
+        required: false
+        default: ""
+      credentials_json:
+        description: "JSON array de credenciales [{\"usuario\":\"u\",\"contrasena\":\"p\"}] (optional)"
+        required: false
+        default: ""
 
 jobs:
   validaciones-caso03:
@@ -32,8 +40,9 @@ jobs:
       run:
         shell: cmd
     env:
-      REGINSA_URL: ${{ secrets.REGINSA_URL }}
-      BASE_URL: ${{ secrets.REGINSA_URL }}
+      REGINSA_URL: ${{ github.event.inputs.reginsa_url || vars.REGINSA_URL || secrets.REGINSA_URL }}
+      BASE_URL: ${{ github.event.inputs.reginsa_url || vars.REGINSA_URL || secrets.REGINSA_URL }}
+      REGINSA_CREDENTIALS_JSON: ${{ github.event.inputs.credentials_json || vars.REGINSA_CREDENTIALS_JSON || secrets.REGINSA_CREDENTIALS_JSON || '' }}
       REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
       REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
       REGINSA_USER_2: ${{ secrets.REGINSA_USER_2 }}
@@ -60,7 +69,7 @@ jobs:
         run: npx playwright install chromium
 
       - name: Run validaciones Caso 03
-        run: npx playwright test tests/casos-prueba/03-reconsiderar-sin-sanciones-validaciones.plantilla.spec.ts --workers=${{ github.event.inputs.workers || '1' }} --repeat-each=${{ github.event.inputs.repeat_each || '1' }} --project=chromium
+        run: npx playwright test tests/casos-prueba/03-reconsiderar-sin-sanciones-validaciones.plantilla.spec.ts --workers=1 --repeat-each=1 --project=chromium
 
       - name: Upload artifacts
         if: always() && github.event.inputs.upload_artifacts == 'true'

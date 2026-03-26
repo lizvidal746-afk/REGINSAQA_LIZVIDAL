@@ -20,7 +20,7 @@ Set-Location $root
 
 if (-not (Test-Path 'reportes')) { New-Item -ItemType Directory -Path 'reportes' | Out-Null }
 
-k6 run tests/performance/k6/templates/k6_rate_limit_stress_case02.js `
+k6 run tests/performance/k6-grafana/templates/k6_rate_limit_stress_case02.js `
   --env "BASE_API=$BaseApi" `
   --env "RL_ENDPOINT=$Endpoint" `
   --env "STRESS_LOW_RPM=$LowRpm" `

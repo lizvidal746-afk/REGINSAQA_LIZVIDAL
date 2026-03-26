@@ -16,13 +16,61 @@ import 'dotenv/config';
 // Este archivo SOLO lee esas variables; no guardar claves en código.
 const construirPoolCredenciales = () => {
   const pool: Array<{ usuario: string; contraseña: string }> = [];
-  for (let i = 1; i <= 8; i++) {
-    const usuario = process.env[`REGINSA_USER_${i}`] || '';
-    const contraseña = process.env[`REGINSA_PASS_${i}`] || '';
-    if (usuario && contraseña) {
-      pool.push({ usuario, contraseña });
+  const vistos = new Set<string>();
+
+  const agregar = (usuarioRaw: string, contraseñaRaw: string) => {
+    const usuario = (usuarioRaw || '').trim();
+    const contraseña = (contraseñaRaw || '').trim();
+    if (!usuario || !contraseña) return;
+    const clave = `${usuario}::${contraseña}`;
+    if (vistos.has(clave)) return;
+    vistos.add(clave);
+    pool.push({ usuario, contraseña });
+  };
+
+  const jsonCredenciales = (process.env.REGINSA_CREDENTIALS_JSON || '').trim();
+  if (jsonCredenciales) {
+    try {
+      const items = JSON.parse(jsonCredenciales);
+      if (Array.isArray(items)) {
+        for (const item of items) {
+          if (!item || typeof item !== 'object') continue;
+          const registro = item as Record<string, unknown>;
+          const usuario = String(
+            registro.usuario ||
+            registro.user ||
+            registro.username ||
+            ''
+          );
+          const contraseña = String(
+            registro.contraseña ||
+            registro.contrasena ||
+            registro.pass ||
+            registro.password ||
+            ''
+          );
+          agregar(usuario, contraseña);
+        }
+      }
+    } catch {
+      console.warn('⚠️ REGINSA_CREDENTIALS_JSON no tiene formato JSON válido. Se ignora este origen.');
     }
   }
+
+  const slots = Object.keys(process.env)
+    .map((key) => {
+      const m = /^REGINSA_USER_(\d+)$/.exec(key);
+      return m ? Number(m[1]) : NaN;
+    })
+    .filter((n) => Number.isFinite(n))
+    .sort((a, b) => a - b);
+
+  for (const slot of slots) {
+    const usuario = process.env[`REGINSA_USER_${slot}`] || '';
+    const contraseña = process.env[`REGINSA_PASS_${slot}`] || '';
+    agregar(usuario, contraseña);
+  }
+
   return pool;
 };
 
@@ -77,8 +125,45 @@ const seleccionarCredencial = (workerIndex?: number): { usuario: string; contras
   return usuarios[0];
 };
 
+const esModoCompactoLogs = (): boolean => {
+  const executionMode = (process.env.REGINSA_EXECUTION_MODE || '').toLowerCase();
+  return executionMode === 'fast' || executionMode === 'scale' || process.env.SKIP_SCREENSHOTS === '1';
+};
+
+const permitirLogsDetallados = (overrideVarName?: string): boolean => {
+  if (overrideVarName && process.env[overrideVarName] === '1') {
+    return true;
+  }
+  return !esModoCompactoLogs();
+};
+
 export function obtenerCredencial(workerIndex?: number): { usuario: string; contraseña: string } {
   return seleccionarCredencial(workerIndex);
+}
+
+function construirUrlModulo(baseUrlActual: string, fallbackUrl: string, hashTarget: string): string {
+  const rutaHash = hashTarget.replace(/^#\/?/, '').replace(/^\/+/, '');
+  const baseOrigen = (() => {
+    try {
+      return new URL(baseUrlActual).origin;
+    } catch {
+      try {
+        return new URL(fallbackUrl).origin;
+      } catch {
+        return '';
+      }
+    }
+  })();
+
+  if (baseOrigen) {
+    return `${baseOrigen}/#/${rutaHash}`;
+  }
+
+  const fallbackPlano = (fallbackUrl || '').replace(/#.*$/, '').replace(/\/$/, '');
+  if (/^https?:\/\//i.test(fallbackPlano)) {
+    return `${fallbackPlano}/#/${rutaHash}`;
+  }
+  return `https://${fallbackPlano}/#/${rutaHash}`;
 }
 
 /**
@@ -91,43 +176,260 @@ export async function iniciarSesionYNavegar(
   modulo: 'infractor' | 'administrado' | 'sancion' = 'infractor',
   workerIndex?: number
 ): Promise<void> {
-  console.log('🔐 INICIALIZANDO SESIÓN Y NAVEGACIÓN...');
+  const detailedAuthLogs = permitirLogsDetallados('REGINSA_VERBOSE_AUTH_LOGS');
+  const logAuth = (message: string) => {
+    if (detailedAuthLogs) {
+      console.log(message);
+    }
+  };
+
+  logAuth('🔐 INICIALIZANDO SESIÓN Y NAVEGACIÓN...');
+  const executionMode = (process.env.REGINSA_EXECUTION_MODE || '').toLowerCase();
+  const isFast = executionMode === 'fast' || process.env.SKIP_SCREENSHOTS === '1';
+  const pauseShort = isFast ? 120 : 300;
+  const pauseMedium = isFast ? 250 : 800;
+  const pauseLong = isFast ? 350 : 1000;
   const credenciales = obtenerCredencialesConfiguradas();
   const usuarioEnv = process.env.REGINSA_USER || '';
   const contraseñaEnv = process.env.REGINSA_PASS || '';
   const credencialActiva = seleccionarCredencial(workerIndex);
   if (usuarioEnv && contraseñaEnv && !(typeof workerIndex === 'number' && credenciales.usuarios.length > 0 && !permitirUsuarioUnicoEnParalelo)) {
-    console.log('⚠️ REGINSA_USER/REGINSA_PASS definidos: todos los workers usarán el mismo usuario.');
+    logAuth('⚠️ REGINSA_USER/REGINSA_PASS definidos: todos los workers usarán el mismo usuario.');
   } else if (typeof workerIndex === 'number' && credenciales.usuarios.length > 0) {
-    console.log(`🔁 Pool paralelo activo: ${credenciales.usuarios.length} usuarios disponibles.`);
+    logAuth(`🔁 Pool paralelo activo: ${credenciales.usuarios.length} usuarios disponibles.`);
     const usuariosDisponibles = credenciales.usuarios
       .map((item) => item.usuario)
       .filter((usuario) => !!usuario)
       .join(', ');
     if (usuariosDisponibles) {
-      console.log(`👥 Usuarios disponibles: ${usuariosDisponibles}`);
+      logAuth(`👥 Usuarios disponibles: ${usuariosDisponibles}`);
     }
 
-    const slotsFaltantes: number[] = [];
-    for (let slot = 1; slot <= 8; slot++) {
+    const slotsDetectados = Object.keys(process.env)
+      .map((key) => {
+        const m = /^REGINSA_USER_(\d+)$/.exec(key);
+        return m ? Number(m[1]) : NaN;
+      })
+      .filter((n) => Number.isFinite(n))
+      .sort((a, b) => a - b);
+
+    const slotsFaltantes = slotsDetectados.filter((slot) => {
       const hasUser = !!(process.env[`REGINSA_USER_${slot}`] || '').trim();
       const hasPass = !!(process.env[`REGINSA_PASS_${slot}`] || '').trim();
-      if (!hasUser || !hasPass) {
-        slotsFaltantes.push(slot);
-      }
-    }
+      return !hasUser || !hasPass;
+    });
     if (slotsFaltantes.length > 0) {
       console.warn(`⚠️ Slots de credenciales incompletos: ${slotsFaltantes.join(', ')}.`);
     }
   }
-  console.log(`👤 Usuario asignado: ${credencialActiva.usuario} (worker ${typeof workerIndex === 'number' ? workerIndex : 0})`);
+  logAuth(`👤 Usuario asignado: ${credencialActiva.usuario} (worker ${typeof workerIndex === 'number' ? workerIndex : 0})`);
+
+  const esperarPaginaEstable = async (): Promise<void> => {
+    await page.waitForLoadState('domcontentloaded').catch(() => {});
+    await page.waitForLoadState('networkidle', { timeout: isFast ? 7000 : 12000 }).catch(() => {});
+  };
+
+  const esPantallaErrorSistema = async (): Promise<boolean> => {
+    const btnAcceder = page.getByRole('button', { name: /Acceder Ahora/i }).first();
+    if (await btnAcceder.isVisible().catch(() => false)) {
+      return false;
+    }
+
+    const urlActual = page.url() || '';
+    if (/#\/home\b/i.test(urlActual)) {
+      return false;
+    }
+
+    const errorVisible = await page
+      .getByText(/no\s*se\s*complet[oó]\s*el\s*proceso|identificador\s*del\s*sistema\s*no\s*ha\s*sido\s*correctamente\s*enviado/i)
+      .first()
+      .isVisible()
+      .catch(() => false);
+
+    return errorVisible;
+  };
+
+  const recuperarPantallaErrorSistema = async (): Promise<boolean> => {
+    const hayError = await esPantallaErrorSistema();
+    if (!hayError) return false;
+
+    console.warn('⚠️ Pantalla de error del sistema detectada. Aplicando recuperación automática...');
+    await page.goto(credenciales.url, { waitUntil: 'domcontentloaded' }).catch(() => {});
+    await esperarPaginaEstable();
+    await page.waitForTimeout(pauseMedium);
+
+    const persiste = await esPantallaErrorSistema();
+    if (persiste) {
+      await page.reload().catch(() => {});
+      await esperarPaginaEstable();
+      await page.waitForTimeout(pauseMedium);
+    }
+
+    return true;
+  };
+
+  const esModuloObjetivoVisible = async (moduloTarget: 'infractor' | 'administrado'): Promise<boolean> => {
+    const btnAcceder = page.getByRole('button', { name: /Acceder Ahora/i }).first();
+    if (await btnAcceder.isVisible().catch(() => false)) {
+      return false;
+    }
+
+    if (moduloTarget === 'infractor') {
+      const señalesInfractor = [
+        page.getByText(/Registro\s+de\s+Infracci[oó]n\s+y\s+Sanci[oó]n/i).first(),
+        page.locator('button:has-text("Registrar Sancionar")').first(),
+        page.locator('button[label="Registrar Sancionar"]').first(),
+        page.locator('table').first()
+      ];
+
+      for (const señal of señalesInfractor) {
+        if (await señal.isVisible().catch(() => false)) return true;
+      }
+
+      return false;
+    }
+
+    const señalesAdministrado = [
+      page.getByText(/Administrado|Administrados/i).first(),
+      page.locator('input[placeholder*="ruc" i], input[aria-label*="ruc" i]').first(),
+      page.locator('input[placeholder*="raz[oó]n" i], input[aria-label*="raz[oó]n" i]').first(),
+      page.locator('table').first()
+    ];
+
+    for (const señal of señalesAdministrado) {
+      if (await señal.isVisible().catch(() => false)) return true;
+    }
+
+    return false;
+  };
+
+  const esPantallaOperativa = async (): Promise<boolean> => esModuloObjetivoVisible(modulo === 'administrado' ? 'administrado' : 'infractor');
+
+  const normalizarBearer = (valor: string): string => {
+    const limpio = String(valor || '').trim().replace(/^Bearer\s+/i, '');
+    if (!limpio) return '';
+    if (/^(null|undefined)$/i.test(limpio)) return '';
+    return limpio;
+  };
+
+  const obtenerTokenAplicativo = async (): Promise<string> => {
+    const tokenRaw = await page.evaluate(() => {
+      const clavesDirectas = ['token', 'access_token', 'authToken', 'jwtToken', 'Authorization'];
+      for (const clave of clavesDirectas) {
+        const valor = window.localStorage.getItem(clave) || window.sessionStorage.getItem(clave);
+        if (valor) return valor;
+      }
+
+      const recolectar = (storage: Storage): string => {
+        for (let i = 0; i < storage.length; i++) {
+          const key = storage.key(i);
+          if (!key || !/token|auth|bearer|jwt/i.test(key)) continue;
+          const valor = storage.getItem(key);
+          if (!valor) continue;
+          try {
+            const parseado = JSON.parse(valor);
+            if (parseado && typeof parseado === 'object') {
+              const registro = parseado as Record<string, unknown>;
+              const candidato =
+                registro.token ||
+                registro.access_token ||
+                registro.accessToken ||
+                registro.authToken ||
+                registro.jwt;
+              if (typeof candidato === 'string' && candidato.trim()) {
+                return candidato;
+              }
+            }
+          } catch {
+            // valor no JSON, continuar con cadena plana
+          }
+          return valor;
+        }
+        return '';
+      };
+
+      return recolectar(window.localStorage) || recolectar(window.sessionStorage) || '';
+    }).catch(() => '');
+
+    return normalizarBearer(String(tokenRaw || ''));
+  };
+
+  const esperarTokenAplicativo = async (timeoutMs: number): Promise<boolean> => {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const token = await obtenerTokenAplicativo();
+      if (token) return true;
+      await page.waitForTimeout(pauseShort);
+    }
+    return false;
+  };
+
+  const esperarSesionAllData = async (timeoutMs: number): Promise<boolean> => {
+    try {
+      await page.waitForResponse((res) => {
+        const url = res.url().toLowerCase();
+        if (!url.includes('/api/authorization/sesionalldata')) return false;
+        const status = res.status();
+        if (status < 200 || status >= 300) return false;
+        const auth = (res.request().headers()['authorization'] || '').trim();
+        return /^bearer\s+.+/i.test(auth) && !/^bearer\s*(null|undefined)?\s*$/i.test(auth);
+      }, { timeout: timeoutMs });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const ejecutarLogin = async (): Promise<boolean> => {
+    const btnAccederAhora = page.getByRole('button', { name: /Acceder Ahora/i }).first();
+    const inputUsuario = page.getByRole('textbox', { name: 'Usuario' });
+    const inputContraseña = page.getByRole('textbox', { name: 'Contraseña' });
+
+    const accedeVisible = await btnAccederAhora.isVisible().catch(() => false);
+    const usuarioVisible = await inputUsuario.isVisible().catch(() => false);
+
+    if (!accedeVisible && !usuarioVisible) {
+      return false;
+    }
+
+    if (accedeVisible) {
+      await btnAccederAhora.click().catch(() => {});
+      await page.waitForTimeout(pauseMedium);
+
+      // Punku puede demorar en mostrar form o redirigir de vuelta.
+      await Promise.race([
+        inputUsuario.waitFor({ state: 'visible', timeout: isFast ? 9000 : 15000 }),
+        page.waitForURL(/punkuloginv2|reginsaqa\.sunedu\.gob\.pe/i, { timeout: isFast ? 9000 : 15000 })
+      ]).catch(() => {});
+    }
+
+    await inputUsuario.waitFor({ state: 'visible', timeout: 12000 });
+    await inputUsuario.fill(credencialActiva.usuario);
+    await page.waitForTimeout(pauseShort);
+
+    await inputContraseña.waitFor({ state: 'visible', timeout: 12000 });
+    await inputContraseña.fill(credencialActiva.contraseña);
+    await page.waitForTimeout(pauseShort);
+
+    await page.getByRole('button', { name: 'Iniciar sesión' }).click();
+
+    // Esperar retorno desde Punku a REGINSA antes de validar módulo.
+    await page.waitForURL(/reginsaqa\.sunedu\.gob\.pe/i, { timeout: isFast ? 12000 : 22000 }).catch(() => {});
+    await esperarPaginaEstable();
+    await page.waitForTimeout(pauseMedium);
+
+    return true;
+  };
   
   try {
     // Navegar a home
+    let seRecuperoPantallaError = false;
+
     await page.goto(credenciales.url);
     await page.waitForLoadState('domcontentloaded');
+    seRecuperoPantallaError = (await recuperarPantallaErrorSistema()) || seRecuperoPantallaError;
 
-    if (typeof workerIndex === 'number' || process.env.REGINSA_FORCE_LOGIN === '1') {
+    if (process.env.REGINSA_FORCE_LOGIN === '1') {
       await page.evaluate(() => {
         localStorage.clear();
         sessionStorage.clear();
@@ -144,136 +446,130 @@ export async function iniciarSesionYNavegar(
       });
       await page.waitForLoadState('domcontentloaded');
     }
-    await page.waitForLoadState('domcontentloaded');
 
-    // Si ya hay sesión, el botón "Acceder Ahora" no aparece
-    const btnAcceder = page.getByRole('button', { name: 'Acceder Ahora' });
-    const requiereLogin = await btnAcceder.isVisible().catch(() => false);
-
-    if (requiereLogin) {
-      await btnAcceder.click();
-      await page.waitForTimeout(800);
-
-      // Ingresar usuario
-      const inputUsuario = page.getByRole('textbox', { name: 'Usuario' });
-      await inputUsuario.waitFor({ state: 'visible' });
-      await inputUsuario.fill(credencialActiva.usuario);
-      await page.waitForTimeout(300);
-
-      // Ingresar contraseña
-      const inputContraseña = page.getByRole('textbox', { name: 'Contraseña' });
-      await inputContraseña.fill(credencialActiva.contraseña);
-      await page.waitForTimeout(300);
-
-      // Iniciar sesión
-      await page.getByRole('button', { name: 'Iniciar sesión' }).click();
-      await page.waitForLoadState('networkidle').catch(() => {});
-      await page.waitForTimeout(1500);
-
-      console.log('✅ Sesión iniciada');
+    const loginEjecutado = await ejecutarLogin();
+    if (loginEjecutado) {
+      logAuth('✅ Sesión iniciada');
     } else {
-      console.log('✅ Sesión ya activa (login omitido)');
+      logAuth('✅ Sesión ya activa (login omitido)');
     }
 
-    const navegar = async (regex: RegExp, etiqueta: string): Promise<void> => {
-      // Esperar a que el menú tenga links cargados
-      await page.waitForLoadState('domcontentloaded');
-      await page.waitForLoadState('networkidle').catch(() => {});
-      await page.waitForTimeout(1000);
+    seRecuperoPantallaError = (await recuperarPantallaErrorSistema()) || seRecuperoPantallaError;
 
-      const primerItem = page.locator('a, [role="link"], [role="menuitem"]').first();
-      if (!(await primerItem.isVisible().catch(() => false))) {
+    let paginaCerradaDuranteNavegacion = false;
+
+    const esperarModuloObjetivo = async (moduloTarget: 'infractor' | 'administrado'): Promise<boolean> => {
+      const timeoutModulo = isFast ? 8000 : 15000;
+      const señales = moduloTarget === 'administrado'
+        ? [
+            page.getByText(/Administrado|Administrados/i).first(),
+            page.locator('input[placeholder*="ruc" i], input[aria-label*="ruc" i]').first(),
+            page.locator('input[placeholder*="raz[oó]n" i], input[aria-label*="raz[oó]n" i]').first(),
+            page.locator('table').first()
+          ]
+        : [
+            page.getByText(/Registro\s+de\s+Infracci[oó]n\s+y\s+Sanci[oó]n/i).first(),
+            page.locator('button:has-text("Registrar Sancionar")').first(),
+            page.locator('button[label="Registrar Sancionar"]').first(),
+            page.locator('table').first()
+          ];
+
+      try {
+        await Promise.any(
+          señales.map((señal) => señal.waitFor({ state: 'visible', timeout: timeoutModulo }))
+        );
+        return true;
+      } catch {
         if (page.isClosed()) {
-          throw new Error('La página se cerró antes de recargar el menú.');
+          paginaCerradaDuranteNavegacion = true;
         }
-        await page.reload().catch((error) => {
-          if (page.isClosed()) {
-            throw new Error('La página se cerró durante la recarga del menú.');
-          }
-          throw error;
-        });
-        await page.waitForLoadState('domcontentloaded');
-        await page.waitForLoadState('networkidle').catch(() => {});
+        return false;
       }
-
-      await primerItem.waitFor({ state: 'visible', timeout: 60000 });
-
-      const candidatos = [
-        page.getByRole('link', { name: regex }).first(),
-        page.getByRole('menuitem', { name: regex }).first(),
-        page.getByRole('button', { name: regex }).first(),
-        page.locator(`a:has-text("${etiqueta}")`).first(),
-        page.locator(`[role="menuitem"]:has-text("${etiqueta}")`).first(),
-        page.locator(`button:has-text("${etiqueta}")`).first(),
-        page.locator(`li:has-text("${etiqueta}")`).first()
-      ];
-
-      for (const candidato of candidatos) {
-        if (!(await candidato.isVisible().catch(() => false))) continue;
-        await candidato.scrollIntoViewIfNeeded().catch(() => {});
-        await candidato.click({ timeout: 15000 }).catch(() => {});
-        await page.waitForTimeout(500);
-        return;
-      }
-
-      throw new Error(`No se encontró el módulo ${etiqueta}.`);
     };
 
     const navegarDirectoPorRuta = async (moduloTarget: 'infractor' | 'administrado'): Promise<boolean> => {
       const permitirFallback = process.env.REGINSA_DIRECT_NAV_FALLBACK !== '0';
       if (!permitirFallback) return false;
-
-      const hashTarget = moduloTarget === 'administrado' ? '#/pages/administrado' : '#/pages/infractor';
-      const actual = page.url() || credenciales.url;
-
-      let targetUrl = '';
-      try {
-        const base = new URL(actual);
-        targetUrl = `${base.origin}/${hashTarget}`;
-      } catch {
-        const candidato = (credenciales.url || '').replace(/\/$/, '');
-        targetUrl = /^https?:\/\//i.test(candidato)
-          ? `${candidato.split('#')[0]}/${hashTarget}`
-          : `https://${candidato.split('#')[0]}/${hashTarget}`;
+      if (page.isClosed()) {
+        paginaCerradaDuranteNavegacion = true;
+        return false;
       }
 
-      await page.goto(targetUrl, { waitUntil: 'domcontentloaded' }).catch(() => {});
-      await page.waitForLoadState('networkidle').catch(() => {});
+      const hashTarget = moduloTarget === 'administrado' ? 'pages/administrado' : 'pages/infractor';
+      const targetUrl = construirUrlModulo(page.url() || '', credenciales.url, hashTarget);
 
-      const urlOk = page.url().includes(hashTarget);
-      const tablaOk = await page.locator('table').first().isVisible().catch(() => false);
-      const botonRegistroOk = await page.locator('button:has-text("Registrar Sancionar")').first().isVisible().catch(() => false);
-      return urlOk || tablaOk || botonRegistroOk;
+      await page.goto(targetUrl, { waitUntil: 'domcontentloaded' }).catch(() => {});
+      if (page.isClosed()) {
+        paginaCerradaDuranteNavegacion = true;
+        return false;
+      }
+      await esperarPaginaEstable();
+      if (page.isClosed()) {
+        paginaCerradaDuranteNavegacion = true;
+        return false;
+      }
+      seRecuperoPantallaError = (await recuperarPantallaErrorSistema()) || seRecuperoPantallaError;
+      if (page.isClosed()) {
+        paginaCerradaDuranteNavegacion = true;
+        return false;
+      }
+
+      const sigueEnError = await esPantallaErrorSistema();
+      if (sigueEnError) return false;
+
+      if (await esModuloObjetivoVisible(moduloTarget)) {
+        return true;
+      }
+
+      return esperarModuloObjetivo(moduloTarget);
     };
 
-    // Navegar al módulo solicitado - Con reintentos y alternativas
-    const regexModulo = modulo === 'administrado'
-      ? /Administrado|Administrados/i
-      : /Infractor y Sanci[oó]n/i;
+    // Navegación determinística por ruta para evitar regresiones de menú/home.
     const etiqueta = modulo === 'administrado' ? 'Administrado' : 'Infractor';
 
-    try {
-      await navegar(regexModulo, etiqueta);
-    } catch (error) {
-      const moduloFallback = modulo === 'administrado' ? 'administrado' : 'infractor';
-      const navegoDirecto = await navegarDirectoPorRuta(moduloFallback);
-      if (navegoDirecto) {
-        console.log(`↪️ Fallback navegación directa aplicado: ${modulo}`);
-      } else {
-        const esScale = process.env.REGINSA_SCALE_MODE === '1';
-        if (esScale) {
-          console.warn(`⚠️ Navegación de módulo no encontrada (${etiqueta}) en modo scale. Se continúa con recuperación posterior.`);
+    const moduloFallback = modulo === 'administrado' ? 'administrado' : 'infractor';
+    let moduloResuelto = false;
+
+    const navegoDirectoInicial = await navegarDirectoPorRuta(moduloFallback);
+    if (paginaCerradaDuranteNavegacion || page.isClosed()) {
+      throw new Error('La página o el contexto del navegador se cerró durante la navegación post-login. Posible cierre de sesión forzado, redirección crítica del sistema o crash del navegador.');
+    }
+    moduloResuelto = navegoDirectoInicial;
+
+    if (!moduloResuelto || !(await esPantallaOperativa())) {
+      // Último intento limpio: volver a home y reintentar ruta una vez.
+      await page.goto(credenciales.url, { waitUntil: 'domcontentloaded' }).catch(() => {});
+      await esperarPaginaEstable();
+      seRecuperoPantallaError = (await recuperarPantallaErrorSistema()) || seRecuperoPantallaError;
+
+      const navegoDirectoFinal = await navegarDirectoPorRuta(moduloFallback);
+      if (paginaCerradaDuranteNavegacion || page.isClosed()) {
+        throw new Error('La página o el contexto del navegador se cerró durante el reintento de navegación al módulo después del login.');
+      }
+      const pantallaOperativaFinal = await esPantallaOperativa();
+      if (!navegoDirectoFinal || !pantallaOperativaFinal) {
+        const btnAccederVisible = await page.getByRole('button', { name: /Acceder Ahora/i }).first().isVisible().catch(() => false);
+        if (btnAccederVisible) {
+          console.warn('⚠️ Rebote a Home detectado tras login. Reintentando inicio de sesión y navegación una vez...');
+          await page.goto(credenciales.url, { waitUntil: 'domcontentloaded' }).catch(() => {});
+          await esperarPaginaEstable();
+          await ejecutarLogin().catch(() => {});
+          const navegoTrasReLogin = await navegarDirectoPorRuta(moduloFallback);
+          const pantallaOperativaTrasReLogin = await esPantallaOperativa();
+          if (!navegoTrasReLogin || !pantallaOperativaTrasReLogin) {
+            throw new Error(`Navegación incompleta: la sesión volvió a Home (Acceder Ahora visible) antes de cargar el módulo ${etiqueta}.`);
+          }
         } else {
-          throw error;
+          throw new Error(`Navegación incompleta: el módulo ${etiqueta} no quedó visible después de recuperación.`);
         }
       }
     }
 
-    console.log(modulo === 'administrado'
+    logAuth(modulo === 'administrado'
       ? '✅ Módulo Administrado cargado'
       : '✅ Módulo Infractor y Sanción cargado');
-    
-    await page.waitForTimeout(1000);
+
+    await page.waitForTimeout(pauseLong);
 
   } catch (error) {
     console.error('❌ Error en inicialización:', error);
@@ -321,10 +617,40 @@ export async function loginReginsa(page: Page): Promise<void> {
  */
 export async function navegarAInfraccionSancion(page: Page): Promise<void> {
   console.log('📋 Navegando a Infractor y Sanción...');
-  
-  await page.getByRole('link', { name: ' Infractor y Sanción' }).click();
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(1000);
+  const credenciales = obtenerCredencialesConfiguradas();
+
+  const yaEnModulo = async (): Promise<boolean> => {
+    const señales = [
+      page.locator('table').first(),
+      page.getByText(/Registro\s+de\s+Infracci[oó]n\s+y\s+Sanci[oó]n/i).first(),
+      page.locator('button:has-text("Registrar Sancionar")').first()
+    ];
+
+    for (const señal of señales) {
+      if (await señal.isVisible().catch(() => false)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  if (await yaEnModulo()) {
+    console.log('✅ En sección Infractor y Sanción (ya estaba cargada)');
+    return;
+  }
+
+  const targetUrl = construirUrlModulo(page.url() || '', credenciales.url, 'pages/infractor');
+  for (let intento = 0; intento < 2; intento++) {
+    await page.goto(targetUrl, { waitUntil: 'domcontentloaded' }).catch(() => {});
+    await page.waitForLoadState('networkidle').catch(() => {});
+    await page.waitForTimeout(500);
+    if (await yaEnModulo()) break;
+  }
+
+  if (!(await yaEnModulo())) {
+    throw new Error('No se pudo navegar a Infractor y Sanción (link no visible y fallback directo sin tabla).');
+  }
 
   console.log('✅ En sección Infractor y Sanción');
 }
@@ -349,18 +675,15 @@ export function parseFechaTexto(texto: string): Date | null {
 }
 
 export function calcularFechaReconsideracion(fechaResolucion: Date | null): Date {
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-
   const base = fechaResolucion ?? new Date();
   const minFecha = new Date(base);
-  minFecha.setDate(minFecha.getDate() + 1);
+  minFecha.setHours(0, 0, 0, 0);
 
   const maxFecha = new Date();
   maxFecha.setHours(0, 0, 0, 0);
 
   if (minFecha > maxFecha) {
-    throw new Error('No hay fecha válida de reconsideración (resolución >= hoy).');
+    throw new Error('No hay fecha válida de reconsideración (resolución > hoy).');
   }
 
   const diff = Math.floor((maxFecha.getTime() - minFecha.getTime()) / (24 * 60 * 60 * 1000));
@@ -407,7 +730,8 @@ export function generarFechaPonderada(
 export async function completarCabeceraReconsideracion(
   page: Page,
   rutaArchivo: string,
-  fechaReconsideracion?: Date
+  fechaReconsideracion?: Date,
+  numeroPrefix = 'Reconsid N°'
 ): Promise<string> {
   const cabeceraPanel = page.getByRole('tabpanel').filter({ hasText: /Datos del administrado/i }).first();
   const tabDatos = page.getByRole('tab', { name: /Datos del administrado/i });
@@ -528,7 +852,8 @@ export async function completarCabeceraReconsideracion(
   // 2) Número de reconsideración
   const fechaUsar = fechaReconsideracion ?? new Date();
   const numeroAleatorio = String(Math.floor(Math.random() * 9000) + 1000);
-  const numeroReconsideracion = `Reconsid N° ${numeroAleatorio}-${fechaUsar.getFullYear()}`;
+  const prefijoNormalizado = (numeroPrefix || 'Reconsid N°').trim();
+  const numeroReconsideracion = `${prefijoNormalizado} ${numeroAleatorio}-${fechaUsar.getFullYear()}`;
   const inputNumero = page
     .locator('label', { hasText: /Nº\s*de\s*Reconsideraci[oó]n/i })
     .locator('..')
@@ -704,8 +1029,26 @@ export async function completarCabeceraReconsideracion(
  */
 export async function abrirFormularioNuevoAdministrado(page: Page): Promise<void> {
   console.log('➕ Abriendo formulario nuevo administrado...');
-  const dialogAbierto = page.getByRole('dialog').filter({ hasText: /Agregar\s*Administrado|Registrar\s*Sancionar/i }).first();
-  if (await dialogAbierto.isVisible().catch(() => false)) {
+  const formularioAdministradoAbierto = async (): Promise<boolean> => {
+    const modalAdmin = page
+      .locator('.ant-modal:visible, .p-dialog:visible, [role="dialog"]:visible')
+      .filter({
+        has: page.locator(
+          'input[formcontrolname*="ruc" i], input[name*="ruc" i], input[id*="ruc" i], input[placeholder*="ruc" i], input[aria-label*="ruc" i]'
+        )
+      })
+      .first();
+
+    const visible = await modalAdmin.isVisible().catch(() => false);
+    if (!visible) return false;
+
+    const razonSocial = modalAdmin.locator(
+      'input[formcontrolname*="razon" i], input[name*="razon" i], input[id*="razon" i], input[placeholder*="razon" i], input[aria-label*="razon" i]'
+    ).first();
+    return razonSocial.isVisible().catch(() => false);
+  };
+
+  if (await formularioAdministradoAbierto()) {
     console.log('✅ Formulario ya abierto');
     return;
   }
@@ -739,26 +1082,51 @@ export async function abrirFormularioNuevoAdministrado(page: Page): Promise<void
     }
   };
 
+  const asegurarVistaAdministrado = async (): Promise<void> => {
+    const rucFiltro = page.locator('input[placeholder*="ruc" i], input[aria-label*="ruc" i]').first();
+    const razonFiltro = page.locator('input[placeholder*="raz[oó]n" i], input[aria-label*="raz[oó]n" i]').first();
+
+    const yaEnVista = (await rucFiltro.isVisible().catch(() => false)) || (await razonFiltro.isVisible().catch(() => false));
+    if (yaEnVista) return;
+
+    const linkAdministrado = page.getByRole('link', { name: /Administrado|Administrados/i }).first();
+    if (await linkAdministrado.isVisible().catch(() => false)) {
+      await linkAdministrado.click({ timeout: 12000 }).catch(() => {});
+      await page.waitForLoadState('domcontentloaded').catch(() => {});
+      await page.waitForLoadState('networkidle').catch(() => {});
+    }
+
+    const sigueSinVista = !(await rucFiltro.isVisible().catch(() => false)) && !(await razonFiltro.isVisible().catch(() => false));
+    if (sigueSinVista) {
+      await page.goto('#/pages/administrado', { waitUntil: 'domcontentloaded' }).catch(() => {});
+      await page.waitForLoadState('networkidle').catch(() => {});
+    }
+  };
+
   const recuperarPantalla = async (intento: number): Promise<void> => {
     await page.keyboard.press('Escape').catch(() => {});
     await page.waitForTimeout(250);
 
-    const linkModulo = page.getByRole('link', { name: /Infractor y Sanci[oó]n|Administrado|Administrados/i }).first();
-    if (await linkModulo.isVisible().catch(() => false)) {
-      await linkModulo.click({ timeout: 10000 }).catch(() => {});
-      await page.waitForLoadState('domcontentloaded');
+    const linkAdministrado = page.getByRole('link', { name: /Administrado|Administrados/i }).first();
+    if (await linkAdministrado.isVisible().catch(() => false)) {
+      await linkAdministrado.click({ timeout: 10000 }).catch(() => {});
+      await page.waitForLoadState('domcontentloaded').catch(() => {});
       await page.waitForLoadState('networkidle').catch(() => {});
     }
 
     if (intento >= 1) {
       await page.reload().catch(() => {});
-      await page.waitForLoadState('domcontentloaded');
+      await page.waitForLoadState('domcontentloaded').catch(() => {});
       await page.waitForLoadState('networkidle').catch(() => {});
     }
+
+    await asegurarVistaAdministrado();
   };
   
   await page.waitForLoadState('networkidle');
   await recuperarSesionSiEsNecesario();
+  await asegurarVistaAdministrado();
+  await page.evaluate(() => window.scrollTo(0, 0)).catch(() => {});
 
   const overlay = page.locator('.p-dialog-mask, .p-component-overlay');
   if (await overlay.isVisible().catch(() => false)) {
@@ -776,25 +1144,22 @@ export async function abrirFormularioNuevoAdministrado(page: Page): Promise<void
   ].join(', ')).first();
 
   const candidatos = [
-    btnRegistrarSancionar,
     page.locator('div.flex.align-items-end button.btn-royal-blue.p-button-icon-only:has(span.pi.pi-user-plus)').first(),
+    page.locator('button.btn-royal-blue.p-button-icon-only').first(),
     page.locator('div.flex.align-items-end span.pi.pi-user-plus').first().locator('xpath=ancestor::button[1]'),
+    btnRegistrarSancionar,
+    page.locator('button[aria-label*="agregar" i], button[title*="agregar" i]').first(),
+    page.getByRole('button', { name: /^Registrar\s*Sancionar$/i }).first(),
     page.getByRole('button', { name: /Registrar\s*Sancionar/i }).first(),
-    page.getByRole('button', { name: /Agregar\s*Administrado|Nuevo\s*Administrado|Administrado/i }).first(),
-    page.getByRole('button', { name: /Nuevo administrado|Nuevo/i }).first(),
-    page.getByRole('button', { name: /Agregar|Registrar|Administrado/i }).first(),
     page.locator('button:has-text("Registrar Sancionar")').first(),
-    page.locator('button:has-text("Nuevo")').first(),
-    page.locator('button:has-text("Agregar")').first(),
     page.locator('button:has(span.pi.pi-user-plus)').first(),
-    page.locator('span.pi.pi-user-plus').first().locator('xpath=ancestor::button[1]'),
-    page.locator('button.ant-btn-primary.ant-btn-icon-only').first(),
-    page.locator('button.ant-btn-primary').first()
+    page.locator('button:has(span.pi.pi-plus)').first(),
+    page.locator('span.pi.pi-user-plus').first().locator('xpath=ancestor::button[1]')
   ];
 
-  const modal = page.getByRole('dialog').filter({ hasText: /Agregar\s*Administrado|Registrar\s*Sancionar/i }).first();
-  const modalAlt = page.locator('.ant-modal, .p-dialog').filter({ hasText: /Agregar\s*Administrado|Registrar\s*Sancionar/i }).first();
-  const rucGlobal = page.locator('input[formcontrolname*="ruc" i], input[name*="ruc" i], input[id*="ruc" i], input[placeholder*="ruc" i], input[aria-label*="ruc" i]').first();
+  const modal = page.getByRole('dialog').filter({ hasText: /Agregar\s*Administrado/i }).first();
+  const modalAlt = page.locator('.ant-modal, .p-dialog').filter({ hasText: /Agregar\s*Administrado/i }).first();
+  const formularioSancion = page.locator('input[formcontrolname="numeroExpediente"]').first();
 
   let abierto = false;
   for (let intento = 0; intento < 6 && !abierto; intento++) {
@@ -804,12 +1169,15 @@ export async function abrirFormularioNuevoAdministrado(page: Page): Promise<void
       await boton.click({ force: true }).catch(() => {});
       await page.waitForTimeout(550);
 
-      const modalVisible = await modal.isVisible().catch(() => false);
-      const modalAltVisible = await modalAlt.isVisible().catch(() => false);
-      const rucVisible = await rucGlobal.isVisible().catch(() => false);
-      if (modalVisible || modalAltVisible || rucVisible) {
+      if (await formularioAdministradoAbierto()) {
         abierto = true;
         break;
+      }
+
+      const sancionVisible = await formularioSancion.isVisible().catch(() => false);
+      if (sancionVisible) {
+        await page.keyboard.press('Escape').catch(() => {});
+        await page.waitForTimeout(250);
       }
     }
 
@@ -822,34 +1190,7 @@ export async function abrirFormularioNuevoAdministrado(page: Page): Promise<void
   }
 
   if (!abierto) {
-    const botones = page.getByRole('button');
-    const totalBotones = await botones.count().catch(() => 0);
-    const maxExplorar = Math.min(totalBotones, 20);
-    for (let i = 0; i < maxExplorar && !abierto; i++) {
-      const boton = botones.nth(i);
-      const visible = await boton.isVisible().catch(() => false);
-      if (!visible) continue;
-
-      const texto = (await boton.innerText().catch(() => '')).trim();
-      if (/limpiar|buscar|exportar|expandir|profile|iniciar\s*sesi[oó]n|acceder/i.test(texto)) {
-        continue;
-      }
-
-      await boton.scrollIntoViewIfNeeded().catch(() => {});
-      await boton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(250);
-
-      const modalVisible = await modal.isVisible().catch(() => false);
-      const modalAltVisible = await modalAlt.isVisible().catch(() => false);
-      const rucVisible = await rucGlobal.isVisible().catch(() => false);
-      if (modalVisible || modalAltVisible || rucVisible) {
-        abierto = true;
-      }
-    }
-  }
-
-  if (!abierto) {
-    throw new Error('No se pudo abrir formulario de Administrado. Botones intentados sin éxito (Agregar/Nuevo/Registrar Sancionar).');
+    throw new Error('No se pudo abrir formulario de Administrado. Botones intentados sin exito (Registrar Sancionar / icono usuario-plus).');
   }
 
   const modalVisible = await modal.isVisible().catch(() => false);
@@ -884,6 +1225,30 @@ export async function abrirFormularioRegistrarSancion(page: Page): Promise<void>
   console.log('➕ Abriendo formulario registrar sanción...');
   await page.waitForLoadState('domcontentloaded');
   await page.waitForLoadState('networkidle').catch(() => {});
+
+  const asegurarVistaInfractor = async (): Promise<void> => {
+    const yaEnInfractor =
+      (await page.locator('button:has-text("Registrar Sancionar")').first().isVisible().catch(() => false)) ||
+      (await page.getByText(/Registro\s+de\s+Infracci[oó]n\s+y\s+Sanci[oó]n/i).first().isVisible().catch(() => false));
+
+    if (yaEnInfractor) return;
+
+    const linkInfractor = page.getByRole('link', { name: /Infractor\s+y\s+Sanci[oó]n|Infractor/i }).first();
+    if (await linkInfractor.isVisible().catch(() => false)) {
+      await linkInfractor.click({ timeout: 10000 }).catch(() => {});
+      await page.waitForLoadState('domcontentloaded').catch(() => {});
+      await page.waitForLoadState('networkidle').catch(() => {});
+    }
+
+    const sigueFuera =
+      !(await page.locator('button:has-text("Registrar Sancionar")').first().isVisible().catch(() => false)) &&
+      !(await page.getByText(/Registro\s+de\s+Infracci[oó]n\s+y\s+Sanci[oó]n/i).first().isVisible().catch(() => false));
+
+    if (sigueFuera) {
+      await page.goto('#/pages/infractor', { waitUntil: 'domcontentloaded' }).catch(() => {});
+      await page.waitForLoadState('networkidle').catch(() => {});
+    }
+  };
 
   const formularioAbierto = async (): Promise<boolean> => {
     const indicadores = [
@@ -930,17 +1295,20 @@ export async function abrirFormularioRegistrarSancion(page: Page): Promise<void>
   }
 
   await recuperarSesionSiEsNecesario();
+  await asegurarVistaInfractor();
 
   const candidatos = [
     page.locator('button[label="Registrar Sancionar"]').first(),
     page.locator('div.mb-3.sm\\:mb-0 button[label="Registrar Sancionar"]').first(),
     page.locator('button.p-button-info:has-text("Registrar Sancionar")').first(),
+    page.locator('button.btn-royal-blue.p-button-icon-only:has(span.pi.pi-user-plus)').first(),
     page.getByRole('button', { name: /^Registrar\s*Sancionar$/i }).first(),
     page.getByRole('button').filter({ hasText: /Registrar\s*Sanci[oó]n|Registrar|Sanci[oó]n/i }).first(),
     page.getByRole('button', { name: /Registrar\s*Sanci[oó]n|Registrar|Sanci[oó]n/i }).first(),
     page.locator('button:has-text("Registrar")').first(),
     page.locator('button:has-text("Sanción")').first(),
-    page.locator('button:has-text("Sancion")').first()
+    page.locator('button:has-text("Sancion")').first(),
+    page.locator('button:has(span.pi.pi-user-plus), button:has(span.pi.pi-plus)').first()
   ];
 
   let abierto = false;
@@ -958,7 +1326,8 @@ export async function abrirFormularioRegistrarSancion(page: Page): Promise<void>
     if (!abierto) {
       console.log(`⚠️ Botón no visible (intento ${intento}/3). Esperando y reintentando...`);
       await page.waitForTimeout(2000);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('networkidle').catch(() => {});
+      await asegurarVistaInfractor();
     }
   }
 
@@ -1058,65 +1427,133 @@ export function generarNumeroAleatorio(min: number = 100, max: number = 9999): n
 }
 
 /**
+ * Abre un dropdown de PrimeNG de forma robusta:
+ * - espera trigger visible/enabled
+ * - click + espera de panel visible con opciones
+ * - reintentos con backoff corto (solo en este paso)
+ */
+export async function abrirDropdownRobusto(
+  page: Page,
+  trigger: Locator,
+  panel: Locator,
+  options: Locator,
+  config?: { maxIntentos?: number; timeoutPasoMs?: number }
+): Promise<number> {
+  const maxIntentos = Math.max(1, config?.maxIntentos ?? 4);
+  const timeoutPasoMs = Math.max(1000, config?.timeoutPasoMs ?? 2500);
+
+  for (let intento = 1; intento <= maxIntentos; intento++) {
+    const espera = Math.min(900, 120 * intento);
+    try {
+      await trigger.waitFor({ state: 'visible', timeout: timeoutPasoMs });
+      await trigger.scrollIntoViewIfNeeded().catch(() => {});
+
+      const enabled = await trigger.isEnabled().catch(() => true);
+      if (!enabled) {
+        await page.waitForTimeout(espera);
+        continue;
+      }
+
+      await trigger.click({ force: true });
+      const panelVisible = await panel.isVisible({ timeout: timeoutPasoMs }).catch(() => false);
+      if (!panelVisible) {
+        await page.keyboard.press('Escape').catch(() => {});
+        await page.waitForTimeout(espera);
+        continue;
+      }
+
+      const count = await options.count();
+      if (count > 0) {
+        return count;
+      }
+
+      // Panel abierto pero vacío: cerrar y reintentar.
+      await page.keyboard.press('Escape').catch(() => {});
+      await page.waitForTimeout(espera);
+    } catch {
+      await page.keyboard.press('Escape').catch(() => {});
+      await page.waitForTimeout(espera);
+    }
+  }
+
+  throw new Error('No se pudo abrir dropdown con opciones disponibles.');
+}
+
+/**
  * Obtiene un administrado aleatorio de la lista
  * SOLUCIÓN FINAL CORRECTA PARA PRIMENNG (con sincronización del DOM)
  */
 export async function obtenerAdministradoAleatorio(page: Page, indicePreferido?: number): Promise<string> {
-  console.log('🎲 Seleccionando administrado aleatorio...');
+  const detailedPickerLogs = permitirLogsDetallados('REGINSA_VERBOSE_PICKER_LOGS');
+  const logPicker = (message: string) => {
+    if (detailedPickerLogs) {
+      console.log(message);
+    }
+  };
+
+  logPicker('🎲 Seleccionando administrado aleatorio...');
   
   try {
-    // PASO 0: Hacer clic en el dropdown para abrirlo
-    console.log('   Paso 0: Abriendo dropdown...');
+    // PASO 0: Abrir dropdown de forma robusta
+    logPicker('   Paso 0: Abriendo dropdown...');
     const dropdown = page.locator('p-dropdown[formcontrolname="idAdministrado"], p-dropdown[formcontrolname="administrado"]').first();
-    
-    if (await dropdown.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await dropdown.click();
-      await page.waitForTimeout(500);
-      console.log('   ✓ Dropdown clickeado');
-    } else {
-      console.warn('   ⚠️ Dropdown no visible, intentando alternativa...');
-      await page.waitForTimeout(1200);
-      if (await dropdown.isVisible({ timeout: 1500 }).catch(() => false)) {
-        await dropdown.click();
-        await page.waitForTimeout(700);
-      } else {
-        const allDropdowns = await page.locator('p-dropdown').all();
-        if (allDropdowns.length > 0) {
-          await allDropdowns[0].click();
-          await page.waitForTimeout(900);
-        }
+    const triggerPrimario = dropdown.locator('.p-dropdown, .p-dropdown-trigger, [role="combobox"]').first();
+    const triggerAlternativo = page.getByRole('combobox').first();
+    const panel = page.locator('.p-dropdown-panel:visible').last();
+    const options = page.locator('.p-dropdown-panel:visible .p-dropdown-item');
+
+    let cantidad = 0;
+    let abierto = false;
+    const maxIntentosAbrir = 6;
+    for (let intento = 1; intento <= maxIntentosAbrir && !abierto; intento++) {
+      const trigger = (await triggerPrimario.isVisible().catch(() => false)) ? triggerPrimario : triggerAlternativo;
+      try {
+        cantidad = await abrirDropdownRobusto(page, trigger, panel, options, {
+          maxIntentos: 2,
+          timeoutPasoMs: 2600
+        });
+        abierto = cantidad > 0;
+      } catch {
+        // Fallback adicional: click sobre host + teclado para abrir panel.
+        await dropdown.click({ force: true }).catch(() => {});
+        await page.keyboard.press('ArrowDown').catch(() => {});
+        await page.waitForTimeout(180 * intento);
+        cantidad = await options.count().catch(() => 0);
+        abierto = cantidad > 0;
       }
     }
+    if (!abierto) {
+      throw new Error('No se pudo abrir dropdown con opciones disponibles.');
+    }
+    logPicker('   ✓ Dropdown clickeado');
 
     // PASO 1: Esperar que el panel del dropdown esté visible
-    console.log('   Paso 1: Esperando panel del dropdown...');
-    const panel = page.locator('.p-dropdown-panel');
-    await panel.waitFor({ state: 'visible', timeout: 10000 });
-    console.log('   ✓ Panel visible');
+    logPicker('   Paso 1: Esperando panel del dropdown...');
+    await panel.waitFor({ state: 'visible', timeout: 5000 });
+    logPicker('   ✓ Panel visible');
 
     // PASO 2: Esperar que existan opciones en el panel
-    console.log('   Paso 2: Esperando opciones...');
-    const options = panel.locator('.p-dropdown-item');
-    await options.first().waitFor({ state: 'visible', timeout: 10000 });
-    const count = await options.count();
-    console.log(`   ✓ ${count} opciones encontradas`);
+    logPicker('   Paso 2: Esperando opciones...');
+    await options.first().waitFor({ state: 'visible', timeout: 5000 });
+    const count = Math.max(cantidad, await options.count());
+    logPicker(`   ✓ ${count} opciones encontradas`);
 
     if (count === 0) {
       throw new Error('No hay opciones en el dropdown de Administrado');
     }
 
     // PASO 3: Seleccionar opción aleatoria
-    console.log('   Paso 3: Seleccionando opción aleatoria...');
+    logPicker('   Paso 3: Seleccionando opción aleatoria...');
     const indiceBase = typeof indicePreferido === 'number'
       ? ((indicePreferido % count) + count) % count
       : Math.floor(Math.random() * count);
     const optionSeleccionada = options.nth(indiceBase);
     
     const administradoSeleccionado = (await optionSeleccionada.innerText())?.trim() || `Opcion_${indiceBase}`;
-    console.log(`   Opción ${indiceBase + 1}/${count}: "${administradoSeleccionado}"`);
+    logPicker(`   Opción ${indiceBase + 1}/${count}: "${administradoSeleccionado}"`);
     
     // PASO 4: Clickear la opción
-    console.log('   Paso 4: Clickeando opción...');
+    logPicker('   Paso 4: Clickeando opción...');
     
     // Scroll into view si es necesario
     await optionSeleccionada.scrollIntoViewIfNeeded();
@@ -1128,16 +1565,16 @@ export async function obtenerAdministradoAleatorio(page: Page, indicePreferido?:
     await optionSeleccionada.click({ force: true });
     
     // PASO 5: Esperar que el panel del dropdown se cierre (indicador de selección exitosa)
-    console.log('   Paso 5: Esperando confirmación del cambio...');
+    logPicker('   Paso 5: Esperando confirmación del cambio...');
     const panelDropdown = page.locator('.p-dropdown-panel');
     
     // Esperar a que el panel desaparezca (indicador de que la selección se procesó)
     try {
       await panelDropdown.waitFor({ state: 'hidden', timeout: 3000 });
-      console.log(`   ✅ Opción seleccionada y confirmada\n`);
+      logPicker(`   ✅ Opción seleccionada y confirmada\n`);
     } catch (e) {
       // Si el panel no desaparece, seguir adelante (a veces sucede)
-      console.log(`   ⚠️  Panel no desapareció, pero continuando...\n`);
+      logPicker(`   ⚠️  Panel no desapareció, pero continuando...\n`);
     }
     
     return administradoSeleccionado;

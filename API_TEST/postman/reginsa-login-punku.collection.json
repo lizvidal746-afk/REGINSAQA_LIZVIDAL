@@ -1,0 +1,47 @@
+{
+  "info": {
+    "name": "REGINSA - Login Punku",
+    "_postman_id": "reginsa-login-punku-2026",
+    "description": "Coleccion de login unico Punku para obtener TOKEN_JWT y reutilizarlo en ejecuciones posteriores.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00.1) Auth/Punku - Login unico",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"CODE\": \"{{punku_code}}\",\n  \"CODE_CHALLENGE\": \"{{punku_code_challenge}}\"\n}"
+        },
+        "url": {
+          "raw": "{{punku_base}}/api/Authentication/GetTokenByCodeAndCodeChallenge",
+          "host": ["{{punku_base}}"],
+          "path": ["api", "Authentication", "GetTokenByCodeAndCodeChallenge"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('[LOGIN] Punku auth status 200', () => pm.expect([200,201]).to.include(pm.response.code));",
+              "const data = pm.response.json();",
+              "const token = data?.TOKEN_JWT || '';",
+              "pm.test('[LOGIN] TOKEN_JWT presente', () => pm.expect(token).to.not.equal(''));",
+              "pm.environment.set('TOKEN_JWT', token);",
+              "pm.environment.set('token', token);",
+              "pm.environment.set('auth_header', 'Bearer ' + token);",
+              "pm.environment.set('GUID_SESION', data?.GUID_SESION || '');"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

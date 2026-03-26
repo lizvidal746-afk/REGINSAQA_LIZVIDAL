@@ -68,8 +68,16 @@ function findSummaryMetrics() {
 }
 
 function metricCount(metrics, key) {
-  const value = metrics?.[key]?.values?.count;
-  return Number.isFinite(value) ? Number(value) : 0;
+  const metric = metrics?.[key];
+  if (!metric || typeof metric !== 'object') return 0;
+
+  const directCount = metric.count;
+  if (Number.isFinite(directCount)) return Number(directCount);
+
+  const nestedCount = metric?.values?.count;
+  if (Number.isFinite(nestedCount)) return Number(nestedCount);
+
+  return 0;
 }
 
 async function fetchListado(apiBase, authHeader) {

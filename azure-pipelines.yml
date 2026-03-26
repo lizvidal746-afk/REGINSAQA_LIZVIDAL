@@ -2,6 +2,8 @@ trigger: none
 pr: none
 
 variables:
+  - name: CASE_TARGET
+    value: '01'
   - name: PW_WORKERS
     value: '6'
   - name: PW_REPEAT_EACH
@@ -77,7 +79,16 @@ stages:
               $env:REGINSA_CONFIRMAR_API_WAIT_MS = "1500"
               $env:REGINSA_CONFIRMAR_API_RETRIES_EXT = "20"
               $env:REGINSA_CONFIRMAR_API_WAIT_MS_EXT = "2000"
-              npm run test:01:scale -- --workers=$(PW_WORKERS) --repeat-each=$(PW_REPEAT_EACH) --project=chromium
+              $env:REGINSA_CASO04_SKIP_EXHAUSTED_PAGES = "1"
+              $caseTarget = "$(CASE_TARGET)"
+              switch ($caseTarget) {
+                '01' { npm run test:01:scale -- --workers=$(PW_WORKERS) --repeat-each=$(PW_REPEAT_EACH) --project=chromium; break }
+                '02' { npm run test:02:scale -- --workers=$(PW_WORKERS) --repeat-each=$(PW_REPEAT_EACH) --project=chromium; break }
+                '03' { npm run test:03:scale -- --workers=$(PW_WORKERS) --repeat-each=$(PW_REPEAT_EACH) --project=chromium; break }
+                '04' { npm run test:04:scale -- --workers=$(PW_WORKERS) --repeat-each=$(PW_REPEAT_EACH) --project=chromium; break }
+                'suite' { npm run test:functional:suite -- --workers=$(PW_WORKERS) --repeat-each=$(PW_REPEAT_EACH) --project=chromium; break }
+                default { throw "CASE_TARGET inválido: $caseTarget" }
+              }
             displayName: Run functional scale
 
           - script: node scripts/evaluate-playwright-results.js
@@ -120,7 +131,7 @@ stages:
           - powershell: |
               if (-not (Test-Path 'reportes')) { New-Item -ItemType Directory -Path 'reportes' | Out-Null }
               $env:BASE_URL = "$(REGINSA_URL)"
-              k6 run docs/plantillas/k6_smoke_reginsa.js --env BASE_URL=$env:BASE_URL --vus $(K6_VUS) --duration $(K6_DURATION) --summary-export reportes/k6-summary.json
+              k6 run tests/performance/k6-grafana/reginsa-smoke.js --env BASE_URL=$env:BASE_URL --vus $(K6_VUS) --duration $(K6_DURATION) --summary-export reportes/k6-summary.json
             displayName: Run k6 smoke
 
           - task: PublishBuildArtifacts@1

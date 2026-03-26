@@ -4,11 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       auth_mode:
-        description: "Auth mode: token|auto"
+        description: "Auth mode: auto|token (default auto)"
         required: false
-        default: "token"
+        default: "auto"
       token1:
         description: "Token when auth_mode=token"
+        required: false
+        default: ""
+      k6_auth_header:
+        description: "Bearer token when auth_mode=token"
         required: false
         default: ""
       sleep_mode:
@@ -73,8 +77,9 @@ jobs:
 
       - name: Run K6 Caso 02
         env:
-          AUTH_MODE: ${{ github.event.inputs.auth_mode || 'token' }}
+          AUTH_MODE: ${{ github.event.inputs.auth_mode || 'auto' }}
           TOKEN1_INPUT: ${{ github.event.inputs.token1 }}
+          AUTH_HEADER_INPUT: ${{ github.event.inputs.k6_auth_header }}
           PACK_INPUT: ${{ github.event.inputs.pack || 'none' }}
           PACK_STEP_INPUT: ${{ github.event.inputs.pack_step || '1' }}
           SLEEP_MODE: ${{ github.event.inputs.sleep_mode || 'min' }}
@@ -161,14 +166,15 @@ jobs:
 
           if /I "%SMOKE_MODE%"=="true" (
             set FIXED_VUS_INPUT=1
-            set FIXED_ITER_INPUT=10
+            set FIXED_ITER_INPUT=2
             set BURST_MODE_INPUT=false
             set RUN_SLEEP=0.8
           )
 
           set AUTH_FLAGS=
           if /I "%AUTH_MODE%"=="token" (
-            if not "%TOKEN1_INPUT%"=="" set AUTH_FLAGS= --env TOKEN1=%TOKEN1_INPUT%
+            if not "%AUTH_HEADER_INPUT%"=="" set AUTH_FLAGS= --env K6_AUTH_HEADER=%AUTH_HEADER_INPUT%
+            if "%AUTH_HEADER_INPUT%"=="" if not "%TOKEN1_INPUT%"=="" set AUTH_FLAGS= --env TOKEN1=%TOKEN1_INPUT%
           )
           if /I "%AUTH_MODE%"=="auto" (
             set AUTH_FLAGS= --env K6_AUTO_LOGIN=1 --env REGINSA_USER=%REGINSA_USER% --env REGINSA_PASS=%REGINSA_PASS%
@@ -176,8 +182,7 @@ jobs:
 
           set BURST_FLAGS=
           if /I "%BURST_MODE_INPUT%"=="true" set BURST_FLAGS= --env K6_BURST_MODE=1
-
-          k6 run tests/performance/k6/k6_caso_02_registrar_sancion.js --env BASE_API=%BASE_API_URL% --env K6_FIXED_VUS=%FIXED_VUS_INPUT% --env K6_FIXED_ITERATIONS=%FIXED_ITER_INPUT% --env K6_TOTAL_REGISTROS=%FIXED_ITER_INPUT% --env K6_SLEEP_SECONDS=%RUN_SLEEP% --env K6_CABECERA_MODE=form_pascal --env K6_RETRY_429_MAX=0 --env K6_SANCIONES_POR_REGISTRO=1 --env K6_MEDIDAS_POR_REGISTRO=1 --env K6_FORCE_SINGLE_SANCION=1 --env K6_FORCE_SINGLE_MEDIDA=1 --env K6_SANCION_MODE=sequence --env K6_RIS_MODE=rotate_1_2 --env K6_ADMIN_SELECTION_MODE=random --env K6_ADMIN_POOL_SIZE=20 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 %AUTH_FLAGS% %BURST_FLAGS% --summary-export reportes/k6-caso02-selfhosted-summary.json
+          k6 run tests/performance/k6-grafana/k6_caso_02_registrar_sancion.js --env BASE_API=%BASE_API_URL% --env K6_FIXED_VUS=%FIXED_VUS_INPUT% --env K6_FIXED_ITERATIONS=%FIXED_ITER_INPUT% --env K6_TOTAL_REGISTROS=%FIXED_ITER_INPUT% --env K6_SLEEP_SECONDS=%RUN_SLEEP% --env K6_CABECERA_MODE=form_pascal --env K6_RETRY_429_MAX=0 --env K6_SANCIONES_POR_REGISTRO=1 --env K6_MEDIDAS_POR_REGISTRO=1 --env K6_FORCE_SINGLE_SANCION=1 --env K6_FORCE_SINGLE_MEDIDA=1 --env K6_SANCION_MODE=sequence --env K6_RIS_MODE=rotate_1_2 --env K6_ADMIN_SELECTION_MODE=random --env K6_ADMIN_POOL_SIZE=20 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 %AUTH_FLAGS% %BURST_FLAGS% --summary-export reportes/k6-caso02-selfhosted-summary.json
 
       - name: Upload artifacts
         if: always() && github.event.inputs.upload_artifacts == 'true'

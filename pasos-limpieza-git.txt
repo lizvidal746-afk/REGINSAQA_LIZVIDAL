@@ -1,0 +1,45 @@
+# PASOS PARA LIMPIAR Y SUBIR TU REPOSITORIO A GITHUB
+
+1. Crea o actualiza tu archivo .gitignore
+
+Copia y pega esto en un archivo llamado .gitignore en la raíz de tu proyecto:
+
+MANUAL/
+SI091_REGINSA_FRONTEND-1/
+SI091_REGINSA_BACKEND/
+SI091_REGINSA_ENLINEA/
+SI091_REGINSA_CONFIG/
+allure-report/
+allure-results/
+playwright-report/
+test-results/
+coverage/
+reportes/
+node_modules/
+dist/
+build/
+*.log
+*.tmp
+*.bak
+
+2. Elimina del control de versiones lo que ya fue subido por error
+
+En la terminal, ejecuta:
+
+git rm -r --cached MANUAL/ SI091_REGINSA_FRONTEND-1/ SI091_REGINSA_BACKEND/ SI091_REGINSA_ENLINEA/ SI091_REGINSA_CONFIG/ allure-report/ allure-results/ playwright-report/ test-results/ coverage/ reportes/
+
+3. Agrega el archivo .gitignore al control de versiones
+
+git add .gitignore
+
+4. Haz un commit de los cambios
+
+git commit -m "Limpieza: excluyendo carpetas temporales y clonaciones"
+
+5. Sube tus cambios a GitHub
+
+git push origin main
+
+---
+
+¡Listo! Sigue estos pasos uno por uno y tu repositorio quedará limpio y sincronizado.

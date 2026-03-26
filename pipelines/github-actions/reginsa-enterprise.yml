@@ -22,6 +22,10 @@ on:
         description: Repeticiones por caso
         required: false
         default: "1"
+      case_target:
+        description: Caso funcional objetivo (01|02|03|04|suite)
+        required: false
+        default: "01"
       registros:
         description: Cantidad de registros objetivo
         required: false
@@ -61,6 +65,7 @@ jobs:
       REGINSA_HEADLESS: ${{ inputs.headless }}
       REGINSA_TARGET_REGISTROS: ${{ inputs.registros }}
       REGINSA_ENVIRONMENT: ${{ inputs.environment }}
+      REGINSA_CASO04_SKIP_EXHAUSTED_PAGES: "1"
     steps:
       - uses: actions/checkout@v4
 
@@ -75,7 +80,15 @@ jobs:
         run: |
           case "${{ inputs.test_type }}" in
             smoke) npm run test:smoke ;;
-            functional) npm run test:functional:suite -- --workers=${{ inputs.workers }} --repeat-each=${{ inputs.repeat_each }} ;;
+            functional)
+              case "${{ inputs.case_target }}" in
+                01) npm run test:01:scale -- --workers=${{ inputs.workers }} --repeat-each=${{ inputs.repeat_each }} --project=chromium ;;
+                02) npm run test:02:scale -- --workers=${{ inputs.workers }} --repeat-each=${{ inputs.repeat_each }} --project=chromium ;;
+                03) npm run test:03:scale -- --workers=${{ inputs.workers }} --repeat-each=${{ inputs.repeat_each }} --project=chromium ;;
+                04) npm run test:04:scale -- --workers=${{ inputs.workers }} --repeat-each=${{ inputs.repeat_each }} --project=chromium ;;
+                suite) npm run test:functional:suite -- --workers=${{ inputs.workers }} --repeat-each=${{ inputs.repeat_each }} --project=chromium ;;
+                *) echo "case_target inválido: ${{ inputs.case_target }}"; exit 1 ;;
+              esac ;;
             regression) npm run test:regression ;;
             performance) npm run test:performance ;;
             security) npm run test:security ;;

@@ -1,0 +1,149 @@
+﻿{
+    "generatedAt":  "2026-03-18 16:56:00",
+    "projectKey":  "si091_reginsa_frontend",
+    "qualityGate":  "OK",
+    "metrics":  {
+                    "bugs":  "198",
+                    "vulnerabilities":  "0",
+                    "codeSmells":  "196",
+                    "coverage":  "0.0",
+                    "duplicatedLinesDensity":  "0.1",
+                    "maintainabilityRating":  "1.0",
+                    "reliabilityRating":  "4.0",
+                    "securityRating":  "1.0",
+                    "securityHotspotsReviewed":  "0.0"
+                },
+    "trend":  {
+                  "vulnerabilities":  {
+                                          "previous":  1,
+                                          "current":  1,
+                                          "delta":  0
+                                      },
+                  "code_smells":  {
+                                      "previous":  196,
+                                      "current":  196,
+                                      "delta":  0
+                                  },
+                  "duplicated_lines_density":  {
+                                                   "previous":  1,
+                                                   "current":  1,
+                                                   "delta":  0
+                                               },
+                  "coverage":  {
+                                   "previous":  1,
+                                   "current":  1,
+                                   "delta":  0
+                               },
+                  "bugs":  {
+                               "previous":  198,
+                               "current":  198,
+                               "delta":  0
+                           }
+              },
+    "bySeverity":  [
+                       {
+                           "severity":  "MAJOR",
+                           "count":  334
+                       },
+                       {
+                           "severity":  "CRITICAL",
+                           "count":  27
+                       },
+                       {
+                           "severity":  "MINOR",
+                           "count":  24
+                       },
+                       {
+                           "severity":  "INFO",
+                           "count":  9
+                       }
+                   ],
+    "topRules":  [
+                     {
+                         "rule":  "css:S4649",
+                         "count":  125
+                     },
+                     {
+                         "rule":  "css:S4666",
+                         "count":  105
+                     },
+                     {
+                         "rule":  "Web:TableHeaderHasIdOrScopeCheck",
+                         "count":  47
+                     },
+                     {
+                         "rule":  "css:S4656",
+                         "count":  25
+                     },
+                     {
+                         "rule":  "typescript:S3504",
+                         "count":  11
+                     },
+                     {
+                         "rule":  "typescript:S3776",
+                         "count":  11
+                     },
+                     {
+                         "rule":  "typescript:S3358",
+                         "count":  10
+                     },
+                     {
+                         "rule":  "typescript:S1128",
+                         "count":  9
+                     },
+                     {
+                         "rule":  "Web:AvoidCommentedOutCodeCheck",
+                         "count":  9
+                     },
+                     {
+                         "rule":  "typescript:S1135",
+                         "count":  8
+                     }
+                 ],
+    "topFiles":  [
+                     {
+                         "component":  "si091_reginsa_frontend:src/app/components/pages/infractor/infractor.component.html",
+                         "count":  39
+                     },
+                     {
+                         "component":  "si091_reginsa_frontend:src/app/components/pages/infractor/infractor.component.ts",
+                         "count":  30
+                     },
+                     {
+                         "component":  "si091_reginsa_frontend:src/assets/layout/styles/theme/theme-dim/cyan/theme.css",
+                         "count":  10
+                     },
+                     {
+                         "component":  "si091_reginsa_frontend:src/assets/layout/styles/theme/theme-dim/blue/theme.css",
+                         "count":  10
+                     },
+                     {
+                         "component":  "si091_reginsa_frontend:src/assets/layout/styles/theme/theme-dark/teal/theme.css",
+                         "count":  10
+                     },
+                     {
+                         "component":  "si091_reginsa_frontend:src/assets/layout/styles/theme/theme-dim/indigo/theme.css",
+                         "count":  10
+                     },
+                     {
+                         "component":  "si091_reginsa_frontend:src/assets/layout/styles/theme/theme-dim/orange/theme.css",
+                         "count":  10
+                     },
+                     {
+                         "component":  "si091_reginsa_frontend:src/assets/layout/styles/theme/theme-dim/green/theme.css",
+                         "count":  10
+                     },
+                     {
+                         "component":  "si091_reginsa_frontend:src/assets/layout/styles/theme/theme-dark/purple/theme.css",
+                         "count":  10
+                     },
+                     {
+                         "component":  "si091_reginsa_frontend:src/app/services/security/global.service.ts",
+                         "count":  10
+                     }
+                 ],
+    "quickWins":  [
+                      "Atacar severidades BLOCKER/CRITICAL/MAJOR en primera iteracion.",
+                      "Aplicar reglas de estilo y limpieza para reducir code smells mas frecuentes."
+                  ]
+}

@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, '..');
 const reportesDir = path.join(root, 'reportes');
 const poolPath = path.join(reportesDir, 'administrados-pool.json');
 const outputPath = path.join(reportesDir, 'k6-caso01-dataset.json');
+const sequencePath = path.join(reportesDir, 'k6-caso01-secuencia.json');
 
 const args = process.argv.slice(2);
 const sizeArg = args.find((arg) => /^--size=\d+$/i.test(arg));
@@ -23,6 +24,37 @@ const sizeFromEnv = Number(process.env.K6_TOTAL_REGISTROS || 0);
 const size = Number.isFinite(sizeFromArg) && sizeFromArg > 0
   ? sizeFromArg
   : (Number.isFinite(sizeFromEnv) && sizeFromEnv > 0 ? sizeFromEnv : 200);
+
+function readSequence() {
+  if (!fs.existsSync(sequencePath)) return 0;
+  try {
+    const raw = fs.readFileSync(sequencePath, 'utf8');
+    const data = JSON.parse(raw);
+    const last = Number(data && data.last);
+    return Number.isFinite(last) && last > 0 ? last : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function nextSequence() {
+  const envSeq = Number.parseInt(String(process.env.K6_PREFIX_SEQUENCE || ''), 10);
+  const last = Number.isFinite(envSeq) && envSeq > 0 ? envSeq - 1 : readSequence();
+  const next = Math.max(1, last + 1);
+  fs.writeFileSync(sequencePath, JSON.stringify({ last: next, updatedAt: new Date().toISOString() }, null, 2));
+  return next;
+}
+
+const sequence = nextSequence();
+const prefixLabel = `K6 ${String(sequence).padStart(2, '0')}`;
+
+function withPrefix(value) {
+  const text = String(value || '').trim();
+  if (!text) return `${prefixLabel} SIN-NOMBRE`;
+  const normalized = normalizeText(text);
+  if (normalized.startsWith(`${prefixLabel} `)) return text;
+  return `${prefixLabel} ${text}`;
+}
 
 function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {
@@ -59,8 +91,8 @@ function buildSynthetic(index) {
   const runSuffix = String(runTag).slice(-6);
   return {
     ruc,
-    razonSocial: `K6 R${runSuffix} EMPRESA ${suf} S.A.C.`,
-    nombreComercial: `K6 R${runSuffix} ${suf}`,
+    razonSocial: withPrefix(`EMPRESA ${suf} S.A.C.`),
+    nombreComercial: withPrefix(`EMPRESA ${suf}`),
     estado: 1,
     source: 'synthetic'
   };
@@ -95,14 +127,15 @@ function main() {
       if (!ruc || usedRuc.has(ruc)) continue;
 
       const razonSocial = String(item?.razonSocial || '').trim();
-      const razonSocialNorm = normalizeText(razonSocial);
-      const nombreComercial = String(item?.nombreComercial || '').trim() || razonSocial;
+      const razonSocialPrefixed = withPrefix(razonSocial);
+      const razonSocialNorm = normalizeText(razonSocialPrefixed);
+      const nombreComercial = withPrefix(String(item?.nombreComercial || '').trim() || razonSocial);
 
       if (!razonSocial || !razonSocialNorm || usedRazon.has(razonSocialNorm)) continue;
 
       dataset.push({
         ruc,
-        razonSocial,
+        razonSocial: razonSocialPrefixed,
         nombreComercial,
         estado: 1,
         source: 'pool'
@@ -134,26 +167,28 @@ function main() {
 
   const validations = [];
   if (dataset.length !== size) validations.push(`dataset.length (${dataset.length}) != size (${size})`);
-  if (uniqueRucCount !== dataset.length) validations.push(`RUC no único (${uniqueRucCount}/${dataset.length})`);
-  if (uniqueRazonCount !== dataset.length) validations.push(`razón social no única (${uniqueRazonCount}/${dataset.length})`);
-  if (invalidRucCount > 0) validations.push(`RUC inválido de longitud en ${invalidRucCount} registros`);
+  if (uniqueRucCount !== dataset.length) validations.push(`RUC no unico (${uniqueRucCount}/${dataset.length})`);
+  if (uniqueRazonCount !== dataset.length) validations.push(`razon social no unica (${uniqueRazonCount}/${dataset.length})`);
+  if (invalidRucCount > 0) validations.push(`RUC invalido de longitud en ${invalidRucCount} registros`);
 
-  console.log(`📦 Dataset k6 caso 01 generado: ${dataset.length}`);
+  console.log(`Dataset k6 caso 01 generado: ${dataset.length}`);
+  console.log(`   - prefijo secuencial: ${prefixLabel}`);
+  console.log(`   - secuencia: ${sequence}`);
   console.log(`   - strategy: ${strategy}`);
   console.log(`   - rucPrefix: ${rucPrefix}`);
   console.log(`   - runTag: ${runTag}`);
-  console.log(`   - únicos RUC: ${uniqueRucCount} | razón social: ${uniqueRazonCount}`);
+  console.log(`   - unicos RUC: ${uniqueRucCount} | razon social: ${uniqueRazonCount}`);
   console.log(`   - failFast: ${failFast ? 'ON' : 'OFF'}`);
   console.log(`   - desde pool: ${strategy === 'mixed' ? dataset.length - syntheticCount : 0}`);
-  console.log(`   - sintéticos: ${syntheticCount}`);
+  console.log(`   - sinteticos: ${syntheticCount}`);
   console.log(`   - archivo: ${outputPath}`);
 
   if (dataset.length < size) {
-    console.warn(`⚠️ Dataset menor al objetivo solicitado (${dataset.length}/${size}).`);
+    console.warn(`WARN: Dataset menor al objetivo solicitado (${dataset.length}/${size}).`);
   }
 
   if (validations.length > 0) {
-    const message = `❌ Validación dataset falló: ${validations.join(' | ')}`;
+    const message = `ERROR: Validacion dataset fallo: ${validations.join(' | ')}`;
     if (failFast) {
       throw new Error(message);
     }

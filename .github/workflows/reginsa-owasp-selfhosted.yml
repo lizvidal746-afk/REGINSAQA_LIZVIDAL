@@ -29,11 +29,11 @@ jobs:
           fetch-depth: 1
           clean: false
 
-      - name: Run OWASP baseline + translate
+      - name: Run OWASP dated flow (baseline + formal reports)
         run: |
           $target = "${{ github.event.inputs.target_url }}"
           if ([string]::IsNullOrWhiteSpace($target)) { $target = $env:REGINSA_URL }
-          .\scripts\security\run-owasp-baseline-and-translate.ps1 -Target $target -OutputDir "reportes/security"
+          .\scripts\security\generar-reportes-owasp-fechados.ps1 -Target $target -BaseDir "reportes/security"
 
       - name: Upload artifacts
         if: always() && github.event.inputs.upload_artifacts == 'true'

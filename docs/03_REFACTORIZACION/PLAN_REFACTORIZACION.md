@@ -16,7 +16,7 @@
 | Alta | Crear pipelines enterprise parametrizables | Operación multi-entorno | `pipelines/github-actions/*`, `pipelines/azure/*`, `pipelines/jenkins/*` |
 | Media | Introducir POM + Service Layer para Caso 01 y 02 | Mantenibilidad | `core/services/*`, `tests/functional/*` |
 | Media | Integrar DAST (ZAP) en pipeline | Seguridad continua | `tests/security/zap/*`, `package.json`, pipelines |
-| Media | Estandarizar performance k6 | Capacidad y SLO | `tests/performance/k6/*`, `package.json` |
+| Media | Estandarizar performance k6 | Capacidad y SLO | `tests/performance/k6-grafana/*`, `package.json` |
 | Baja | Consolidar documentación institucional mínima | Transferencia operativa | `docs/*.md` |
 | Baja | Retirar carpeta `playwrigth/` tras cierre de migración | Evita duplicidad | Árbol `playwrigth/*` |
 

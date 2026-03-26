@@ -10,7 +10,7 @@ on:
       repeat_each:
         description: "Playwright repeat-each"
         required: false
-        default: "9"
+        default: "3"
       smoke_mode:
         description: "Smoke mode true/false"
         required: false
@@ -43,6 +43,14 @@ on:
         description: "Allowed failed tests when gate_mode=tolerant"
         required: false
         default: "0"
+      reginsa_url:
+        description: "Override URL REGINSA (optional)"
+        required: false
+        default: ""
+      credentials_json:
+        description: "JSON array de credenciales [{\"usuario\":\"u\",\"contrasena\":\"p\"}] (optional)"
+        required: false
+        default: ""
 
 jobs:
   caso03-funcional-pro:
@@ -52,8 +60,9 @@ jobs:
       run:
         shell: cmd
     env:
-      REGINSA_URL: ${{ secrets.REGINSA_URL }}
-      BASE_URL: ${{ secrets.REGINSA_URL }}
+      REGINSA_URL: ${{ github.event.inputs.reginsa_url || vars.REGINSA_URL || secrets.REGINSA_URL }}
+      BASE_URL: ${{ github.event.inputs.reginsa_url || vars.REGINSA_URL || secrets.REGINSA_URL }}
+      REGINSA_CREDENTIALS_JSON: ${{ github.event.inputs.credentials_json || vars.REGINSA_CREDENTIALS_JSON || secrets.REGINSA_CREDENTIALS_JSON || '' }}
       REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
       REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
       REGINSA_USER_2: ${{ secrets.REGINSA_USER_2 }}
@@ -99,9 +108,9 @@ jobs:
           @echo off
           setlocal
           if /I "${{ github.event.inputs.smoke_mode || 'false' }}"=="true" (
-            npx playwright test --grep "03-RECONSIDERAR SIN SANCIONES" --workers=2 --repeat-each=1 --project=chromium
+            npm run test:03:fast -- --workers=2 --repeat-each=1 --project=chromium
           ) else (
-            npm run test:03:scale -- --workers=${{ github.event.inputs.workers || '3' }} --repeat-each=${{ github.event.inputs.repeat_each || '9' }} --project=chromium
+            npm run test:03:scale -- --workers=${{ github.event.inputs.workers || '3' }} --repeat-each=${{ github.event.inputs.repeat_each || '3' }} --project=chromium
           )
 
       - name: Evaluate outcomes

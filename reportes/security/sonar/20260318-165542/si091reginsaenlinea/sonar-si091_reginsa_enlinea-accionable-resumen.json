@@ -1,0 +1,40 @@
+﻿{
+    "generatedAt":  "2026-03-18 16:56:29",
+    "projectKey":  "si091_reginsa_enlinea",
+    "qualityGate":  "OK",
+    "metrics":  {
+                    "bugs":  "15",
+                    "vulnerabilities":  "0",
+                    "codeSmells":  "0",
+                    "coverage":  null,
+                    "duplicatedLinesDensity":  "0.0",
+                    "maintainabilityRating":  "1.0",
+                    "reliabilityRating":  "3.0",
+                    "securityRating":  "1.0",
+                    "securityHotspotsReviewed":  null
+                },
+    "trend":  {
+
+              },
+    "bySeverity":  [
+                       {
+                           "severity":  "MAJOR",
+                           "count":  15
+                       }
+                   ],
+    "topRules":  [
+                     {
+                         "rule":  "Web:TableHeaderHasIdOrScopeCheck",
+                         "count":  15
+                     }
+                 ],
+    "topFiles":  [
+                     {
+                         "component":  "si091_reginsa_enlinea:src/package/module/Reginsa/reginsa.component.html",
+                         "count":  15
+                     }
+                 ],
+    "quickWins":  [
+                      "Atacar severidades BLOCKER/CRITICAL/MAJOR en primera iteracion."
+                  ]
+}

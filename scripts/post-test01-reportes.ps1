@@ -49,17 +49,18 @@ if (Test-Path $playwrightReport) {
   Write-Host 'Playwright report no encontrado.'
 }
 
+# Allure NO debe abrirse con file:// (doble clic en index.html): el SPA queda en "Loading..."
+# porque carga JSON bajo /data vía fetch; sin servidor HTTP falla. Usar solo: npx allure open
 if ((Test-Path $allureReportIndex) -and ($allureResultFiles.Count -gt 0)) {
-  Write-Host 'Abriendo Allure report por servidor local...'
+  Write-Host 'Abriendo Allure con servidor local (única forma que carga datos)...'
   try {
-    Start-Process -FilePath 'cmd.exe' -ArgumentList '/c', 'npx allure open allure-report' -WorkingDirectory $root | Out-Null
+    $npx = (Get-Command npx -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty Source)
+    if (-not $npx) { $npx = 'npx' }
+    Start-Process -FilePath $npx -ArgumentList @('allure', 'open', 'allure-report') -WorkingDirectory $root | Out-Null
+    Write-Host 'Allure: npx allure open allure-report (si no abre, ejecútalo manualmente en la raíz del repo).'
   } catch {
-    Write-Host 'No se pudo iniciar allure open automáticamente.'
-    $openedAllure = Start-ReportPath -Path $allureReportIndex -Label 'Allure report (estático)'
-    if (-not $openedAllure) {
-      Write-Host 'Si no se abrió, ejecuta manualmente:'
-      Write-Host '  npx allure open allure-report'
-    }
+    Write-Host 'No se pudo iniciar allure open automáticamente. Ejecuta:'
+    Write-Host '  npx allure open allure-report'
   }
 } else {
   Write-Host 'Allure report no disponible para abrir (sin resultados o sin index generado).'

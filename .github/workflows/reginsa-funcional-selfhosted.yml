@@ -202,22 +202,22 @@ jobs:
           )
 
           if /I "%CASE_TARGET%"=="caso02" (
-            npx playwright test --grep="02-REGISTRAR SANCIÓN" --workers=%RUN_WORKERS% --repeat-each=%RUN_REPEAT% --project=%RUN_PROJECT%
+            npm run test:02:scale -- --workers=%RUN_WORKERS% --repeat-each=%RUN_REPEAT% --project=%RUN_PROJECT%
             goto :eof
           )
 
           if /I "%CASE_TARGET%"=="caso03" (
-            npx playwright test --grep="03-RECONSIDERAR SIN SANCIONES" --workers=%RUN_WORKERS% --repeat-each=%RUN_REPEAT% --project=%RUN_PROJECT%
+            npm run test:03:scale -- --workers=%RUN_WORKERS% --repeat-each=%RUN_REPEAT% --project=%RUN_PROJECT%
             goto :eof
           )
 
           if /I "%CASE_TARGET%"=="caso04" (
-            npx playwright test --grep="04-RECONSIDERAR CON SANCIONES" --workers=%RUN_WORKERS% --repeat-each=%RUN_REPEAT% --project=%RUN_PROJECT%
+            npm run test:04:scale -- --workers=%RUN_WORKERS% --repeat-each=%RUN_REPEAT% --project=%RUN_PROJECT%
             goto :eof
           )
 
           if /I "%CASE_TARGET%"=="suite_01_04" (
-            npx playwright test --grep="01-AGREGAR ADMINISTRADO|02-REGISTRAR SANCIÓN|03-RECONSIDERAR SIN SANCIONES|04-RECONSIDERAR CON SANCIONES" --workers=%RUN_WORKERS% --repeat-each=%RUN_REPEAT% --project=%RUN_PROJECT%
+            npm run test:functional:suite -- --workers=%RUN_WORKERS% --repeat-each=%RUN_REPEAT% --project=%RUN_PROJECT%
             goto :eof
           )
 

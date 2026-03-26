@@ -9,6 +9,9 @@ $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
 $env:SKIP_SCREENSHOTS = '1'
+if (-not $env:REGINSA_FUNC_RUN_ID) {
+  $env:REGINSA_FUNC_RUN_ID = [guid]::NewGuid().ToString()
+}
 $env:REGINSA_SCALE_MODE = '1'
 $env:REGINSA_STRICT_VERIFY = '1'
 $env:REGINSA_VERIFY_API = '1'

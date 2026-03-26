@@ -23,7 +23,7 @@ $env:K6_DEBUG_ERRORS = "1"
 $env:K6_DEBUG_ERROR_MAX = "20"
 
 # 4) Ejecutar flujo completo caso 2 con reporte en Grafana Cloud
-k6 run -o cloud docs/plantillas/k6_caso_02_registrar_sancion_completo.js `
+k6 run -o cloud tests/performance/k6-grafana/k6_caso_02_registrar_sancion.js `
     --env K6_CLOUD_TOKEN=$env:K6_CLOUD_TOKEN `
     --env K6_CLOUD_PROJECT_ID=$env:K6_CLOUD_PROJECT_ID `
     --env BASE_API=$env:BASE_API `

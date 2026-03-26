@@ -45,12 +45,12 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"usuario\": \"{{usuario}}\",\n  \"contrasena\": \"{{contrasena}}\"\n}"
+          "raw": "{\n  \"CODE\": \"{{punku_code}}\",\n  \"CODE_CHALLENGE\": \"{{punku_code_challenge}}\"\n}"
         },
         "url": {
-          "raw": "{{base_api}}/Auth/Login",
-          "host": ["{{base_api}}"],
-          "path": ["Auth", "Login"]
+          "raw": "{{punku_base}}/api/Authentication/GetTokenByCodeAndCodeChallenge",
+          "host": ["{{punku_base}}"],
+          "path": ["api", "Authentication", "GetTokenByCodeAndCodeChallenge"]
         }
       },
       "event": [
@@ -59,13 +59,14 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('Login status 200/201', function () { pm.expect([200,201]).to.include(pm.response.code); });",
-              "const data = pm.response.json();",
-              "const candidates = [data?.token, data?.accessToken, data?.access_token, data?.oData?.token, data?.oData?.accessToken, data?.oData?.access_token, data?.oData?.jwt];",
-              "const token = candidates.find((v) => typeof v === 'string' && v.trim().length > 0) || '';",
-              "pm.test('Token presente', function () { pm.expect(token).to.not.equal(''); });",
+              "pm.test('Punku auth status 200', function () { pm.expect([200,201]).to.include(pm.response.code); });",
+              "var data = pm.response.json();",
+              "const token = data?.TOKEN_JWT || '';",
+              "pm.test('TOKEN_JWT presente', function () { pm.expect(token).to.not.equal(''); });",
+              "pm.environment.set('TOKEN_JWT', token);",
               "pm.environment.set('token', token);",
-              "pm.environment.set('auth_header', token.startsWith('Bearer ') ? token : `Bearer ${token}`);"
+              "pm.environment.set('auth_header', 'Bearer ' + token);",
+              "pm.environment.set('GUID_SESION', data?.GUID_SESION || '');"
             ]
           }
         }

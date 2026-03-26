@@ -8,6 +8,7 @@ import {
 type OmitirCampo = 'archivo' | 'numero' | 'fecha' | 'ninguno';
 
 const TOAST_OK = '.p-toast-message-success, .p-toast-message[aria-label*="Exito"], .p-toast-message[aria-label*="\u00c9xito"]';
+const TOAST_WARN = '.p-toast-message-warn, .p-toast-message[aria-label*="Validaci" i], .p-toast-message';
 
 async function obtenerIndiceColumna(page: Page, regex: RegExp): Promise<number> {
   const headers = page.locator('thead tr th');
@@ -160,15 +161,38 @@ async function intentarGuardarCabecera(page: Page): Promise<boolean> {
   return await page.locator(TOAST_OK).first().isVisible({ timeout: 1400 }).catch(() => false);
 }
 
+async function obtenerTextoToastValidacion(page: Page): Promise<string> {
+  const toast = page.locator(TOAST_WARN).first();
+  const visible = await toast.isVisible({ timeout: 3000 }).catch(() => false);
+  if (!visible) return '';
+  return (await toast.innerText().catch(() => '')).trim();
+}
+
 test.describe('@validaciones 04-RECONSIDERAR CON SANCIONES - Cabecera obligatoria', () => {
   test.describe.configure({ mode: 'serial' });
   test.setTimeout(240000);
+
+  test.afterEach(async ({ page }, testInfo) => {
+    const screenshot = await page.screenshot({ fullPage: true }).catch(() => null);
+    if (screenshot) {
+      await testInfo.attach('validacion-evidencia-ui', {
+        body: screenshot,
+        contentType: 'image/png'
+      });
+    }
+  });
 
   const casos: Array<{ omitir: OmitirCampo; titulo: string }> = [
     { omitir: 'archivo', titulo: 'Archivo de reconsideracion obligatorio' },
     { omitir: 'numero', titulo: 'Numero de reconsideracion obligatorio' },
     { omitir: 'fecha', titulo: 'Fecha de reconsideracion obligatoria' }
   ];
+
+  const mensajesEsperados: Record<'archivo' | 'numero' | 'fecha', RegExp> = {
+    archivo: /archivo\s*de\s*reconsideraci[oó]n|archivo/i,
+    numero: /n[uú]mero\s*de\s*reconsideraci[oó]n|n[uú]mero/i,
+    fecha: /fecha\s*de\s*reconsideraci[oó]n|fecha/i
+  };
 
   for (const item of casos) {
     test(`bloquea guardado cuando falta: ${item.titulo}`, async ({ page }, testInfo) => {
@@ -183,6 +207,11 @@ test.describe('@validaciones 04-RECONSIDERAR CON SANCIONES - Cabecera obligatori
 
       const guardo = await intentarGuardarCabecera(page);
       expect(guardo).toBeFalsy();
+
+      const textoToast = await obtenerTextoToastValidacion(page);
+      if (item.omitir !== 'ninguno') {
+        expect(mensajesEsperados[item.omitir].test(textoToast)).toBeTruthy();
+      }
     });
   }
 });

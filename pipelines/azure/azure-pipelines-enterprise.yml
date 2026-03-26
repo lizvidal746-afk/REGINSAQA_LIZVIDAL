@@ -10,6 +10,7 @@ parameters:
       - functional
       - regression
       - performance
+      - k6
       - security
   - name: workers
     type: string
@@ -17,6 +18,16 @@ parameters:
   - name: repeatEach
     type: string
     default: '1'
+  - name: caseTarget
+    type: string
+    default: '01'
+    values:
+      - '00'
+      - '01'
+      - '02'
+      - '03'
+      - '04'
+      - suite
   - name: registros
     type: string
     default: '10'
@@ -26,6 +37,27 @@ parameters:
   - name: environment
     type: string
     default: qa
+  - name: k6Output
+    type: string
+    default: local
+    values:
+      - local
+      - cloud
+  - name: k6SleepSeconds
+    type: string
+    default: '0'
+  - name: k6PerfDuration
+    type: string
+    default: '2m'
+  - name: k6Vus
+    type: string
+    default: '1'
+  - name: k6ExpectRateLimit
+    type: string
+    default: '1'
+  - name: k6EnforceOkRate
+    type: string
+    default: '0'
 
 pool:
   vmImage: ubuntu-latest
@@ -35,6 +67,14 @@ variables:
   REGINSA_HEADLESS: ${{ parameters.headless }}
   REGINSA_TARGET_REGISTROS: ${{ parameters.registros }}
   REGINSA_ENVIRONMENT: ${{ parameters.environment }}
+  REGINSA_CASE_TARGET: ${{ parameters.caseTarget }}
+  REGINSA_K6_OUTPUT: ${{ parameters.k6Output }}
+  REGINSA_K6_SLEEP_SECONDS: ${{ parameters.k6SleepSeconds }}
+  REGINSA_K6_PERF_DURATION: ${{ parameters.k6PerfDuration }}
+  REGINSA_K6_VUS: ${{ parameters.k6Vus }}
+  REGINSA_K6_EXPECT_RATE_LIMIT: ${{ parameters.k6ExpectRateLimit }}
+  REGINSA_K6_ENFORCE_OK_RATE: ${{ parameters.k6EnforceOkRate }}
+  REGINSA_CASO04_SKIP_EXHAUSTED_PAGES: '1'
 
 stages:
   - stage: QA
@@ -48,10 +88,51 @@ stages:
           - script: npm ci
             displayName: Install dependencies
           - script: |
+              if [ "${{ parameters.testType }}" = "k6" ]; then
+                sudo gpg -k || true
+                sudo apt-get update
+                sudo apt-get install -y gnupg ca-certificates
+                curl -fsSL https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
+                echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+                sudo apt-get update
+                sudo apt-get install -y k6
+                k6 version
+              fi
+            displayName: Install k6 (only for k6 testType)
+          - script: |
               if [ "${{ parameters.testType }}" = "smoke" ]; then npm run test:smoke; fi
-              if [ "${{ parameters.testType }}" = "functional" ]; then npm run test:functional:suite -- --workers=${{ parameters.workers }} --repeat-each=${{ parameters.repeatEach }}; fi
+              if [ "${{ parameters.testType }}" = "functional" ]; then
+                case "${{ parameters.caseTarget }}" in
+                  01) npm run test:01:scale -- --workers=${{ parameters.workers }} --repeat-each=${{ parameters.repeatEach }} --project=chromium ;;
+                  02) npm run test:02:scale -- --workers=${{ parameters.workers }} --repeat-each=${{ parameters.repeatEach }} --project=chromium ;;
+                  03) npm run test:03:scale -- --workers=${{ parameters.workers }} --repeat-each=${{ parameters.repeatEach }} --project=chromium ;;
+                  04) npm run test:04:scale -- --workers=${{ parameters.workers }} --repeat-each=${{ parameters.repeatEach }} --project=chromium ;;
+                  suite) npm run test:functional:suite -- --workers=${{ parameters.workers }} --repeat-each=${{ parameters.repeatEach }} --project=chromium ;;
+                  *) echo "caseTarget inválido: ${{ parameters.caseTarget }}"; exit 1 ;;
+                esac
+              fi
               if [ "${{ parameters.testType }}" = "regression" ]; then npm run test:regression; fi
               if [ "${{ parameters.testType }}" = "performance" ]; then npm run test:performance; fi
+              if [ "${{ parameters.testType }}" = "k6" ]; then
+                case "${{ parameters.caseTarget }}" in
+                  00)
+                    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso00-login.ps1 -K6Output "${{ parameters.k6Output }}" -K6Cantidad "${{ parameters.registros }}" -K6Vus "${{ parameters.k6Vus }}" -PerfDuration "${{ parameters.k6PerfDuration }}" -K6SleepSeconds "${{ parameters.k6SleepSeconds }}" -GrafanaProjectId "$(K6_CLOUD_PROJECT_ID)" -GrafanaToken "$(K6_CLOUD_TOKEN)"
+                    ;;
+                  01)
+                    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso01-local.ps1 -Mode k6 -K6Output "${{ parameters.k6Output }}" -K6Cantidad "${{ parameters.registros }}" -K6Vus "${{ parameters.k6Vus }}" -PerfDuration "${{ parameters.k6PerfDuration }}" -K6SleepSeconds "${{ parameters.k6SleepSeconds }}" -GrafanaProjectId "$(K6_CLOUD_PROJECT_ID)" -GrafanaToken "$(K6_CLOUD_TOKEN)"
+                    ;;
+                  02)
+                    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso02-local.ps1 -Mode k6 -K6Output "${{ parameters.k6Output }}" -K6Cantidad "${{ parameters.registros }}" -K6Vus "${{ parameters.k6Vus }}" -PerfDuration "${{ parameters.k6PerfDuration }}" -K6SleepSeconds "${{ parameters.k6SleepSeconds }}" -K6ExpectRateLimit "${{ parameters.k6ExpectRateLimit }}" -K6EnforceOkRate "${{ parameters.k6EnforceOkRate }}" -GrafanaProjectId "$(K6_CLOUD_PROJECT_ID)" -GrafanaToken "$(K6_CLOUD_TOKEN)"
+                    ;;
+                  03)
+                    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso03-local.ps1 -Mode k6 -K6Output "${{ parameters.k6Output }}" -K6Cantidad "${{ parameters.registros }}" -K6Vus "${{ parameters.k6Vus }}" -PerfDuration "${{ parameters.k6PerfDuration }}" -K6SleepSeconds "${{ parameters.k6SleepSeconds }}" -K6ExpectRateLimit "${{ parameters.k6ExpectRateLimit }}" -K6EnforceOkRate "${{ parameters.k6EnforceOkRate }}" -GrafanaProjectId "$(K6_CLOUD_PROJECT_ID)" -GrafanaToken "$(K6_CLOUD_TOKEN)"
+                    ;;
+                  04)
+                    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 -K6Output "${{ parameters.k6Output }}" -K6Cantidad "${{ parameters.registros }}" -K6Vus "${{ parameters.k6Vus }}" -PerfDuration "${{ parameters.k6PerfDuration }}" -K6SleepSeconds "${{ parameters.k6SleepSeconds }}" -K6ExpectRateLimit "${{ parameters.k6ExpectRateLimit }}" -K6EnforceOkRate "${{ parameters.k6EnforceOkRate }}" -GrafanaProjectId "$(K6_CLOUD_PROJECT_ID)" -GrafanaToken "$(K6_CLOUD_TOKEN)"
+                    ;;
+                  *) echo "caseTarget inválido para k6: ${{ parameters.caseTarget }}"; exit 1 ;;
+                esac
+              fi
               if [ "${{ parameters.testType }}" = "security" ]; then npm run test:security; fi
             displayName: Run selected suite
           - task: PublishBuildArtifacts@1

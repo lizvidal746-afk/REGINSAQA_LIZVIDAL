@@ -14,7 +14,7 @@ Estandarizar cómo ejecutar rendimiento del Caso 01 en k6 (local/cloud) sin dupl
 
 ### Tokens por VU
 
-El script `tests/performance/k6/k6_caso_01_agregar_administrado.js` soporta:
+El script `tests/performance/k6-grafana/k6_caso_01_agregar_administrado.js` soporta:
 
 1. `K6_AUTH_HEADER` (un token para todos).
 2. `K6_AUTH_HEADERS` (lista separada por `;` o `,`, rotada por VU).
@@ -45,8 +45,6 @@ Generador `scripts/generar-k6-caso01-dataset.js` (fresh):
 ## 3) Preparación mínima (PowerShell)
 
 ```powershell
-$env:K6_CLOUD_TOKEN="TU_K6_CLOUD_TOKEN"
-$env:K6_CLOUD_PROJECT_ID="TU_K6_PROJECT_ID"
 $env:BASE_URL="https://reginsaapiqa.sunedu.gob.pe/api"
 
 # Opción A: un token para todos los VUs
@@ -70,7 +68,7 @@ npm run pool:k6:dataset:fresh -- --size=N --fail-fast=1
 ### 4.2 Ejecución estable (shared-iterations)
 
 ```powershell
-k6 run -o cloud tests/performance/k6/k6_caso_01_agregar_administrado.js `
+k6 run tests/performance/k6-grafana/k6_caso_01_agregar_administrado.js `
   --env BASE_URL=$env:BASE_URL `
   --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER `
   --env K6_FIXED_ITERATIONS=N `
@@ -86,7 +84,7 @@ k6 run -o cloud tests/performance/k6/k6_caso_01_agregar_administrado.js `
 ### 4.3 Ejecución burst (per-vu-iterations)
 
 ```powershell
-k6 run -o cloud tests/performance/k6/k6_caso_01_agregar_administrado.js `
+k6 run tests/performance/k6-grafana/k6_caso_01_agregar_administrado.js `
   --env BASE_URL=$env:BASE_URL `
   --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER `
   --env K6_BURST_MODE=1 `
@@ -125,49 +123,49 @@ Notas:
 
 ```powershell
 npm run pool:k6:dataset:fresh -- --size=10 --fail-fast=1
-k6 run -o cloud tests/performance/k6/k6_caso_01_agregar_administrado.js --env BASE_URL=$env:BASE_URL --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER --env K6_FIXED_ITERATIONS=10 --env K6_FIXED_VUS=1 --env K6_TOTAL_REGISTROS=10 --env K6_STRICT_UNIQUE=1 --env K6_SLEEP_SECONDS=0.8 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 --summary-export reportes/k6-caso01-summary-cloud.json
+k6 run tests/performance/k6-grafana/k6_caso_01_agregar_administrado.js --env BASE_URL=$env:BASE_URL --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER --env K6_FIXED_ITERATIONS=10 --env K6_FIXED_VUS=1 --env K6_TOTAL_REGISTROS=10 --env K6_STRICT_UNIQUE=1 --env K6_SLEEP_SECONDS=0.8 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 --summary-export reportes/k6-caso01-summary-local.json
 ```
 
 ### 50 (estable)
 
 ```powershell
 npm run pool:k6:dataset:fresh -- --size=50 --fail-fast=1
-k6 run -o cloud tests/performance/k6/k6_caso_01_agregar_administrado.js --env BASE_URL=$env:BASE_URL --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER --env K6_FIXED_ITERATIONS=50 --env K6_FIXED_VUS=3 --env K6_TOTAL_REGISTROS=50 --env K6_STRICT_UNIQUE=1 --env K6_SLEEP_SECONDS=0.5 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 --summary-export reportes/k6-caso01-summary-cloud.json
+k6 run tests/performance/k6-grafana/k6_caso_01_agregar_administrado.js --env BASE_URL=$env:BASE_URL --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER --env K6_FIXED_ITERATIONS=50 --env K6_FIXED_VUS=3 --env K6_TOTAL_REGISTROS=50 --env K6_STRICT_UNIQUE=1 --env K6_SLEEP_SECONDS=0.5 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 --summary-export reportes/k6-caso01-summary-local.json
 ```
 
 ### 100 (estable)
 
 ```powershell
 npm run pool:k6:dataset:fresh -- --size=100 --fail-fast=1
-k6 run -o cloud tests/performance/k6/k6_caso_01_agregar_administrado.js --env BASE_URL=$env:BASE_URL --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER --env K6_FIXED_ITERATIONS=100 --env K6_FIXED_VUS=5 --env K6_TOTAL_REGISTROS=100 --env K6_STRICT_UNIQUE=1 --env K6_SLEEP_SECONDS=0.4 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 --summary-export reportes/k6-caso01-summary-cloud.json
+k6 run tests/performance/k6-grafana/k6_caso_01_agregar_administrado.js --env BASE_URL=$env:BASE_URL --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER --env K6_FIXED_ITERATIONS=100 --env K6_FIXED_VUS=5 --env K6_TOTAL_REGISTROS=100 --env K6_STRICT_UNIQUE=1 --env K6_SLEEP_SECONDS=0.4 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 --summary-export reportes/k6-caso01-summary-local.json
 ```
 
 ### 200 (estable)
 
 ```powershell
 npm run pool:k6:dataset:fresh -- --size=200 --fail-fast=1
-k6 run -o cloud tests/performance/k6/k6_caso_01_agregar_administrado.js --env BASE_URL=$env:BASE_URL --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER --env K6_FIXED_ITERATIONS=200 --env K6_FIXED_VUS=8 --env K6_TOTAL_REGISTROS=200 --env K6_STRICT_UNIQUE=1 --env K6_SLEEP_SECONDS=0.3 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 --summary-export reportes/k6-caso01-summary-cloud.json
+k6 run tests/performance/k6-grafana/k6_caso_01_agregar_administrado.js --env BASE_URL=$env:BASE_URL --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER --env K6_FIXED_ITERATIONS=200 --env K6_FIXED_VUS=8 --env K6_TOTAL_REGISTROS=200 --env K6_STRICT_UNIQUE=1 --env K6_SLEEP_SECONDS=0.3 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 --summary-export reportes/k6-caso01-summary-local.json
 ```
 
 ### 300 (estable)
 
 ```powershell
 npm run pool:k6:dataset:fresh -- --size=300 --fail-fast=1
-k6 run -o cloud tests/performance/k6/k6_caso_01_agregar_administrado.js --env BASE_URL=$env:BASE_URL --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER --env K6_FIXED_ITERATIONS=300 --env K6_FIXED_VUS=10 --env K6_TOTAL_REGISTROS=300 --env K6_STRICT_UNIQUE=1 --env K6_SLEEP_SECONDS=0.2 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 --summary-export reportes/k6-caso01-summary-cloud.json
+k6 run tests/performance/k6-grafana/k6_caso_01_agregar_administrado.js --env BASE_URL=$env:BASE_URL --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER --env K6_FIXED_ITERATIONS=300 --env K6_FIXED_VUS=10 --env K6_TOTAL_REGISTROS=300 --env K6_STRICT_UNIQUE=1 --env K6_SLEEP_SECONDS=0.2 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 --summary-export reportes/k6-caso01-summary-local.json
 ```
 
 ### 900 (burst)
 
 ```powershell
 npm run pool:k6:dataset:fresh -- --size=900 --fail-fast=1
-k6 run -o cloud tests/performance/k6/k6_caso_01_agregar_administrado.js --env BASE_URL=$env:BASE_URL --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER --env K6_BURST_MODE=1 --env K6_FIXED_VUS=30 --env K6_BURST_ITER_PER_VU=30 --env K6_TOTAL_REGISTROS=900 --env K6_STRICT_UNIQUE=1 --env K6_SLEEP_SECONDS=0 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 --summary-export reportes/k6-caso01-summary-cloud.json
+k6 run tests/performance/k6-grafana/k6_caso_01_agregar_administrado.js --env BASE_URL=$env:BASE_URL --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER --env K6_BURST_MODE=1 --env K6_FIXED_VUS=30 --env K6_BURST_ITER_PER_VU=30 --env K6_TOTAL_REGISTROS=900 --env K6_STRICT_UNIQUE=1 --env K6_SLEEP_SECONDS=0 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 --summary-export reportes/k6-caso01-summary-local.json
 ```
 
 ### 1000 (burst)
 
 ```powershell
 npm run pool:k6:dataset:fresh -- --size=1000 --fail-fast=1
-k6 run -o cloud tests/performance/k6/k6_caso_01_agregar_administrado.js --env BASE_URL=$env:BASE_URL --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER --env K6_BURST_MODE=1 --env K6_FIXED_VUS=25 --env K6_BURST_ITER_PER_VU=40 --env K6_TOTAL_REGISTROS=1000 --env K6_STRICT_UNIQUE=1 --env K6_SLEEP_SECONDS=0 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 --summary-export reportes/k6-caso01-summary-cloud.json
+k6 run tests/performance/k6-grafana/k6_caso_01_agregar_administrado.js --env BASE_URL=$env:BASE_URL --env K6_AUTH_HEADER=$env:K6_AUTH_HEADER --env K6_BURST_MODE=1 --env K6_FIXED_VUS=25 --env K6_BURST_ITER_PER_VU=40 --env K6_TOTAL_REGISTROS=1000 --env K6_STRICT_UNIQUE=1 --env K6_SLEEP_SECONDS=0 --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 --summary-export reportes/k6-caso01-summary-local.json
 ```
 
 ## 7) Buenas prácticas para 8 usuarios reales

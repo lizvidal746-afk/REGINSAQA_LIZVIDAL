@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       auth_mode:
-        description: "Auth mode: token|auto"
+        description: "Auth mode: auto|token (default auto)"
         required: false
-        default: "token"
+        default: "auto"
       k6_auth_header:
         description: "Token when auth_mode=token"
         required: false
@@ -15,14 +15,18 @@ on:
         description: "Alias token when auth_mode=token (equivale a TOKEN1 en terminal)"
         required: false
         default: ""
-      run_mode:
-        description: "k6 output mode: local|cloud"
-        required: false
-        default: "local"
       sleep_mode:
         description: "Sleep mode: zero|min|custom"
         required: false
         default: "min"
+      pack:
+        description: "Pack preset: none|pack_1|pack_2|pack_3"
+        required: false
+        default: "none"
+      pack_step:
+        description: "Pack step: 1|2|3"
+        required: false
+        default: "1"
       smoke_mode:
         description: "Smoke mode true/false"
         required: false
@@ -81,11 +85,12 @@ jobs:
 
       - name: Run K6 Caso 04
         env:
-          AUTH_MODE: ${{ github.event.inputs.auth_mode || 'token' }}
+          AUTH_MODE: ${{ github.event.inputs.auth_mode || 'auto' }}
           AUTH_HEADER_INPUT: ${{ github.event.inputs.k6_auth_header }}
           TOKEN1_INPUT: ${{ github.event.inputs.token1 }}
-          RUN_MODE_INPUT: ${{ github.event.inputs.run_mode || 'local' }}
           SLEEP_MODE: ${{ github.event.inputs.sleep_mode || 'min' }}
+          PACK_INPUT: ${{ github.event.inputs.pack || 'none' }}
+          PACK_STEP_INPUT: ${{ github.event.inputs.pack_step || '1' }}
           SMOKE_MODE: ${{ github.event.inputs.smoke_mode || 'false' }}
           SLEEP_SECONDS_INPUT: ${{ github.event.inputs.sleep_seconds || '0.2' }}
           BURST_MODE_INPUT: ${{ github.event.inputs.burst_mode || 'true' }}
@@ -105,6 +110,69 @@ jobs:
           set RUN_SLEEP=%SLEEP_SECONDS_INPUT%
           if /I "%SLEEP_MODE%"=="zero" set RUN_SLEEP=0
           if /I "%SLEEP_MODE%"=="min" set RUN_SLEEP=0.2
+
+          if /I "%PACK_INPUT%"=="pack_1" (
+            if "%PACK_STEP_INPUT%"=="1" (
+              set FIXED_VUS_INPUT=1
+              set FIXED_ITER_INPUT=3
+              set BURST_MODE_INPUT=false
+              set RUN_SLEEP=0.8
+            )
+            if "%PACK_STEP_INPUT%"=="2" (
+              set FIXED_VUS_INPUT=2
+              set FIXED_ITER_INPUT=10
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0.8
+            )
+            if "%PACK_STEP_INPUT%"=="3" (
+              set FIXED_VUS_INPUT=5
+              set FIXED_ITER_INPUT=50
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0.5
+            )
+          )
+
+          if /I "%PACK_INPUT%"=="pack_2" (
+            if "%PACK_STEP_INPUT%"=="1" (
+              set FIXED_VUS_INPUT=3
+              set FIXED_ITER_INPUT=20
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0.5
+            )
+            if "%PACK_STEP_INPUT%"=="2" (
+              set FIXED_VUS_INPUT=8
+              set FIXED_ITER_INPUT=100
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0.3
+            )
+            if "%PACK_STEP_INPUT%"=="3" (
+              set FIXED_VUS_INPUT=12
+              set FIXED_ITER_INPUT=200
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0.2
+            )
+          )
+
+          if /I "%PACK_INPUT%"=="pack_3" (
+            if "%PACK_STEP_INPUT%"=="1" (
+              set FIXED_VUS_INPUT=3
+              set FIXED_ITER_INPUT=20
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0.5
+            )
+            if "%PACK_STEP_INPUT%"=="2" (
+              set FIXED_VUS_INPUT=20
+              set FIXED_ITER_INPUT=500
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0.1
+            )
+            if "%PACK_STEP_INPUT%"=="3" (
+              set FIXED_VUS_INPUT=30
+              set FIXED_ITER_INPUT=1000
+              set BURST_MODE_INPUT=true
+              set RUN_SLEEP=0
+            )
+          )
 
           if /I "%SMOKE_MODE%"=="true" (
             set FIXED_VUS_INPUT=1
@@ -129,10 +197,7 @@ jobs:
           set TAG_FLAGS= --tag case=caso04 --tag mode=burst
           if /I "%BURST_MODE_INPUT%"=="false" set TAG_FLAGS= --tag case=caso04 --tag mode=shared
 
-          set OUT_FLAG=
-          if /I "%RUN_MODE_INPUT%"=="cloud" set OUT_FLAG=-o cloud
-
-          k6 run %OUT_FLAG% tests/performance/k6/k6_caso_04_reconsiderar_con_sanciones.js %TAG_FLAGS% --env BASE_API=%BASE_API_URL% --env BASE_URL=%BASE_API_URL% --env PERF_DURATION=%PERF_DURATION_INPUT% --env K6_FIXED_VUS=%FIXED_VUS_INPUT% --env K6_FIXED_ITERATIONS=%FIXED_ITER_INPUT% --env K6_TOTAL_REGISTROS=%FIXED_ITER_INPUT% --env K6_SLEEP_SECONDS=%RUN_SLEEP% --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 %AUTH_FLAGS% %BURST_FLAGS% --summary-export reportes/k6-caso04-selfhosted-summary.json
+          k6 run tests/performance/k6-grafana/k6_caso_04_reconsiderar_con_sanciones.js %TAG_FLAGS% --env BASE_API=%BASE_API_URL% --env BASE_URL=%BASE_API_URL% --env PERF_DURATION=%PERF_DURATION_INPUT% --env K6_FIXED_VUS=%FIXED_VUS_INPUT% --env K6_FIXED_ITERATIONS=%FIXED_ITER_INPUT% --env K6_TOTAL_REGISTROS=%FIXED_ITER_INPUT% --env K6_SLEEP_SECONDS=%RUN_SLEEP% --env K6_DEBUG_ERRORS=1 --env K6_DEBUG_ERRORS_MAX=20 %AUTH_FLAGS% %BURST_FLAGS% --summary-export reportes/k6-caso04-selfhosted-summary.json
 
       - name: Upload artifacts
         if: always() && github.event.inputs.upload_artifacts == 'true'

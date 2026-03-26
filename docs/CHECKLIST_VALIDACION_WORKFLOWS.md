@@ -37,7 +37,7 @@ Este checklist permite validar rápidamente cada workflow YAML por caso y tipo d
 5. **Validar subida de artefactos/evidencias**
    - Revisar que los resultados y reportes se suban correctamente.
 6. **Confirmar integración con herramientas externas**
-   - Ejemplo: SonarQube, OWASP ZAP, k6 Cloud, etc.
+   - Ejemplo: SonarQube, OWASP ZAP, k6 local, etc.
 7. **Revisar documentación**
    - El workflow debe estar documentado en `README_OPERACION_PACKS.md`.
 8. **Repetir para cada caso y tipo de prueba**

@@ -1,0 +1,18 @@
+{
+  "json.schemaDownload.enabled": false,
+  "workbench.trustedDomains": [
+    "https://raw.githubusercontent.com",
+    "raw.githubusercontent.com"
+  ],
+  "powershell.scriptAnalysis.settingsPath": "PSScriptAnalyzerSettings.psd1",
+  "sonarlint.connectedMode.connections.sonarqube": [
+    {
+      "connectionId": "REGINSA-SONAR",
+      "serverUrl": "http://localhost:9000"
+    }
+  ],
+  "sonarlint.connectedMode.project": {
+    "connectionId": "REGINSA-SONAR",
+    "projectKey": "reginsa-qa-framework"
+  }
+}

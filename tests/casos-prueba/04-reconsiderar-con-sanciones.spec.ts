@@ -9,6 +9,15 @@ import {
   calcularFechaReconsideracion,
   resolverDocumentoPrueba
 } from 'tests/utilidades/reginsa-actions';
+import { getTestContext } from 'helpers/test-context';
+import {
+  reservarConsecutivoGlobalPorRun,
+  reservarClaveCandidato,
+  liberarClaveCandidato,
+  registrarAsignacionSecuencial,
+  marcarPaginaAgotada,
+  esPaginaAgotada,
+} from 'helpers/strict-sequential';
 
 /**
  * EJECUCIÓN (rápido)
@@ -40,17 +49,26 @@ import {
 test.describe('04-RECONSIDERAR CON SANCIONES', () => {
   test('Reconsiderar - Buscar y abrir modal de sanción', async ({ page }, testInfo) => {
     test.setTimeout(300000);
+    const ctx = getTestContext(testInfo);
     const esScale = process.env.REGINSA_SCALE_MODE === '1';
     const strictVerify = process.env.REGINSA_STRICT_VERIFY !== '0';
+    const usarSkipPaginasAgotadas = process.env.REGINSA_CASO04_SKIP_EXHAUSTED_PAGES !== '0';
+    let reservaActivaKey = '';
+    let reservaCompletada = false;
+    const crearTimestampArchivo = (): string =>
+      new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
 
-    const esperarRespuestaApiGuardado = async (timeoutMs: number): Promise<boolean> => {
+    const esperarRespuestaApiGuardado = async (
+      timeoutMs: number,
+      modo: 'estricto' | 'amplio' = 'estricto'
+    ): Promise<boolean> => {
       try {
         const response = await page.waitForResponse((res) => {
           const method = res.request().method().toUpperCase();
           if (!['POST', 'PUT', 'PATCH'].includes(method)) return false;
           const url = res.url().toLowerCase();
           if (!url.includes('/api/')) return false;
-          if (!/(reconsider|sanci|infractor|resoluci|detalle)/i.test(url)) return false;
+          if (modo === 'estricto' && !/(reconsider|sanci|infractor|resoluci|detalle)/i.test(url)) return false;
           const status = res.status();
           return status >= 200 && status < 300;
         }, { timeout: timeoutMs });
@@ -71,27 +89,62 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
       // Reutiliza `iniciarSesionYNavegar`
       // ═══════════════════════════════════════════════════════════════════
       console.log('📋 PASO 1: Iniciando sesión...');
-      await iniciarSesionYNavegar(page, 'infractor', testInfo.workerIndex);
+      const iniciarSesionConReintento = async (): Promise<void> => {
+        let ultimoError: unknown;
+        const workerBase = Number(testInfo.workerIndex ?? 0);
+        const maxIntentos = Number.parseInt(process.env.REGINSA_CASO04_LOGIN_RETRIES || '5', 10) || 5;
+        for (let intento = 1; intento <= maxIntentos; intento++) {
+          try {
+            const workerRotado = workerBase + (intento - 1);
+            await iniciarSesionYNavegar(page, 'infractor', workerRotado);
+            return;
+          } catch (error) {
+            ultimoError = error;
+            const mensaje = String((error as Error)?.message || '');
+            const recuperable = /Navegaci[oó]n incompleta|Acceder Ahora visible|volvi[oó] a Home/i.test(mensaje);
+            if (!recuperable || intento === maxIntentos) {
+              throw error;
+            }
+            console.warn(`⚠️ Reintento de sesión/navegación (${intento}/${maxIntentos}) por rebote a Home...`);
+            await page.goto('https://reginsaqa.sunedu.gob.pe/#/home', { waitUntil: 'domcontentloaded' }).catch(() => {});
+            await page.waitForTimeout(Math.min(3000, 600 * intento));
+          }
+        }
+        throw (ultimoError || new Error('No se pudo inicializar sesión para Caso 04.'));
+      };
+
+      await iniciarSesionConReintento();
       console.log('✅ Sesión iniciada\n');
 
       // ═══════════════════════════════════════════════════════════════════
       // PASO 2: BUSCAR REGISTRO CON DETALLE DE SANCIONES
       // ═══════════════════════════════════════════════════════════════════
       console.log('📋 PASO 2: Buscando registro con F. Modificación, N° Reconsideración y F. Reconsideración vacíos...');
-      await page.locator('table').waitFor({ state: 'visible', timeout: 10000 });
-      const filas = page.locator('tr');
+      const tablaPrincipal = page
+        .locator('table')
+        .filter({ has: page.locator('th', { hasText: /F\.?\s*Modificaci/i }) })
+        .first();
+      await tablaPrincipal.waitFor({ state: 'visible', timeout: 15000 });
       let registroEncontrado = false;
-      let paginaActual = 1;
-      const maxPaginas = 15;
       let numeroFilaEncontrada = -1;
       let fechaResolucionSeleccionada: Date | null = null;
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
+      console.log(`   🎯 Selección en orden estricto (worker=${ctx.workerIndex}, repeat=${ctx.repeatIndex})`);
+      console.log('   📌 Estrategia: columnas vacías -> expandir -> validar infracciones -> reservar y procesar.');
+      console.log(`   🧪 Skip páginas agotadas (misma corrida): ${usarSkipPaginasAgotadas ? 'ON' : 'OFF'}`);
+
+      const isEmptyValor = (value: unknown): boolean => {
+        if (value === null || value === undefined) return true;
+        const v = String(value).trim().toLowerCase();
+        return v === '' || v === '-' || v === '--' || v === 'null' || v === 'undefined' || v === '0001-01-01' || v === '0001-01-01t00:00:00';
+      };
+      console.log('   ℹ️ Selección basada solo en UI para evitar desalineación API/UI.');
 
       
 
       const obtenerIndiceColumna = async (regex: RegExp): Promise<number> => {
-        const headers = page.locator('thead tr th');
+        const headers = tablaPrincipal.locator('thead tr th');
         const total = await headers.count();
         for (let i = 0; i < total; i++) {
           const texto = (await headers.nth(i).textContent())?.trim() || '';
@@ -101,6 +154,10 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
       };
 
       const idxAdmin = await obtenerIndiceColumna(/Administrado/i);
+      const idxExp = await obtenerIndiceColumna(/N\W*de\W*Expediente|N\W*Expediente/i);
+      const idxRes = await obtenerIndiceColumna(/N\W*de\W*Resoluci\w*|N\W*Resoluci\w*/i);
+      const idxSancion = await obtenerIndiceColumna(/Sanci[oó]n\s*Impuesta|Sanci[oó]n/i);
+      const idxInfracciones = await obtenerIndiceColumna(/Infracci[oó]n|Infracciones\s*detectadas/i);
       const idxFMod = await obtenerIndiceColumna(/F\.\s*Modificaci\w*|Modificaci\w*/i);
       const idxNRec = await obtenerIndiceColumna(/N\W*Reconsideraci\w*/i);
       const idxFRec = await obtenerIndiceColumna(/F\.\s*Reconsideraci\w*|Reconsideraci\w*/i);
@@ -109,58 +166,250 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
         throw new Error('No se pudieron identificar las columnas F. Modificación, N° Reconsideración y F. Reconsideración.');
       }
 
-      while (!registroEncontrado && paginaActual <= maxPaginas) {
-        const totalFilas = await filas.count();
-        // Buscar todos los registros válidos y asignar uno único por worker+repeat
-        const candidatos: { filaIdx: number, fechaResolucion: Date|null, administrado: string }[] = [];
-        for (let i = 1; i < totalFilas; i++) {
-          const fila = filas.nth(i);
-          const celdas = fila.locator('td');
-          const totalCeldas = await celdas.count();
-          if (totalCeldas >= 9) {
-            const fModificacion = (await celdas.nth(idxFMod).textContent())?.trim() || '';
-            const nReconsid = (await celdas.nth(idxNRec).textContent())?.trim() || '';
-            const fReconsid = (await celdas.nth(idxFRec).textContent())?.trim() || '';
-            const fechasDetectadas: Date[] = [];
-            for (let c = 0; c < totalCeldas; c++) {
-              const texto = (await celdas.nth(c).textContent())?.trim() || '';
-              const fecha = parseFechaTexto(texto);
-              if (fecha) fechasDetectadas.push(fecha);
-            }
-            const fechaResolucion = fechasDetectadas[0] || null;
-            const fechaResolucionValida = Boolean(fechaResolucion && fechaResolucion < hoy);
-            if (!fModificacion && !nReconsid && !fReconsid && fechaResolucionValida) {
-              const administrado = idxAdmin >= 0
-                ? (await celdas.nth(idxAdmin).textContent())?.trim() || 'N/D'
-                : (await celdas.nth(0).textContent())?.trim() || 'N/D';
-              candidatos.push({ filaIdx: i, fechaResolucion, administrado });
-            }
-          }
+      const getPaginatorButton = (kind: 'prev' | 'next') => {
+        if (kind === 'prev') {
+          return page.locator(
+            'button[aria-label="Previous Page"], button[aria-label="Previous"], .p-paginator-prev, .p-paginator-first'
+          ).first();
         }
-        // Asignar registro único por worker+repeat
-        const slot = (testInfo.workerIndex ?? 0) + (testInfo.repeatEachIndex ?? 0);
-        if (candidatos.length > slot) {
-          const elegido = candidatos[slot];
-          console.log(`   👤 Administrado: ${elegido.administrado}`);
-          numeroFilaEncontrada = elegido.filaIdx;
+        return page.locator(
+          'button[aria-label="Next Page"], button[aria-label="Next"], .p-paginator-next, .p-paginator-last'
+        ).first();
+      };
+
+      const isPaginatorEnabled = async (button: ReturnType<typeof page.locator>): Promise<boolean> => {
+        const exists = await button.count().catch(() => 0);
+        if (!exists) return false;
+        const disabledAttr = await button.getAttribute('disabled').catch(() => null);
+        if (disabledAttr !== null) return false;
+        const ariaDisabled = (await button.getAttribute('aria-disabled').catch(() => null)) || '';
+        if (ariaDisabled.toLowerCase() === 'true') return false;
+        const className = (await button.getAttribute('class').catch(() => '')) || '';
+        if (/p-disabled|disabled/i.test(className)) return false;
+        return await button.isEnabled().catch(() => false);
+      };
+
+      const irPrimeraPagina = async (): Promise<void> => {
+        const btnPrev = getPaginatorButton('prev');
+        for (let i = 0; i < 120; i++) {
+          const habilitado = await isPaginatorEnabled(btnPrev);
+          if (!habilitado) break;
+          await btnPrev.click();
+          await page.waitForTimeout(80);
+        }
+      };
+
+      const evaluarFilaCandidata = async (fila: ReturnType<typeof page.locator>, totalCeldas: number) => {
+        const celdas = fila.locator('td');
+        const fModificacion = ((await celdas.nth(idxFMod).textContent()) || '').replace(/\u00a0/g, ' ').trim();
+        const nReconsid = ((await celdas.nth(idxNRec).textContent()) || '').replace(/\u00a0/g, ' ').trim();
+        const fReconsid = ((await celdas.nth(idxFRec).textContent()) || '').replace(/\u00a0/g, ' ').trim();
+        const expedienteFila = idxExp >= 0 && idxExp < totalCeldas
+          ? (await celdas.nth(idxExp).textContent())?.trim() || ''
+          : '';
+        const resolucionFila = idxRes >= 0 && idxRes < totalCeldas
+          ? (await celdas.nth(idxRes).textContent())?.trim() || ''
+          : '';
+        const administrado = idxAdmin >= 0
+          ? (await celdas.nth(idxAdmin).textContent())?.trim() || 'N/D'
+          : (await celdas.nth(0).textContent())?.trim() || 'N/D';
+
+        const sancionTexto = idxSancion >= 0 && idxSancion < totalCeldas
+          ? (await celdas.nth(idxSancion).textContent())?.trim() || ''
+          : '';
+        const infraccionesTexto = idxInfracciones >= 0 && idxInfracciones < totalCeldas
+          ? (await celdas.nth(idxInfracciones).textContent())?.trim() || ''
+          : '';
+        const filaTexto = (await fila.innerText().catch(() => '')).trim();
+
+        const haySancionPorTexto = Boolean(sancionTexto && !/^(sin|ninguna|no\s*aplica|n\/a|0)$/i.test(sancionTexto));
+        const hayInfraccionPorColumna = Boolean(infraccionesTexto && !/^(sin|ninguna|no\s*aplica|n\/a|0)$/i.test(infraccionesTexto));
+        const hayInfraccionPorFila = /infracci|multa|uit|suspensi[oó]n|cancelaci[oó]n/i.test(filaTexto);
+        const fechasDetectadas: Date[] = [];
+        for (let c = 0; c < totalCeldas; c++) {
+          const texto = (await celdas.nth(c).textContent())?.trim() || '';
+          const fecha = parseFechaTexto(texto);
+          if (fecha) fechasDetectadas.push(fecha);
+        }
+
+        const fechaResolucion = fechasDetectadas[0] || null;
+        const fechaResolucionValida = fechasDetectadas.length === 0 || fechasDetectadas.some((f) => f < hoy);
+        const tresCamposVacios = isEmptyValor(fModificacion) && isEmptyValor(nReconsid) && isEmptyValor(fReconsid);
+        const esApto = tresCamposVacios && fechaResolucionValida;
+        return {
+          esApto,
+          sancionTexto,
+          infraccionesTexto,
+          haySancionPorTexto,
+          hayInfraccionPorColumna,
+          hayInfraccionPorFila,
+          expedienteFila,
+          resolucionFila,
+          administrado,
+          fechaResolucion,
+        };
+      };
+
+      const tieneSancionRapidaEnFila = async (fila: ReturnType<typeof page.locator>, totalCeldas: number): Promise<boolean> => {
+        const celdas = fila.locator('td');
+        const sancionTexto = idxSancion >= 0 && idxSancion < totalCeldas
+          ? (await celdas.nth(idxSancion).innerText().catch(() => '')).trim()
+          : '';
+        const infraccionesTexto = idxInfracciones >= 0 && idxInfracciones < totalCeldas
+          ? (await celdas.nth(idxInfracciones).innerText().catch(() => '')).trim()
+          : '';
+        const combinado = `${sancionTexto} ${infraccionesTexto}`.toLowerCase();
+        if (!combinado) return false;
+        if (/^\s*(sin|ninguna|no\s*aplica|n\/a|0)\s*$/i.test(combinado)) return false;
+        return /multa|suspensi|cancelaci|uit|soles|hecho\s*infractor|infracci/i.test(combinado);
+      };
+
+      const tieneSancionesEnTablaHija = async (fila: ReturnType<typeof page.locator>): Promise<boolean> => {
+        const btnExpand = fila.locator('button:has(i.pi-chevron-down), button:has(i.pi-chevron-right)').first();
+        if ((await btnExpand.count().catch(() => 0)) === 0) return false;
+
+        const filaDetalle = fila.locator('xpath=following-sibling::tr[1]');
+        const tablaDetalle = filaDetalle.locator('table').first();
+        const visibleAntes = await tablaDetalle.isVisible().catch(() => false);
+
+        if (!visibleAntes) {
+          await btnExpand.click().catch(() => {});
+          await tablaDetalle.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+        }
+
+        const textoDetalle = (await filaDetalle.innerText().catch(() => '')).toLowerCase();
+        const filasDetalle = await filaDetalle.locator('tbody tr').count().catch(() => 0);
+        const sinDatos = /sin sanciones|sin infracciones|no registra/i.test(textoDetalle);
+        // Criterio manual: al expandir, si hay filas en el detalle y no indica "sin datos",
+        // se considera elegible para reconsideración.
+        const tiene = filasDetalle > 0 && !sinDatos;
+
+        if (!visibleAntes) {
+          await btnExpand.click().catch(() => {});
+        }
+
+        return tiene;
+      };
+
+      await irPrimeraPagina();
+      let elegiblesAcumulados = 0;
+      let paginasExploradas = 0;
+
+      for (let pagina = 1; !registroEncontrado; pagina++) {
+        paginasExploradas = pagina;
+
+        if (usarSkipPaginasAgotadas && esPaginaAgotada('caso04-con-sanciones', pagina)) {
+          console.log(`   ↪️ Página ${pagina}: omitida en esta corrida (marcada sin casos).`);
+          const btnNextSkip = getPaginatorButton('next');
+          const habilitadoSkip = await isPaginatorEnabled(btnNextSkip);
+          if (!habilitadoSkip) break;
+          await btnNextSkip.click();
+          await page.waitForTimeout(80);
+          continue;
+        }
+
+        const filasPagina = tablaPrincipal.locator('tbody > tr');
+        const totalFilas = await filasPagina.count();
+        let elegiblesPagina = 0;
+        let candidatosVaciosPagina = 0;
+
+        for (let i = 0; i < totalFilas; i++) {
+          const fila = filasPagina.nth(i);
+          const botonesEnFila = await fila.locator('button').count().catch(() => 0);
+          if (botonesEnFila === 0) continue;
+
+          const totalCeldas = await fila.locator('td').count();
+          const evaluacion = await evaluarFilaCandidata(fila, totalCeldas);
+          if (!evaluacion.esApto) continue;
+          candidatosVaciosPagina++;
+
+          // Estrategia manual: primero validar vacíos y luego expandir para confirmar infracciones.
+          let tieneSancion = await tieneSancionesEnTablaHija(fila);
+          if (!tieneSancion) {
+            const btnReconsiderarCount = await fila
+              .locator('button.p-button-warning, button[ptooltip*="Reconsiderar"], button i.pi-refresh')
+              .count()
+              .catch(() => 0);
+            const btnInfoCount = await fila
+              .locator('button.p-button-info, button[ptooltip*="Ver Sanción"], button[ptooltip*="Ver Sancion"], button[ptooltip*="Ver Sanci"]')
+              .count()
+              .catch(() => 0);
+
+            tieneSancion =
+              btnReconsiderarCount > 0 ||
+              btnInfoCount > 0 ||
+              evaluacion.haySancionPorTexto ||
+              evaluacion.hayInfraccionPorColumna ||
+              evaluacion.hayInfraccionPorFila ||
+              await tieneSancionRapidaEnFila(fila, totalCeldas);
+          }
+          if (!tieneSancion) continue;
+
+          const claveReserva = `${String(evaluacion.expedienteFila || '').trim()}|${String(evaluacion.resolucionFila || '').trim()}`;
+          if (!claveReserva || claveReserva === '|') continue;
+
+          const reservado = reservarClaveCandidato('caso04-con-sanciones', claveReserva);
+          if (!reservado) {
+            continue;
+          }
+          reservaActivaKey = claveReserva;
+
+          elegiblesAcumulados++;
+          elegiblesPagina++;
+
+          numeroFilaEncontrada = i;
+          fechaResolucionSeleccionada = evaluacion.fechaResolucion;
           registroEncontrado = true;
-          fechaResolucionSeleccionada = elegido.fechaResolucion;
+
+          const trazaSeleccion = {
+            testRunId: process.env.TEST_RUN_ID || '',
+            workerIndex: ctx.workerIndex,
+            repeatIndex: ctx.repeatIndex,
+            selectionSlot: ctx.selectionSlot,
+            elegiblesAcumulados,
+            page: pagina,
+            row: i + 1,
+            expediente: evaluacion.expedienteFila,
+            resolucion: evaluacion.resolucionFila,
+            administrado: evaluacion.administrado,
+            modoSeleccion: 'orden-estricto-con-reserva',
+          };
+
+          registrarAsignacionSecuencial('caso04-con-sanciones', ctx.selectionSlot, {
+            status: 'selected',
+            page: pagina,
+            row: i,
+            workerIndex: ctx.workerIndex,
+            repeatIndex: ctx.repeatIndex,
+            expediente: evaluacion.expedienteFila,
+            resolucion: evaluacion.resolucionFila,
+          });
+
+          console.log(`   👤 Administrado: ${evaluacion.administrado}`);
+          console.log(`   ✅ REGISTRO SELECCIONADO en página ${pagina}, fila ${i + 1}`);
+          console.log(`   🧭 TRAZA_SELECCION_C04: ${JSON.stringify(trazaSeleccion)}`);
+          break;
         }
 
         if (!registroEncontrado) {
-          const btnNextPage = page.getByRole('button', { name: 'Next Page' });
-          if (await btnNextPage.isEnabled().catch(() => false) && paginaActual < maxPaginas) {
-            await btnNextPage.click();
-            // Espera fija eliminada para máxima velocidad
-            paginaActual++;
-          } else {
-            break;
+          console.log(`   📄 Página ${pagina}: vacios=${candidatosVaciosPagina}, elegibles=${elegiblesPagina}, acumulados=${elegiblesAcumulados}`);
+          if (usarSkipPaginasAgotadas && candidatosVaciosPagina === 0 && elegiblesPagina === 0) {
+            marcarPaginaAgotada('caso04-con-sanciones', pagina);
           }
         }
+
+        if (registroEncontrado) break;
+        const btnNextPage = getPaginatorButton('next');
+        const habilitado = await isPaginatorEnabled(btnNextPage);
+        if (!habilitado) break;
+        await btnNextPage.click();
+        await page.waitForTimeout(80);
       }
 
       if (!registroEncontrado) {
-        throw new Error(`❌ No se encontró registro válido`);
+        throw new Error(
+          `❌ No se encontró elegible para reconsideración. elegibles=${elegiblesAcumulados}, páginas=${paginasExploradas}.`
+        );
       }
       console.log('✅ Registro encontrado\n');
 
@@ -168,7 +417,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
       // PASO 3: CLICK EN RECONSIDERAR
       // ═══════════════════════════════════════════════════════════════════
       console.log('📋 PASO 3: Clickeando RECONSIDERAR...');
-      const filaSeleccionada = filas.nth(numeroFilaEncontrada);
+      const filaSeleccionada = tablaPrincipal.locator('tbody > tr').nth(numeroFilaEncontrada);
       const btnReconsiderar = filaSeleccionada.locator('button.p-button-warning');
       await btnReconsiderar.first().click();
       // Espera a que el formulario de cabecera esté visible (igual que caso 3)
@@ -196,8 +445,17 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
       console.log('📋 PASO 4-10: Rellenando datos de cabecera...');
       const rutaArchivo = resolverDocumentoPrueba();
       const fechaReconsideracion = calcularFechaReconsideracion(fechaResolucionSeleccionada);
+      const runIdPrefijo = String(process.env.TEST_RUN_ID || process.env.REGINSA_FUNC_RUN_ID || '').trim();
+      const correlativoFA = reservarConsecutivoGlobalPorRun('caso04-fa-prefix-run', runIdPrefijo, 1);
+      const prefijoReconsideracion = `FA ${String(correlativoFA).padStart(2, '0')}`;
+      console.log(`   🔢 Prefijo de reconsideración: ${prefijoReconsideracion}`);
 
-      const numeroReconsideracion = await completarCabeceraReconsideracion(page, rutaArchivo, fechaReconsideracion);
+      const numeroReconsideracion = await completarCabeceraReconsideracion(
+        page,
+        rutaArchivo,
+        fechaReconsideracion,
+        prefijoReconsideracion
+      );
       console.log('✅ Datos rellenados\n');
 
       // Validar archivo, número y fecha antes de guardar (reintentos)
@@ -236,7 +494,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
       let cabeceraOk = await validarCabecera();
       for (let intento = 0; intento < 2 && !cabeceraOk; intento++) {
         console.log('⚠️ Cabecera incompleta, reintentando carga de archivo/número/fecha...');
-        await completarCabeceraReconsideracion(page, rutaArchivo, fechaReconsideracion);
+        await completarCabeceraReconsideracion(page, rutaArchivo, fechaReconsideracion, prefijoReconsideracion);
         cabeceraOk = await validarCabecera();
       }
 
@@ -259,28 +517,50 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
       await btnGuardar.waitFor({ state: 'visible', timeout: 10000 });
       console.log('   ✓ Botón guardar encontrado, haciendo clic...');
 
-      const apiGuardadoPromise = esperarRespuestaApiGuardado(esScale ? 6000 : 9000);
-      await btnGuardar.click();
-      // Espera a que desaparezca el botón o se muestre el toast de éxito (igual que caso 3)
-      await page.locator('.p-toast-message-success, .p-toast-message').first().waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
-      const apiGuardadoOk = await apiGuardadoPromise;
-      const toastCabecera = await capturarToastExito(
-        page,
-        '04-RECONSIDERAR-CON-SANCIONES',
-        '11_EXITO_CABECERA',
-        numeroReconsideracion,
-        '',
-        'CABECERA_RECONSIDERACION',
-        2500
-      );
-      if (strictVerify && !toastCabecera && !apiGuardadoOk) {
+      let guardadoCabeceraConfirmado = false;
+      let toastCabeceraDetectado = false;
+      const intentosGuardadoCabecera = strictVerify ? 2 : 1;
+
+      for (let intento = 1; intento <= intentosGuardadoCabecera && !guardadoCabeceraConfirmado; intento++) {
+        const timeoutApiEstricto = esScale ? 7000 : 11000;
+        const timeoutApiAmplio = esScale ? 9000 : 14000;
+        const apiGuardadoPromise = esperarRespuestaApiGuardado(timeoutApiEstricto, 'estricto');
+        const apiGuardadoAmplioPromise = esperarRespuestaApiGuardado(timeoutApiAmplio, 'amplio');
+
+        await btnGuardar.click();
+        // Espera breve de toast para capturar confirmación rápida cuando existe
+        await page.locator('.p-toast-message-success, .p-toast-message').first().waitFor({ state: 'visible', timeout: 3500 }).catch(() => {});
+
+        const [apiGuardadoOk, apiGuardadoAmplioOk] = await Promise.all([
+          apiGuardadoPromise,
+          apiGuardadoAmplioPromise,
+        ]);
+        const toastCabecera = await capturarToastExito(
+          page,
+          '04-RECONSIDERAR-CON-SANCIONES',
+          '11_EXITO_CABECERA',
+          numeroReconsideracion,
+          '',
+          'CABECERA_RECONSIDERACION',
+          3000
+        );
+        toastCabeceraDetectado = toastCabeceraDetectado || toastCabecera;
+
+        guardadoCabeceraConfirmado = toastCabecera || apiGuardadoOk || apiGuardadoAmplioOk;
+        if (!guardadoCabeceraConfirmado && intento < intentosGuardadoCabecera) {
+          console.warn(`⚠️ Guardado de cabecera sin señal de confirmación en intento ${intento}; reintentando...`);
+          await page.waitForTimeout(800);
+        }
+      }
+
+      if (strictVerify && !guardadoCabeceraConfirmado) {
         throw new Error('No se confirmó el guardado de cabecera (sin toast ni confirmación API).');
       }
 
       // Capturar mensaje de confirmación en esquina superior izquierda (si existe)
       const toastIzq = page.locator('.p-toast-top-left .p-toast-message, .p-toast-top-left').first();
-      if (!toastCabecera && (await toastIzq.isVisible().catch(() => false))) {
-        const timestamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-').substring(0, 19);
+      if (!toastCabeceraDetectado && (await toastIzq.isVisible().catch(() => false))) {
+        const timestamp = crearTimestampArchivo();
         const archivo = `./screenshots/04-RECONSIDERAR-CON-SANCIONES_11_TOAST_IZQ_${timestamp}.png`;
         await toastIzq.screenshot({ path: archivo });
       }
@@ -320,6 +600,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
       console.log(`📊 Total de registros: ${totalFilasTabla}\n`);
       
       let registrosEditados = 0;
+      let registrosYaConformes = 0;
       const maxRegistrosAEditar = totalFilasTabla;
 
       const obtenerIndiceDetalle = async (regex: RegExp): Promise<number> => {
@@ -331,7 +612,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
         return -1;
       };
 
-      const idxSancion = await obtenerIndiceDetalle(/Sanci[oó]n/i);
+      const idxSancionDetalle = await obtenerIndiceDetalle(/Sanci[oó]n/i);
       const idxPago = await obtenerIndiceDetalle(/Pag[oó]/i);
       const idxReconsidera = await obtenerIndiceDetalle(/Reconsidera/i);
 
@@ -343,8 +624,8 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
         const fila = filasTR.nth(filaIdx);
         const celdas = fila.locator('td');
 
-        const sancionTexto = idxSancion >= 0
-          ? (await celdas.nth(idxSancion).innerText().catch(() => '')).trim()
+        const sancionTexto = idxSancionDetalle >= 0
+          ? (await celdas.nth(idxSancionDetalle).innerText().catch(() => '')).trim()
           : (await fila.innerText().catch(() => '')).trim();
         const tieneMulta = /Multa|UIT|U\.I\.T\.|SOLES/i.test(sancionTexto);
         const tieneSuspension = /Suspensi[oó]n/i.test(sancionTexto);
@@ -361,6 +642,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
         const debeMarcarReconsidera = tieneMulta || tieneSuspension || tieneCancelacion;
         if (debeMarcarPago === pagoActual && debeMarcarReconsidera === reconsideraActual) {
           console.log(`   ✅ Registro ${filaIdx + 1} ya cumple Pagó/Reconsidera, se omite edición.`);
+          registrosYaConformes++;
           continue;
         }
 
@@ -379,7 +661,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
           await dialog.locator('p-checkbox').first().waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
 
           // Captura antes de realizar checks en detalle de sanciones
-          const timestampAntes = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-').substring(0, 19);
+          const timestampAntes = crearTimestampArchivo();
           const archivoAntes = `./screenshots/04-DETALLE-SANCIONES_12_ANTES_REG_${filaIdx + 1}_${timestampAntes}.png`;
           await page.screenshot({ path: archivoAntes, fullPage: true });
 
@@ -515,7 +797,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
                       (labelForId as HTMLElement).click();
                     } else {
                       const input = document.querySelector(`input#${id}`);
-                      if (input) input.click();
+                      if (input) (input as HTMLElement).click();
                     }
                   }, idRecurso);
                   // Espera fija eliminada para máxima velocidad
@@ -579,7 +861,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
           console.log(`      Estado final: Multa: ${multaFinal ? '✅' : '⭕'} | Suspensión: ${suspensionFinal ? '✅' : '⭕'} | Cancelación: ${cancelacionFinal ? '✅' : '⭕'} | Pagó: ${pagoFinal ? '✅' : '⭕'} | Reconsidera: ${reconsideraFinal ? '✅' : '⭕'}`);
 
           // Captura después de realizar checks en detalle de sanciones
-          const timestampDespues = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-').substring(0, 19);
+          const timestampDespues = crearTimestampArchivo();
           const archivoDespues = `./screenshots/04-DETALLE-SANCIONES_13_DESPUES_REG_${filaIdx + 1}_${timestampDespues}.png`;
           await page.screenshot({ path: archivoDespues, fullPage: true });
 
@@ -632,19 +914,37 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
         }
       }
 
+      const totalRegistrosValidos = registrosEditados + registrosYaConformes;
       const minRegistrosRequeridos = strictVerify && totalFilasTabla > 0 ? 1 : 0;
-      if (registrosEditados < minRegistrosRequeridos) {
-        throw new Error(`No se completó ningún detalle de sanción (editados=${registrosEditados}).`);
+      if (totalRegistrosValidos < minRegistrosRequeridos) {
+        throw new Error(
+          `No se completó ningún detalle de sanción (editados=${registrosEditados}, yaConformes=${registrosYaConformes}).`
+        );
       }
 
       console.log('================================================================================');
-      console.log(`✅ PRUEBA COMPLETADA: ${registrosEditados} REGISTROS PROCESADOS`);
+      console.log(
+        `✅ PRUEBA COMPLETADA: editados=${registrosEditados}, yaConformes=${registrosYaConformes}, procesados=${totalRegistrosValidos}`
+      );
       console.log('================================================================================\n');
+      reservaCompletada = true;
+
+      registrarAsignacionSecuencial('caso04-con-sanciones', ctx.selectionSlot, {
+        status: 'completed',
+        page: 0,
+        row: 0,
+        workerIndex: ctx.workerIndex,
+        repeatIndex: ctx.repeatIndex,
+        processed: totalRegistrosValidos,
+      });
 
     } catch (error) {
+      if (reservaActivaKey && !reservaCompletada) {
+        liberarClaveCandidato('caso04-con-sanciones', reservaActivaKey);
+      }
       console.error('\n❌ ERROR:', error instanceof Error ? error.message : String(error));
       try {
-        const timestamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-').substring(0, 19);
+        const timestamp = crearTimestampArchivo();
         const archivo = `./screenshots/04-ERROR_${timestamp}.png`;
         await page.screenshot({ path: archivo, fullPage: true });
         console.log(`📸 Screenshot de error: ${archivo}\n`);

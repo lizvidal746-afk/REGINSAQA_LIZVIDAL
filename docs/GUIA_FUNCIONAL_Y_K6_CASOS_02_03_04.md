@@ -75,9 +75,9 @@ Inputs:
 
 Scripts K6:
 
-- `docs/plantillas/k6_caso_02_registrar_sancion.js`
-- `docs/plantillas/k6_caso_03_reconsiderar_sin_sanciones.js`
-- `docs/plantillas/k6_caso_04_reconsiderar_con_sanciones.js`
+- `tests/performance/k6-grafana/k6_caso_02_registrar_sancion.js`
+- `tests/performance/k6-grafana/k6_caso_03_reconsiderar_sin_sanciones.js`
+- `tests/performance/k6-grafana/k6_caso_04_reconsiderar_con_sanciones.js`
 
 Variables recomendadas en Secrets/Variables:
 

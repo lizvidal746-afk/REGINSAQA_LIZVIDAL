@@ -3,6 +3,14 @@ name: REGINSA Postman Todos los Casos (Self-hosted)
 on:
   workflow_dispatch:
     inputs:
+      auth_strategy:
+        description: "Auth strategy: shared|pool"
+        required: false
+        default: "pool"
+      base_api:
+        description: "Base API URL (si vacio usa secret REGINSA_API_BASE)"
+        required: false
+        default: ""
       upload_artifacts:
         description: "Upload artifacts (true/false)"
         required: false
@@ -14,11 +22,27 @@ jobs:
     timeout-minutes: 150
     defaults:
       run:
-        shell: cmd
+        shell: powershell
     env:
       REGINSA_API_BASE: ${{ secrets.REGINSA_API_BASE }}
       REGINSA_USER: ${{ secrets.REGINSA_USER }}
       REGINSA_PASS: ${{ secrets.REGINSA_PASS }}
+      REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
+      REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
+      REGINSA_USER_2: ${{ secrets.REGINSA_USER_2 }}
+      REGINSA_PASS_2: ${{ secrets.REGINSA_PASS_2 }}
+      REGINSA_USER_3: ${{ secrets.REGINSA_USER_3 }}
+      REGINSA_PASS_3: ${{ secrets.REGINSA_PASS_3 }}
+      REGINSA_USER_4: ${{ secrets.REGINSA_USER_4 }}
+      REGINSA_PASS_4: ${{ secrets.REGINSA_PASS_4 }}
+      REGINSA_USER_5: ${{ secrets.REGINSA_USER_5 }}
+      REGINSA_PASS_5: ${{ secrets.REGINSA_PASS_5 }}
+      REGINSA_USER_6: ${{ secrets.REGINSA_USER_6 }}
+      REGINSA_PASS_6: ${{ secrets.REGINSA_PASS_6 }}
+      REGINSA_USER_7: ${{ secrets.REGINSA_USER_7 }}
+      REGINSA_PASS_7: ${{ secrets.REGINSA_PASS_7 }}
+      REGINSA_USER_8: ${{ secrets.REGINSA_USER_8 }}
+      REGINSA_PASS_8: ${{ secrets.REGINSA_PASS_8 }}
 
     steps:
       - name: Checkout
@@ -35,18 +59,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Newman casos 01-04
+      - name: Run Newman casos 01-04 autoauth
         run: |
-          if not exist reportes\newman mkdir reportes\newman
-          npx newman run API_TEST/postman/reginsa-caso01-api-test.collection.json -e API_TEST/postman/reginsa-caso01-api-test.environment.json --env-var base_api=%REGINSA_API_BASE% --env-var usuario=%REGINSA_USER% --env-var contrasena=%REGINSA_PASS% --reporters cli,junit --reporter-junit-export reportes/newman/caso01-api-test.xml
-          npx newman run API_TEST/postman/reginsa-caso02-api-test.collection.json -e API_TEST/postman/reginsa-caso01-api-test.environment.json --env-var base_api=%REGINSA_API_BASE% --env-var usuario=%REGINSA_USER% --env-var contrasena=%REGINSA_PASS% --reporters cli,junit --reporter-junit-export reportes/newman/caso02-api-test.xml
-          npx newman run API_TEST/postman/reginsa-caso03-api-test.collection.json -e API_TEST/postman/reginsa-caso01-api-test.environment.json --env-var base_api=%REGINSA_API_BASE% --env-var usuario=%REGINSA_USER% --env-var contrasena=%REGINSA_PASS% --reporters cli,junit --reporter-junit-export reportes/newman/caso03-api-test.xml
-          npx newman run API_TEST/postman/reginsa-caso04-api-test.collection.json -e API_TEST/postman/reginsa-caso01-api-test.environment.json --env-var base_api=%REGINSA_API_BASE% --env-var usuario=%REGINSA_USER% --env-var contrasena=%REGINSA_PASS% --reporters cli,junit --reporter-junit-export reportes/newman/caso04-api-test.xml
+          $baseApiInput = "${{ github.event.inputs.base_api }}"
+          if ([string]::IsNullOrWhiteSpace($baseApiInput)) {
+            $baseApiInput = $env:REGINSA_API_BASE
+          }
+
+          if ([string]::IsNullOrWhiteSpace($baseApiInput)) {
+            throw "No se definio base API. Define input base_api o secret REGINSA_API_BASE."
+          }
+
+          $strategy = "${{ github.event.inputs.auth_strategy || 'pool' }}"
+          powershell -ExecutionPolicy Bypass -File scripts/postman/run-postman-autoauth.ps1 -BaseApi $baseApiInput -AuthStrategy $strategy
 
       - name: Upload artifacts
         if: always() && github.event.inputs.upload_artifacts == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: postman-all-selfhosted
-          path: reportes/newman/*.xml
+          path: |
+            reportes/newman/**/*.xml
+            reportes/newman/**/*.json
+            reportes/newman/resumen-postman-autoauth.md
           if-no-files-found: warn

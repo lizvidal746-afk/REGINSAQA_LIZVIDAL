@@ -9,7 +9,11 @@ $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
 $env:SKIP_SCREENSHOTS = '1'
+if (-not $env:REGINSA_FUNC_RUN_ID) {
+  $env:REGINSA_FUNC_RUN_ID = [guid]::NewGuid().ToString()
+}
 $env:REGINSA_SCALE_MODE = '1'
+$env:REGINSA_EXECUTION_MODE = 'scale'
 if (-not $env:REGINSA_STRICT_VERIFY) {
   $env:REGINSA_STRICT_VERIFY = '1'
 }
@@ -177,7 +181,7 @@ try {
 } catch {}
 
 Write-Host 'Ejecutando Caso 01 en modo scale...'
-& npx playwright test --grep=01-AGREGAR --retries=$retries @PlaywrightArgs
+& npx playwright test tests/casos-prueba/01-agregar-administrado.spec.ts --retries=$retries @PlaywrightArgs
 $testExitCode = $LASTEXITCODE
 
 if ($env:REGINSA_SKIP_POST_REPORTS -eq '1') {

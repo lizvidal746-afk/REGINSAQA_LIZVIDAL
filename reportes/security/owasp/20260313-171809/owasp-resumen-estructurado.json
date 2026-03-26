@@ -1,0 +1,114 @@
+﻿{
+    "generatedAt":  "2026-03-13 17:19:05",
+    "target":  "https://reginsaqa.sunedu.gob.pe",
+    "sourceJson":  "reportes\\security\\owasp\\20260313-171809\\zap-baseline-report.json",
+    "totals":  {
+                   "alerts":  {
+                                  "high":  0,
+                                  "medium":  5,
+                                  "low":  4,
+                                  "info":  2
+                              },
+                   "instances":  {
+                                     "high":  0,
+                                     "medium":  15,
+                                     "low":  18,
+                                     "info":  4
+                                 }
+               },
+    "keyFindings":  {
+                        "cspAlerts":  18,
+                        "serverHeaderLeaks":  5,
+                        "xPoweredByLeaks":  5,
+                        "cacheControlWarnings":  1,
+                        "sqlInjectionAlerts":  0
+                    },
+    "cspBreakdown":  [
+                         {
+                             "name":  "CSP: script-src unsafe-inline",
+                             "alerts":  1
+                         },
+                         {
+                             "name":  "CSP: style-src unsafe-inline",
+                             "alerts":  1
+                         },
+                         {
+                             "name":  "CSP: Notices",
+                             "alerts":  1
+                         },
+                         {
+                             "name":  "CSP: Failure to Define Directive with No Fallback",
+                             "alerts":  1
+                         },
+                         {
+                             "name":  "CSP: Wildcard Directive",
+                             "alerts":  1
+                         },
+                         {
+                             "name":  "CSP: script-src unsafe-eval",
+                             "alerts":  1
+                         }
+                     ],
+    "topAlertsByInstances":  [
+                                 {
+                                     "name":  "Server Leaks Information via \"X-Powered-By\" HTTP Response Header Field(s)",
+                                     "riskCode":  "1",
+                                     "risk":  "Low (Medium)",
+                                     "instances":  5
+                                 },
+                                 {
+                                     "name":  "Timestamp Disclosure - Unix",
+                                     "riskCode":  "1",
+                                     "risk":  "Low (Low)",
+                                     "instances":  5
+                                 },
+                                 {
+                                     "name":  "Server Leaks Version Information via \"Server\" HTTP Response Header Field",
+                                     "riskCode":  "1",
+                                     "risk":  "Low (High)",
+                                     "instances":  5
+                                 },
+                                 {
+                                     "name":  "CSP: Notices",
+                                     "riskCode":  "1",
+                                     "risk":  "Low (High)",
+                                     "instances":  3
+                                 },
+                                 {
+                                     "name":  "Modern Web Application",
+                                     "riskCode":  "0",
+                                     "risk":  "Informational (Medium)",
+                                     "instances":  3
+                                 },
+                                 {
+                                     "name":  "CSP: Wildcard Directive",
+                                     "riskCode":  "2",
+                                     "risk":  "Medium (High)",
+                                     "instances":  3
+                                 },
+                                 {
+                                     "name":  "CSP: Failure to Define Directive with No Fallback",
+                                     "riskCode":  "2",
+                                     "risk":  "Medium (High)",
+                                     "instances":  3
+                                 },
+                                 {
+                                     "name":  "CSP: script-src unsafe-eval",
+                                     "riskCode":  "2",
+                                     "risk":  "Medium (High)",
+                                     "instances":  3
+                                 },
+                                 {
+                                     "name":  "CSP: style-src unsafe-inline",
+                                     "riskCode":  "2",
+                                     "risk":  "Medium (High)",
+                                     "instances":  3
+                                 },
+                                 {
+                                     "name":  "CSP: script-src unsafe-inline",
+                                     "riskCode":  "2",
+                                     "risk":  "Medium (High)",
+                                     "instances":  3
+                                 }
+                             ]
+}

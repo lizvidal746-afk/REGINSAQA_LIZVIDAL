@@ -1,0 +1,183 @@
+{
+  "id": "reginsa-shared-env-2026",
+  "name": "REGINSA - Ambiente Compartido QA",
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2026-03-16T00:00:00.000Z",
+  "_postman_exported_using": "GitHub Copilot",
+  "values": [
+    {
+      "key": "ENTORNO",
+      "value": "QA",
+      "description": "Entorno activo: QA | PREPROD | LOCAL",
+      "enabled": true
+    },
+    {
+      "key": "base_api",
+      "value": "https://reginsaapiqa.sunedu.gob.pe/api",
+      "description": "URL base API QA. Cambiar por: https://reginsaapipreprod.sunedu.gob.pe/api (PREPROD) o http://localhost:5000/api (LOCAL)",
+      "enabled": true
+    },
+    {
+      "key": "base_url",
+      "value": "https://reginsaqa.sunedu.gob.pe",
+      "description": "URL base frontend QA",
+      "enabled": true
+    },
+    {
+      "key": "usuario",
+      "value": "REEMPLAZAR_USUARIO",
+      "description": "Usuario QA. Usar variable de entorno CI: REGINSA_USER",
+      "enabled": true
+    },
+    {
+      "key": "contrasena",
+      "value": "REEMPLAZAR_PASSWORD",
+      "description": "Contraseña QA. Usar variable de entorno CI: REGINSA_PASS",
+      "enabled": true
+    },
+    {
+      "key": "token",
+      "value": "",
+      "description": "JWT token - se llena automáticamente en el paso Auth/Login",
+      "enabled": true
+    },
+    {
+      "key": "auth_header",
+      "value": "",
+      "description": "Header Authorization completo: 'Bearer <token>' - se llena automáticamente",
+      "enabled": true
+    },
+    {
+      "key": "ruc_nuevo",
+      "value": "",
+      "description": "RUC generado aleatoriamente para Caso 01 - se llena en pre-request",
+      "enabled": true
+    },
+    {
+      "key": "razon_social_nueva",
+      "value": "",
+      "description": "Razón social generada para Caso 01 - se llena en pre-request",
+      "enabled": true
+    },
+    {
+      "key": "nombre_comercial_nuevo",
+      "value": "",
+      "description": "Nombre comercial generado para Caso 01 - se llena en pre-request",
+      "enabled": true
+    },
+    {
+      "key": "ruc_busqueda",
+      "value": "",
+      "description": "Filtro de búsqueda por RUC para casos operativos de Administrado",
+      "enabled": true
+    },
+    {
+      "key": "razon_busqueda",
+      "value": "",
+      "description": "Filtro de búsqueda por razón social para casos operativos de Administrado",
+      "enabled": true
+    },
+    {
+      "key": "id_ris",
+      "value": "1",
+      "description": "ID del RIS aplicable para Casos 02, 03, 04",
+      "enabled": true
+    },
+    {
+      "key": "id_entidad",
+      "value": "3",
+      "description": "ID de entidad para Caso 02 (administrado existente en BD)",
+      "enabled": true
+    },
+    {
+      "key": "cabecera_id",
+      "value": "",
+      "description": "ID de CabeceraInfraccionSancion - se llena automáticamente en Caso 02/03",
+      "enabled": true
+    },
+    {
+      "key": "id_infraccion",
+      "value": "",
+      "description": "ID de Infraccion - se llena automáticamente desde Infraccion/Listar",
+      "enabled": true
+    },
+    {
+      "key": "display_infraccion",
+      "value": "",
+      "description": "Descripción de Infraccion - se llena automáticamente",
+      "enabled": true
+    },
+    {
+      "key": "detalle_id",
+      "value": "",
+      "description": "ID de DetalleInfraccionSancion - se llena automáticamente en Caso 04",
+      "enabled": true
+    },
+    {
+      "key": "numero_expediente",
+      "value": "",
+      "description": "Número de expediente generado - se llena en pre-request Caso 02",
+      "enabled": true
+    },
+    {
+      "key": "numero_resolucion",
+      "value": "",
+      "description": "Número de resolución generado - se llena en pre-request Caso 02",
+      "enabled": true
+    },
+    {
+      "key": "fecha_resolucion",
+      "value": "",
+      "description": "Fecha de resolución ISO - se llena en pre-request Caso 02",
+      "enabled": true
+    },
+    {
+      "key": "correlativo",
+      "value": "",
+      "description": "Correlativo numérico - se llena en pre-request Caso 02",
+      "enabled": true
+    },
+    {
+      "key": "timeout_ms",
+      "value": "10000",
+      "description": "Timeout en ms para assertions de tiempo de respuesta",
+      "enabled": true
+    },
+    {
+      "key": "punku_base",
+      "value": "https://punkuproxyv2qa.sunedu.gob.pe",
+      "description": "URL base Punku QA - sistema de autenticacion SUNEDU",
+      "enabled": true
+    },
+    {
+      "key": "punku_code",
+      "value": "",
+      "description": "CODE de sesion Punku - obtener del navegador antes de ejecutar (DevTools > Network > GetTokenByCodeAndCodeChallenge > payload > CODE)",
+      "enabled": true
+    },
+    {
+      "key": "punku_code_challenge",
+      "value": "",
+      "description": "CODE_CHALLENGE Punku - obtener del mismo request que punku_code (campo CODE_CHALLENGE del payload)",
+      "enabled": true
+    },
+    {
+      "key": "TOKEN_JWT",
+      "value": "",
+      "description": "JWT retornado por Punku - se llena automaticamente en el paso Auth/Punku",
+      "enabled": true
+    },
+    {
+      "key": "GUID_SESION",
+      "value": "",
+      "description": "GUID de sesion Punku - se llena automaticamente en el paso Auth/Punku",
+      "enabled": true
+    },
+    {
+      "key": "GUID_SISTEMA",
+      "value": "a8211ba9-d0c1-4f7e-853c-52e1b1c686ce",
+      "description": "GUID del sistema REGINSA en Punku QA - fijo para este ambiente",
+      "enabled": true
+    }
+  ]
+}

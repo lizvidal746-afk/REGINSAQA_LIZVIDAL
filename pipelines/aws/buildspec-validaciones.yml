@@ -1,0 +1,60 @@
+version: 0.2
+
+env:
+  variables:
+    TEST_TYPE: validaciones
+    CASE_TARGET: "01"
+    PW_PROJECT: chromium
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "[install] npm ci"
+      - npm ci
+      - echo "[install] playwright chromium"
+      - npx playwright install chromium
+
+  pre_build:
+    commands:
+      - echo "[pre_build] TEST_TYPE=$TEST_TYPE CASE_TARGET=$CASE_TARGET"
+
+  build:
+    commands:
+      - echo "[build] Ejecutando validaciones (1 corrida por caso)"
+      - |
+        if [ "$TEST_TYPE" != "validaciones" ]; then
+          echo "ERROR: TEST_TYPE soportado en este buildspec es validaciones";
+          exit 1;
+        fi
+      - |
+        case "$CASE_TARGET" in
+          01)
+            npx playwright test tests/casos-prueba/01-agregar-administrado-validaciones.plantilla.spec.ts --workers=1 --repeat-each=1 --project="$PW_PROJECT"
+            ;;
+          02)
+            npx playwright test tests/casos-prueba/02-registrar-sancion-validaciones.plantilla.spec.ts --workers=1 --repeat-each=1 --project="$PW_PROJECT"
+            ;;
+          03)
+            npx playwright test tests/casos-prueba/03-reconsiderar-sin-sanciones-validaciones.plantilla.spec.ts --workers=1 --repeat-each=1 --project="$PW_PROJECT"
+            ;;
+          04)
+            npx playwright test tests/casos-prueba/04-reconsiderar-con-sanciones-validaciones.plantilla.spec.ts --workers=1 --repeat-each=1 --project="$PW_PROJECT"
+            ;;
+          *)
+            echo "ERROR: CASE_TARGET inválido para validaciones: $CASE_TARGET";
+            exit 1;
+            ;;
+        esac
+
+  post_build:
+    commands:
+      - echo "[post_build] Validaciones finalizadas"
+
+artifacts:
+  files:
+    - playwright-report/**/*
+    - test-results/**/*
+    - reportes/**/*
+  discard-paths: no

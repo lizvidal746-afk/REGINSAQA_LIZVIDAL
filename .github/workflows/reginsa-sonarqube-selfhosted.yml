@@ -1,12 +1,26 @@
 name: REGINSA SonarQube (Self-hosted)
 
 on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - qa
+  push:
+    branches:
+      - main
+      - develop
+      - qa
   workflow_dispatch:
     inputs:
       sonar_host_url:
         description: "SonarQube URL (si vacío usa secret SONAR_HOST_URL)"
         required: false
         default: ""
+      project_keys:
+        description: "Project keys separados por coma para resumen de Quality Gate"
+        required: false
+        default: "si091reginsafrontend,si091reginsabackend,si091reginsaenlinea,si091reginsaconfig"
       upload_artifacts:
         description: "Upload artifacts (true/false)"
         required: false
@@ -18,7 +32,7 @@ jobs:
     timeout-minutes: 90
     defaults:
       run:
-        shell: cmd
+        shell: powershell
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SONAR_HOST_URL_SECRET: ${{ secrets.SONAR_HOST_URL }}
@@ -38,13 +52,152 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Sonar scan
+      - name: Run Sonar scan with gate blocking
         run: |
-          set SONAR_HOST_URL=%SONAR_HOST_URL_SECRET%
-          if not "${{ github.event.inputs.sonar_host_url }}"=="" set SONAR_HOST_URL=${{ github.event.inputs.sonar_host_url }}
-          if "%SONAR_HOST_URL%"=="" echo SONAR_HOST_URL missing && exit /b 1
-          if "%SONAR_TOKEN%"=="" echo SONAR_TOKEN missing && exit /b 1
-          npm run test:sonar
+          $sonarHostUrl = $env:SONAR_HOST_URL_SECRET
+          $dispatchHost = "${{ github.event.inputs.sonar_host_url }}"
+          if (-not [string]::IsNullOrWhiteSpace($dispatchHost)) {
+            $sonarHostUrl = $dispatchHost
+          }
+
+          if ([string]::IsNullOrWhiteSpace($sonarHostUrl)) {
+            throw 'SONAR_HOST_URL missing'
+          }
+          if ([string]::IsNullOrWhiteSpace($env:SONAR_TOKEN)) {
+            throw 'SONAR_TOKEN missing'
+          }
+
+          $args = @(
+            '-Dsonar.host.url=' + $sonarHostUrl,
+            '-Dsonar.token=' + $env:SONAR_TOKEN,
+            '-Dsonar.qualitygate.wait=true',
+            '-Dsonar.qualitygate.timeout=600'
+          )
+
+          if ('${{ github.event_name }}' -eq 'pull_request') {
+            $args += '-Dsonar.pullrequest.key=${{ github.event.pull_request.number }}'
+            $args += '-Dsonar.pullrequest.branch=${{ github.head_ref }}'
+            $args += '-Dsonar.pullrequest.base=${{ github.base_ref }}'
+          }
+          elseif ('${{ github.event_name }}' -eq 'push') {
+            $args += '-Dsonar.branch.name=${{ github.ref_name }}'
+          }
+
+          npx sonar-scanner @args
+
+      - name: Build Sonar quality gate summary
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $sonarHostUrl = "${{ github.event.inputs.sonar_host_url }}"
+          if ([string]::IsNullOrWhiteSpace($sonarHostUrl)) {
+            $sonarHostUrl = $env:SONAR_HOST_URL_SECRET
+          }
+
+          if ([string]::IsNullOrWhiteSpace($sonarHostUrl)) {
+            throw 'SONAR_HOST_URL missing'
+          }
+          if ([string]::IsNullOrWhiteSpace($env:SONAR_TOKEN)) {
+            throw 'SONAR_TOKEN missing'
+          }
+
+          $projectKeysRaw = "${{ github.event.inputs.project_keys }}"
+          if ([string]::IsNullOrWhiteSpace($projectKeysRaw)) {
+            $projectKeysRaw = 'reginsa-qa-framework'
+          }
+
+          $projectKeys = $projectKeysRaw.Split(',') | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+
+          $tokenBytes = [System.Text.Encoding]::ASCII.GetBytes($env:SONAR_TOKEN + ':')
+          $basicToken = [Convert]::ToBase64String($tokenBytes)
+          $headers = @{ Authorization = "Basic $basicToken" }
+
+          New-Item -ItemType Directory -Path 'reportes/security' -Force | Out-Null
+          $summaryPath = 'reportes/security/sonar-quality-gate-summary.md'
+          $jsonPath = 'reportes/security/sonar-quality-gate-summary.json'
+
+          $lines = @()
+          $lines += '# SonarQube Quality Gate Summary'
+          $lines += ''
+          $lines += "Host: $sonarHostUrl"
+          $lines += "Generated: $([DateTime]::Now.ToString('yyyy-MM-dd HH:mm:ss'))"
+          $lines += ''
+          $lines += '| Project Key | Quality Gate | Conditions In Error | Bugs | Vulnerabilities | Code Smells | Coverage | Hotspots Reviewed |'
+          $lines += '|---|---|---:|---:|---:|---:|---:|---:|'
+
+          $rows = @()
+
+          foreach ($projectKey in $projectKeys) {
+            $url = "$sonarHostUrl/api/qualitygates/project_status?projectKey=$projectKey"
+            $measuresUrl = "$sonarHostUrl/api/measures/component?component=$projectKey&metricKeys=bugs,vulnerabilities,code_smells,coverage,security_hotspots_reviewed"
+            try {
+              $response = Invoke-RestMethod -Method Get -Uri $url -Headers $headers
+              $status = [string]$response.projectStatus.status
+              if ([string]::IsNullOrWhiteSpace($status)) {
+                $status = 'UNKNOWN'
+              }
+
+              $errorConditions = @($response.projectStatus.conditions | Where-Object { $_.status -eq 'ERROR' })
+              $errorCount = $errorConditions.Count
+
+              $measuresResponse = Invoke-RestMethod -Method Get -Uri $measuresUrl -Headers $headers
+              $measureList = @()
+              if ($measuresResponse.component -and $measuresResponse.component.measures) {
+                $measureList = $measuresResponse.component.measures
+              }
+
+              $bugs = 'N/A'
+              $vulnerabilities = 'N/A'
+              $codeSmells = 'N/A'
+              $coverage = 'N/A'
+              $hotspotsReviewed = 'N/A'
+
+              foreach ($m in $measureList) {
+                switch ($m.metric) {
+                  'bugs' { $bugs = [string]$m.value }
+                  'vulnerabilities' { $vulnerabilities = [string]$m.value }
+                  'code_smells' { $codeSmells = [string]$m.value }
+                  'coverage' { $coverage = [string]$m.value }
+                  'security_hotspots_reviewed' { $hotspotsReviewed = [string]$m.value }
+                }
+              }
+
+              $lines += "| $projectKey | $status | $errorCount | $bugs | $vulnerabilities | $codeSmells | $coverage | $hotspotsReviewed |"
+              $rows += [PSCustomObject]@{
+                projectKey = $projectKey
+                qualityGate = $status
+                errorConditions = $errorCount
+                bugs = $bugs
+                vulnerabilities = $vulnerabilities
+                codeSmells = $codeSmells
+                coverage = $coverage
+                securityHotspotsReviewed = $hotspotsReviewed
+              }
+            }
+            catch {
+              $lines += "| $projectKey | NOT_FOUND_OR_NO_ACCESS | N/A | N/A | N/A | N/A | N/A | N/A |"
+              $rows += [PSCustomObject]@{
+                projectKey = $projectKey
+                qualityGate = 'NOT_FOUND_OR_NO_ACCESS'
+                errorConditions = $null
+                bugs = $null
+                vulnerabilities = $null
+                codeSmells = $null
+                coverage = $null
+                securityHotspotsReviewed = $null
+              }
+            }
+          }
+
+          $lines += ''
+          $lines += 'Legend: NOT_FOUND_OR_NO_ACCESS means the project key was not found or token lacks Browse permission.'
+
+          ($lines -join "`r`n") | Set-Content -Path $summaryPath -Encoding UTF8
+          ($rows | ConvertTo-Json -Depth 4) | Set-Content -Path $jsonPath -Encoding UTF8
+
+          Write-Host "Summary generated: $summaryPath"
+          Write-Host "Summary generated: $jsonPath"
 
       - name: Upload scanner artifacts
         if: always() && github.event.inputs.upload_artifacts == 'true'
@@ -53,4 +206,6 @@ jobs:
           name: sonarqube-selfhosted
           path: |
             .scannerwork
+            reportes/security/sonar-quality-gate-summary.md
+            reportes/security/sonar-quality-gate-summary.json
           if-no-files-found: warn

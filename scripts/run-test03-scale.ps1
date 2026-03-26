@@ -9,6 +9,7 @@ $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
 $env:SKIP_SCREENSHOTS = '1'
+$env:REGINSA_EXECUTION_MODE = 'scale'
 $env:REGINSA_SCALE_MODE = '1'
 if (-not $env:REGINSA_STRICT_VERIFY) {
   $env:REGINSA_STRICT_VERIFY = '1'
@@ -138,7 +139,7 @@ try {
 } catch {}
 
 Write-Host 'Ejecutando Caso 03 en modo scale...'
-& npx playwright test --grep '03-RECONSIDERAR SIN SANCIONES' --retries=$retries @PlaywrightArgs
+& npx playwright test tests/casos-prueba/03-reconsiderar-sin-sanciones.spec.ts --retries=$retries @PlaywrightArgs
 $testExitCode = $LASTEXITCODE
 
 if ($env:REGINSA_SKIP_POST_REPORTS -eq '1') {

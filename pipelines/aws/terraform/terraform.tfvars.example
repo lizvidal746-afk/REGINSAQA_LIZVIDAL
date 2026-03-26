@@ -1,0 +1,36 @@
+aws_region              = "us-east-1"
+name_prefix             = "reginsa-qa"
+repo_owner              = "tu-org-o-usuario"
+repo_name               = "REGINSA"
+repo_branch             = "main"
+codestar_connection_arn = "arn:aws:codestar-connections:us-east-1:111111111111:connection/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+artifact_bucket_name    = "reginsa-codepipeline-artifacts"
+enable_codepipeline     = true
+
+functional_env_plain = {
+  TEST_TYPE                           = "functional"
+  CASE_TARGET                         = "suite"
+  PW_WORKERS                          = "3"
+  PW_REPEAT_EACH                      = "9"
+  PW_PROJECT                          = "chromium"
+  REGINSA_CASO04_SKIP_EXHAUSTED_PAGES = "1"
+}
+
+validaciones_env_plain = {
+  TEST_TYPE  = "validaciones"
+  CASE_TARGET = "04"
+  PW_PROJECT = "chromium"
+}
+
+secrets_env = {
+  REGINSA_URL              = "reginsa/qa:REGINSA_URL"
+  REGINSA_CREDENTIALS_JSON = "reginsa/qa:REGINSA_CREDENTIALS_JSON"
+}
+
+secrets_manager_secret_arns = [
+  "arn:aws:secretsmanager:us-east-1:111111111111:secret:reginsa/qa-*"
+]
+
+kms_key_arns = [
+  "arn:aws:kms:us-east-1:111111111111:key/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+]

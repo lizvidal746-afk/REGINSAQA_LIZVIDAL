@@ -117,7 +117,7 @@
 ### Terminal (igual formato actual)
 
 ```powershell
-k6 run -o cloud tests/performance/k6/k6_caso_01_agregar_administrado.js `
+k6 run tests/performance/k6-grafana/k6_caso_01_agregar_administrado.js `
   --tag test_type=smoke `
   --tag profile=baseline `
   --tag case=caso01 `

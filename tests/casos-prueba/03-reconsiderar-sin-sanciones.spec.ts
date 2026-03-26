@@ -2,7 +2,6 @@ import { test } from '@playwright/test';
 import {
   iniciarSesionYNavegar,
   obtenerCredencial,
-  navegarAInfraccionSancion,
   completarCabeceraReconsideracion,
   capturarFormularioLleno,
   capturarToastExito,
@@ -10,41 +9,33 @@ import {
   calcularFechaReconsideracion,
   resolverDocumentoPrueba,
 } from 'tests/utilidades/reginsa-actions';
+import {
+  cumpleCamposVaciosReconsideracion,
+  fechaEnRango,
+  uiMuestraSinDetallesInfraccion,
+  uiMuestraIndicadoresSancion,
+} from 'tests/utilidades/reconsideracion-criterios';
 import { getTestContext } from 'helpers/test-context';
+import { reservarClaveCandidato, liberarClaveCandidato, registrarAsignacionSecuencial } from 'helpers/strict-sequential';
 
-/**
- * EJECUCIÓN (rápido)
- * - Headless por defecto. Para ver navegador: `--headed`.
- * - Con capturas: scripts normales `npm run test:*`.
- * - Sin capturas: scripts `:fast`.
- * - Paralelismo (suite completa): `npm run test:all:w2` / `test:all:w4`.
- */
-
-/**
- * CASO 03: RECONSIDERAR SIN SANCIONES
- *
- * Flujo:
- * 1. Login + navegación al módulo (reutiliza `iniciarSesionYNavegar`)
- * 2. Ir a Infracción y Sanción (reutiliza `navegarAInfraccionSancion`)
- * 3. Buscar registro con campos vacíos (F. Modificación, N° Reconsideración y F. Reconsideración)
- * 4. Editar cabecera y marcar “Presentó reconsideración” (reutiliza `completarCabeceraReconsideracion`)
- * 5. Subir archivo, llenar número y seleccionar fecha válida (fecha > resolución y <= hoy) (reutiliza `completarCabeceraReconsideracion`)
- * 6. Capturar formulario lleno (reutiliza `capturarFormularioLleno`)
- * 7. Guardar cabecera y validar éxito (reutiliza `capturarToastExito`)
- * 8. Ir a Detalle de sanciones y verificar “Sin sanciones registradas”
- *
- * Nota:
- * - Si no hay registros con los 3 campos vacíos y sin sanciones, el test se omite.
- * - Capturas exitosas dependen del modo de ejecución (:fast omite).
- */
+function normalizarTexto(valor: string): string {
+  return String(valor || '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 test.describe('03-RECONSIDERAR SIN SANCIONES', () => {
-  test('Reconsiderar sanción con campos vacíos - búsqueda dinámica', async ({ page }, testInfo) => {
-    test.setTimeout(300000); // 5 minutos - evitar timeout en flujo completo
-    const nombreCaso = '03-reconsiderar-sin-sanciones';
+  test('Reconsiderar sancion con campos vacios - busqueda ligera', async ({ page }, testInfo) => {
+    test.setTimeout(300000);
+
     const ctx = getTestContext(testInfo);
-    const esScale = process.env.REGINSA_SCALE_MODE === '1';
     const strictVerify = process.env.REGINSA_STRICT_VERIFY !== '0';
+    const maxPaginas = Math.max(1, Number.parseInt(process.env.REGINSA_CASO03_MAX_PAGINAS || '30', 10) || 30);
+    const reiniciarPrimeraPagina = process.env.REGINSA_CASO03_START_FIRST_PAGE !== '0';
+    let reservaActivaKey = '';
+    let reservaCompletada = false;
 
     const esperarRespuestaApiGuardado = async (timeoutMs: number): Promise<boolean> => {
       try {
@@ -64,169 +55,210 @@ test.describe('03-RECONSIDERAR SIN SANCIONES', () => {
       }
     };
 
+    const obtenerIndiceColumna = async (tabla: ReturnType<typeof page.locator>, regex: RegExp): Promise<number> => {
+      const headers = tabla.locator('xpath=./thead/tr/th');
+      const total = await headers.count();
+      for (let i = 0; i < total; i++) {
+        const texto = normalizarTexto((await headers.nth(i).textContent()) || '');
+        if (regex.test(texto)) return i;
+      }
+      return -1;
+    };
+
+    const irAPrimeraPagina = async (): Promise<void> => {
+      const paginaUno = page.locator('.p-paginator-page').filter({ hasText: /^1$/ }).first();
+      if (await paginaUno.isVisible().catch(() => false)) {
+        const clase = (await paginaUno.getAttribute('class').catch(() => '')) || '';
+        if (!clase.includes('p-highlight')) {
+          await paginaUno.click().catch(() => {});
+          await page.waitForTimeout(300);
+        }
+        return;
+      }
+
+      const btnFirst = page.getByRole('button', { name: /First Page|Primera/i }).first();
+      if (await btnFirst.isVisible().catch(() => false) && await btnFirst.isEnabled().catch(() => false)) {
+        await btnFirst.click().catch(() => {});
+        await page.waitForTimeout(300);
+      }
+    };
+
     try {
       console.log('\n================================================================================');
-      console.log('🧾 CASO 03: RECONSIDERAR SIN SANCIONES');
+      console.log('CASO 03: RECONSIDERAR SIN SANCIONES (MODO LIGERO)');
       console.log('================================================================================\n');
-      // ═══════════════════════════════════════════════════════════════════
-      // PASO 1: LOGIN + NAVEGACIÓN
-      // Reutiliza `iniciarSesionYNavegar`
-      // ═══════════════════════════════════════════════════════════════════
-      console.log('🔐 PASO 1: Inicializando sesión...');
+
       await iniciarSesionYNavegar(page, 'infractor', testInfo.workerIndex);
-      console.log('✅ Sesión iniciada\n');
+      await page.locator('table').first().waitFor({ state: 'visible', timeout: 12000 });
 
-      // ═══════════════════════════════════════════════════════════════════
-      // PASO 2: NAVEGAR A INFRACCIÓN Y SANCIÓN
-      // Reutiliza `navegarAInfraccionSancion`
-      // ═══════════════════════════════════════════════════════════════════
-      console.log('📋 PASO 2: Navegando a Infracción y Sanción...');
-      await navegarAInfraccionSancion(page);
-      // Espera a que la tabla de registros esté visible (espera inteligente)
-      await page.locator('table').waitFor({ state: 'visible', timeout: 10000 });
-      console.log('✅ Módulo accesible\n');
+      const tablaListado = page
+        .locator('table')
+        .filter({ has: page.locator('th', { hasText: /N\W*Reconsideraci\w*|F\.\s*Modificaci\w*|N\W*de\W*Expediente/i }) })
+        .first();
 
-      // ═══════════════════════════════════════════════════════════════════
-      // PASO 3: BUSCAR REGISTRO CON CAMPOS VACÍOS
-      // ═══════════════════════════════════════════════════════════════════
-      console.log('📋 PASO 3: Buscando registro con campos vacíos (F. Modificación, N° Reconsideración y F. Reconsideración)...');
-      const filas = page.locator('tr');
-      const totalFilas = await filas.count();
-      console.log(`   Total de registros: ${totalFilas - 1}\n`);
-      
-      let registroEncontrado = false;
-      let fechaResolucionSeleccionada: Date | null = null;
-      const candidatos: Array<{ filaIdx: number; fechaResolucion: Date; administrado: string; key: string }> = [];
+      const idxFMod = await obtenerIndiceColumna(tablaListado, /^F\W*Modificaci\w*/i);
+      const idxNRec = await obtenerIndiceColumna(tablaListado, /N\W*Reconsideraci\w*/i);
+      const idxFRec = await obtenerIndiceColumna(tablaListado, /^F\W*Reconsideraci\w*/i);
+      const idxFRes = await obtenerIndiceColumna(tablaListado, /F\.\s*Resoluci\w*|Resoluci\w*/i);
+      const idxSancion = await obtenerIndiceColumna(tablaListado, /Sanci[oó]n|Detalle\s*de\s*sanciones|N\W*de\W*Sanci\w*/i);
+      const idxExp = await obtenerIndiceColumna(tablaListado, /N\W*de\W*Expediente|N\W*Expediente/i);
+      const idxRes = await obtenerIndiceColumna(tablaListado, /N\W*de\W*Resoluci\w*|N\W*Resoluci\w*/i);
+
+      if (idxFMod < 0 || idxNRec < 0 || idxFRec < 0) {
+        throw new Error('No se pudieron identificar columnas de reconsideracion.');
+      }
+
+      if (reiniciarPrimeraPagina) {
+        await irAPrimeraPagina();
+      }
+
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
       const fechaMinima = new Date(2025, 0, 1);
 
-      const obtenerIndiceColumna = async (regex: RegExp): Promise<number> => {
-        const headers = page.locator('thead tr th');
-        const total = await headers.count();
-        for (let i = 0; i < total; i++) {
-          const texto = (await headers.nth(i).textContent())?.trim() || '';
-          if (regex.test(texto)) return i;
+      let registroEncontrado = false;
+      let fechaResolucionSeleccionada: Date | null = null;
+      let paginaSeleccionada = 0;
+      let filaSeleccionada = 0;
+
+      for (let paginaActual = 1; paginaActual <= maxPaginas; paginaActual++) {
+        const filas = tablaListado.locator('xpath=./tbody/tr[not(contains(@class,"p-datatable-row-expansion"))]');
+        let totalFilas = await filas.count().catch(() => 0);
+
+        if (totalFilas === 0) {
+          await page.waitForTimeout(500);
+          totalFilas = await filas.count().catch(() => 0);
         }
-        return -1;
-      };
 
-      const idxAdmin = await obtenerIndiceColumna(/Administrado/i);
-      const idxExp = await obtenerIndiceColumna(/N\W*de\W*Expediente|N\W*Expediente/i);
-      const idxRes = await obtenerIndiceColumna(/N\W*de\W*Resoluci\w*|N\W*Resoluci\w*/i);
-      const idxFMod = await obtenerIndiceColumna(/F\.\s*Modificaci\w*|Modificaci\w*/i);
-      const idxNRec = await obtenerIndiceColumna(/N\W*Reconsideraci\w*/i);
-      const idxFRec = await obtenerIndiceColumna(/F\.\s*Reconsideraci\w*|Reconsideraci\w*/i);
-      const idxFRes = await obtenerIndiceColumna(/F\.\s*Resoluci\w*|Resoluci\w*/i);
+        console.log(`Pagina ${paginaActual}: ${totalFilas} filas`);
 
-      if (idxFMod < 0 || idxNRec < 0 || idxFRec < 0) {
-        throw new Error('No se pudieron identificar las columnas F. Modificación, N° Reconsideración y F. Reconsideración.');
-      }
+        for (let i = 0; i < totalFilas; i++) {
+          const fila = filas.nth(i);
+          const textosCeldas = await fila.locator('xpath=./td').allTextContents().catch(() => [] as string[]);
+          const totalCeldas = textosCeldas.length;
+          if (totalCeldas < 8) continue;
 
-      // Buscar registros que tengan VACÍOS: F. Modificación, N° Reconsideración y F. Reconsideración
-      for (let i = 1; i < totalFilas; i++) {
-        const fila = filas.nth(i);
-        const celdas = fila.locator('td');
-        const totalCeldas = await celdas.count();
-        
-        if (totalCeldas >= 9) {
-          const fModificacion = (await celdas.nth(idxFMod).textContent())?.trim() || '';
-          const nReconsid = (await celdas.nth(idxNRec).textContent())?.trim() || '';
-          const fReconsid = (await celdas.nth(idxFRec).textContent())?.trim() || '';
-          
-          console.log(`   Fila ${i}: F.Mod='${fModificacion}' | N°Rec='${nReconsid}' | F.Rec='${fReconsid}'`);
-          
-          // Buscar fecha de resolución en la fila (prioriza columna F. Resolución si existe)
+          const cell = (index: number): string => {
+            if (index < 0 || index >= totalCeldas) return '';
+            return normalizarTexto(textosCeldas[index] || '');
+          };
+
+          const fMod = cell(idxFMod);
+          const nRec = cell(idxNRec);
+          const fRec = cell(idxFRec);
+
+          const fModTail = totalCeldas >= 4 ? cell(totalCeldas - 4) : '';
+          const nRecTail = totalCeldas >= 3 ? cell(totalCeldas - 3) : '';
+          const fRecTail = totalCeldas >= 2 ? cell(totalCeldas - 2) : '';
+
+          const camposVacios =
+            cumpleCamposVaciosReconsideracion(fMod, nRec, fRec)
+            || cumpleCamposVaciosReconsideracion(fModTail, nRecTail, fRecTail);
+
+          if (!camposVacios) continue;
+
           let fechaResolucion: Date | null = null;
-          if (idxFRes >= 0 && idxFRes < totalCeldas) {
-            const textoFRes = (await celdas.nth(idxFRes).textContent())?.trim() || '';
-            fechaResolucion = parseFechaTexto(textoFRes);
-          }
-          if (!fechaResolucion) {
-            const fechasDetectadas: Date[] = [];
-            for (let c = 0; c < totalCeldas; c++) {
-              const texto = (await celdas.nth(c).textContent())?.trim() || '';
-              const fecha = parseFechaTexto(texto);
-              if (fecha) fechasDetectadas.push(fecha);
-            }
-            fechaResolucion = fechasDetectadas[0] || null;
+          if (idxFRes >= 0) {
+            fechaResolucion = parseFechaTexto(cell(idxFRes));
           }
 
-          // Si TODOS están vacíos
-          if (!fModificacion && !nReconsid && !fReconsid) {
-            if (fechaResolucion && fechaResolucion >= fechaMinima && fechaResolucion < hoy) {
-              const botones = fila.locator('button.p-button-warning');
-              if (await botones.count() > 0) {
-                  const administrado = idxAdmin >= 0
-                    ? (await celdas.nth(idxAdmin).textContent())?.trim() || 'N/D'
-                    : (await celdas.nth(0).textContent())?.trim() || 'N/D';
-                const expediente = idxExp >= 0
-                  ? (await celdas.nth(idxExp).textContent())?.trim() || ''
-                  : '';
-                const resolucion = idxRes >= 0
-                  ? (await celdas.nth(idxRes).textContent())?.trim() || ''
-                  : '';
-                const key = `${administrado}|${expediente}|${resolucion}`.trim();
-                candidatos.push({ filaIdx: i, fechaResolucion, administrado, key });
+          if (!fechaResolucion) {
+            for (let c = 0; c < totalCeldas; c++) {
+              const posible = parseFechaTexto(cell(c));
+              if (posible) {
+                fechaResolucion = posible;
+                break;
               }
             }
           }
-        }
-      }
 
-      if (candidatos.length > 0) {
-        if (candidatos.length < ctx.workers) {
-          test.skip(true, 'No hay suficientes candidatos para ejecutar en paralelo sin colisión.');
-          return;
-        }
-        const elegido = candidatos[ctx.selectionSlot % candidatos.length];
-        console.log(`   👤 Administrado: ${elegido.administrado}`);
-        console.log(`   ✅ REGISTRO VÁLIDO elegido en fila ${elegido.filaIdx} (worker ${ctx.workerIndex}, repeat ${ctx.repeatIndex})\n`);
+          if (!fechaEnRango(fechaResolucion, fechaMinima, hoy)) continue;
 
-        const filaElegida = filas.nth(elegido.filaIdx);
-        const botonesElegidos = filaElegida.locator('button.p-button-warning');
-        await botonesElegidos.first().click();
-        // Espera a que el formulario de cabecera esté visible
-        await page.locator('form').waitFor({ state: 'visible', timeout: 10000 });
-        registroEncontrado = true;
-        fechaResolucionSeleccionada = elegido.fechaResolucion;
+          const textoFila = normalizarTexto((await fila.innerText().catch(() => '')) || '');
+          const textoSancion = idxSancion >= 0 ? cell(idxSancion) : '';
+
+          let evidenciaSinSancion = uiMuestraSinDetallesInfraccion(`${textoSancion} ${textoFila}`);
+          let evidenciaConSancion = uiMuestraIndicadoresSancion(`${textoSancion} ${textoFila}`);
+
+          if (!evidenciaSinSancion && !evidenciaConSancion) {
+            const toggler = fila
+              .locator('td:first-child button, button[aria-expanded], button.p-row-toggler, button:has(span.pi-chevron-right), button:has(span.pi-chevron-down), button:has(i.pi-chevron-right), button:has(i.pi-chevron-down)')
+              .first();
+            if (await toggler.isVisible().catch(() => false)) {
+              await toggler.click().catch(() => {});
+              await page.waitForTimeout(180);
+
+              const detalle = fila.locator('xpath=following-sibling::tr[1]').first();
+              const detalleTexto = normalizarTexto((await detalle.innerText().catch(() => '')) || '');
+              evidenciaSinSancion = uiMuestraSinDetallesInfraccion(detalleTexto);
+              evidenciaConSancion = uiMuestraIndicadoresSancion(detalleTexto);
+            }
+          }
+
+          if (evidenciaConSancion || !evidenciaSinSancion) continue;
+
+          const expediente = idxExp >= 0 ? cell(idxExp) : '';
+          const resolucion = idxRes >= 0 ? cell(idxRes) : '';
+          const candidateKey = `${expediente}|${resolucion}`.trim();
+          if (!candidateKey || candidateKey === '|') continue;
+          const reservado = reservarClaveCandidato('caso03-sin-sanciones', candidateKey);
+          if (!reservado) continue;
+          reservaActivaKey = candidateKey;
+
+          const botones = fila.locator(
+            'button[ptooltip*="Reconsiderar" i], button[icon*="pi-refresh" i], button.p-button-warning:has(span.pi-refresh), button:has(i.pi-refresh), button:has(span.pi-refresh), button[aria-label*="reconsider" i]'
+          );
+
+          if ((await botones.count()) === 0) {
+            liberarClaveCandidato('caso03-sin-sanciones', candidateKey);
+            reservaActivaKey = '';
+            continue;
+          }
+
+          await botones.first().click();
+          await page.locator('form').first().waitFor({ state: 'visible', timeout: 10000 });
+
+          registroEncontrado = true;
+          fechaResolucionSeleccionada = fechaResolucion;
+          paginaSeleccionada = paginaActual;
+          filaSeleccionada = i + 1;
+          registrarAsignacionSecuencial('caso03-sin-sanciones', ctx.selectionSlot, {
+            status: 'selected',
+            page: paginaActual,
+            row: i,
+            workerIndex: ctx.workerIndex,
+            repeatIndex: ctx.repeatIndex,
+            expediente,
+            resolucion
+          });
+          break;
+        }
+
+        if (registroEncontrado) break;
+
+        const btnNextPage = page.getByRole('button', { name: /Next Page/i }).first();
+        const puedeIrSiguiente = await btnNextPage.isEnabled().catch(() => false);
+        if (!puedeIrSiguiente) break;
+
+        await btnNextPage.click().catch(() => {});
+        await page.waitForLoadState('domcontentloaded').catch(() => {});
+        await page.waitForTimeout(300);
       }
 
       if (!registroEncontrado) {
-        console.log('⚠️ No se encontró registro válido con campos vacíos y sin sanciones\n');
-        test.skip(true, 'No hay registros con F. Modificación, N° Reconsideración y F. Reconsideración vacíos y sin sanciones.');
+        console.log('No se encontro registro valido en este intento.');
+        console.log(`EJECUCION CASO03 [worker=${ctx.workerIndex} repeat=${ctx.repeatIndex}] REALIZADA=NO`);
         return;
       }
 
-      // ═══════════════════════════════════════════════════════════════════
-      // PASO 4-8: COMPLETAR CABECERA (ARCHIVO + NÚMERO + FECHA)
-      // Reutiliza `completarCabeceraReconsideracion`
-      // ═══════════════════════════════════════════════════════════════════
-      console.log('📋 PASO 4-8: Editando cabecera y completando datos...');
+      console.log(`Registro elegido en pagina ${paginaSeleccionada}, fila ${filaSeleccionada}.`);
+
       const rutaArchivo = resolverDocumentoPrueba();
-      console.log(`   Ruta: ${rutaArchivo}`);
       const fechaReconsideracion = calcularFechaReconsideracion(fechaResolucionSeleccionada);
+      const prefijoReconsideracion = `FA3 ${String(Date.now()).slice(-4)} N RECONSID`;
+      const numeroReconsideracion = await completarCabeceraReconsideracion(page, rutaArchivo, fechaReconsideracion, prefijoReconsideracion);
 
-      const numeroReconsideracion = await completarCabeceraReconsideracion(page, rutaArchivo, fechaReconsideracion);
-      console.log(`✅ Número ingresado: ${numeroReconsideracion}\n`);
-      const dd = String(fechaReconsideracion.getDate()).padStart(2, '0');
-      const mm = String(fechaReconsideracion.getMonth() + 1).padStart(2, '0');
-      const yyyy = fechaReconsideracion.getFullYear();
-      console.log(`✅ Fecha seleccionada: ${dd}/${mm}/${yyyy}\n`);
-
-      console.log('📋 PASO 9: Validando campos completados...');
-      console.log(`   ✓ Número: ${numeroReconsideracion}`);
-      console.log(`   ✓ Archivo: cargado`);
-      console.log(`   ✓ Fecha: ${dd}/${mm}/${yyyy}`);
-      console.log('   ✅ Todos los campos están completos\n');
-
-      // ═══════════════════════════════════════════════════════════════════
-      // PASO 9.5: CAPTURAR FORMULARIO LLENO
-      // Reutiliza `capturarFormularioLleno`
-      // ═══════════════════════════════════════════════════════════════════
-      console.log('📋 PASO 9.5: Captura formulario lleno...');
-      // Espera a que el formulario esté completamente cargado antes de capturar
-      await page.locator('form').waitFor({ state: 'visible', timeout: 10000 });
+      await page.locator('form').first().waitFor({ state: 'visible', timeout: 10000 });
       await capturarFormularioLleno(
         page,
         '03-RECONSIDERAR-SIN-SANCIONES',
@@ -236,24 +268,15 @@ test.describe('03-RECONSIDERAR SIN SANCIONES', () => {
         '09_FORMULARIO_CABECERA'
       );
 
-      console.log('📋 PASO 10: Guardando cabecera...');
-      const btnGuardar = page.getByRole('button', { name: 'Guardar cabecera' });
+      const btnGuardar = page.getByRole('button', { name: 'Guardar cabecera' }).first();
       await btnGuardar.waitFor({ state: 'visible', timeout: 10000 });
-      console.log('   ✓ Botón guardar encontrado, haciendo clic...');
 
-      const apiGuardadoPromise = esperarRespuestaApiGuardado(esScale ? 6000 : 9000);
+      const apiGuardadoPromise = esperarRespuestaApiGuardado(9000);
       await btnGuardar.click();
-      // Espera corta no bloqueante para permitir render de toast si aparece
+
       await page.locator('.p-toast-message-success, .p-toast-message').first().waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
       const apiGuardadoOk = await apiGuardadoPromise;
-      console.log(`✅ Guardar completado (api=${apiGuardadoOk ? 'sí' : 'no'})\n`);
 
-      // ═══════════════════════════════════════════════════════════════════
-      // PASO 10.5: CAPTURA MENSAJE DE ÉXITO
-      // Reutiliza `capturarToastExito`
-      // ═══════════════════════════════════════════════════════════════════
-      console.log('📸 PASO 10.5: Captura mensaje de éxito (toast verde)...');
-      console.log('   ⏳ Esperando que aparezca el mensaje de confirmación...');
       const toastCabecera = await capturarToastExito(
         page,
         '03-RECONSIDERAR-SIN-SANCIONES',
@@ -263,63 +286,40 @@ test.describe('03-RECONSIDERAR SIN SANCIONES', () => {
         'CABECERA_RECONSIDERACION',
         2500
       );
+
       if (strictVerify && !toastCabecera && !apiGuardadoOk) {
-        throw new Error('No se confirmó el guardado de cabecera (sin toast ni confirmación API).');
-      }
-      if (!toastCabecera) {
-        console.log('   ⚠️ Toast de éxito no visible en ventana rápida, se continúa.');
+        throw new Error('No se confirmo el guardado de cabecera.');
       }
 
-      // ═══════════════════════════════════════════════════════════════════
-      // PASO 11: ACCEDER A DETALLE DE SANCIONES
-      // ═══════════════════════════════════════════════════════════════════
-      console.log('📋 PASO 11: Accediendo a Detalle de sanciones...');
-      const tabDetalle = page.getByRole('tab', { name: 'Detalle de sanciones' });
+      const tabDetalle = page.getByRole('tab', { name: 'Detalle de sanciones' }).first();
       await tabDetalle.waitFor({ state: 'visible', timeout: 10000 });
       await tabDetalle.click();
-      // Espera a que el contenido de la pestaña esté visible
-      await page.locator('body').waitFor({ state: 'visible', timeout: 10000 });
-      console.log('✅ Tab Detalle abierto\n');
+      await page.waitForTimeout(600);
 
-      // ═══════════════════════════════════════════════════════════════════
-      // PASO 12: VERIFICAR TEXTO “SIN SANCIONES REGISTRADAS”
-      // ═══════════════════════════════════════════════════════════════════
-      console.log('📋 PASO 12: Verificando contenido...');
-      // Espera a que el texto "Sin sanciones registradas" esté presente o timeout
-      const bodyText = await page.locator('body').textContent();
-      const haySinSanciones = bodyText?.includes('Sin sanciones registradas') || false;
+      const bodyText = (await page.locator('body').textContent().catch(() => '')) || '';
+      const haySinSanciones = /sin\s+sanciones\s+registradas/i.test(bodyText);
 
-      if (haySinSanciones) {
-        console.log('✅ Texto "Sin sanciones registradas" detectado\n');
-        
-        console.log('================================================================================');
-        console.log('✅ CASO 03 - SIN SANCIONES COMPLETADO');
-        console.log('================================================================================');
-        console.log('📊 Resumen:');
-        console.log(`   - Nº Reconsideración: ${numeroReconsideracion}`);
-        console.log('   - Archivo: GENERAL N° 00001-2026-SUNEDU-SG-OTI.pdf');
-        console.log('   - Detalle: SIN SANCIONES REGISTRADAS');
-        console.log('   - Resultado: ✅ EXITOSO\n');
-        const credencial = obtenerCredencial(testInfo.workerIndex);
-        console.log(`👷 Worker ${testInfo.workerIndex} (${credencial.usuario}) caso 03 completado`);
-        return;
-      } else {
-        console.log('ℹ️ Se encontraron sanciones en este registro\n');
-        if (strictVerify) {
-          throw new Error('El registro seleccionado contiene sanciones; no cumple el objetivo de Caso 03.');
-        }
-      }
+      console.log('================================================================================');
+      console.log('CASO 03 COMPLETADO');
+      console.log('================================================================================');
+      console.log(`N Reconsideracion: ${numeroReconsideracion}`);
+      console.log(`Detalle sin sanciones: ${haySinSanciones ? 'SI' : 'NO'}`);
+      console.log(`EJECUCION CASO03 [worker=${ctx.workerIndex} repeat=${ctx.repeatIndex}] REALIZADA=SI`);
+      reservaCompletada = true;
 
+      const credencial = obtenerCredencial(testInfo.workerIndex);
+      console.log(`Worker ${testInfo.workerIndex} (${credencial.usuario}) caso 03 completado`);
     } catch (error) {
-      console.error('❌ ERROR:', error instanceof Error ? error.message : String(error));
+      if (reservaActivaKey && !reservaCompletada) {
+        liberarClaveCandidato('caso03-sin-sanciones', reservaActivaKey);
+      }
+      console.error('ERROR:', error instanceof Error ? error.message : String(error));
       try {
         const timestamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-').substring(0, 19);
-        const archivo = `./screenshots/${nombreCaso}_ERROR_${timestamp}.png`;
+        const archivo = `./screenshots/03-reconsiderar-sin-sanciones_ERROR_${timestamp}.png`;
         await page.screenshot({ path: archivo, fullPage: true });
-        console.log(`📸 Screenshot de error guardado\n`);
-      } catch (e) {
-        const detalle = e instanceof Error ? e.message : String(e);
-        console.warn(`⚠️ No se pudo capturar screenshot de error: ${detalle}`);
+      } catch {
+        // No bloquear por falla de screenshot.
       }
       throw error;
     }

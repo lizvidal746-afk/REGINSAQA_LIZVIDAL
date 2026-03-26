@@ -84,7 +84,7 @@ stages:
               sudo apt-get update
               sudo apt-get install -y k6
             displayName: Instalar K6
-          - script: k6 run docs/plantillas/k6_smoke_reginsa.js --env BASE_URL=$(BASE_URL)
+          - script: k6 run tests/performance/k6-grafana/reginsa-smoke.js --env BASE_URL=$(BASE_URL)
             displayName: Ejecutar K6
 
   - stage: SonarQubeAnalysis
