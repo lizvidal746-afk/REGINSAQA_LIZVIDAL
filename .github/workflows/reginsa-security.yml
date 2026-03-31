@@ -1,51 +1,52 @@
-name: REGINSA Security
+name: REGINSA Security — DAST OWASP ZAP
 
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
     inputs:
+      target_url:
+        description: "URL objetivo para OWASP ZAP (deja vacío para usar REGINSA_URL secret)"
+        required: false
+        default: ""
       run_zap:
         description: "Ejecutar OWASP ZAP (true/false)"
         required: false
-        default: "false"
+        default: "true"
 
 jobs:
-  security:
+  dast-zap:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      REGINSA_URL: ${{ secrets.REGINSA_URL }}
+      REGINSA_URL: ${{ github.event.inputs.target_url || secrets.REGINSA_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: NPM audit
-        run: npm audit --audit-level=high
 
       - name: Prepare security reports folder
         run: mkdir -p reportes/security
 
       - name: Run OWASP ZAP baseline
-        if: github.event.inputs.run_zap == 'true'
+        if: github.event.inputs.run_zap != 'false'
         run: |
           docker run --rm \
             -v "$PWD:/zap/wrk/:rw" \
             ghcr.io/zaproxy/zaproxy:stable \
-            zap-baseline.py -t "$REGINSA_URL" -r "reportes/security/zap-baseline-report.html" -J "reportes/security/zap-baseline-report.json" -w "reportes/security/zap-baseline-report.md" -m 5
+            zap-baseline.py \
+              -t "$REGINSA_URL" \
+              -r "reportes/security/zap-baseline-report.html" \
+              -J "reportes/security/zap-baseline-report.json" \
+              -w "reportes/security/zap-baseline-report.md" \
+              -a \
+              -m 10
 
-      - name: Upload security artifacts
+      - name: Upload ZAP DAST report artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: security-artifacts
-          path: |
-            reportes/security
+          name: zap-dast-report-${{ github.run_number }}
+          path: reportes/security/
           if-no-files-found: warn
