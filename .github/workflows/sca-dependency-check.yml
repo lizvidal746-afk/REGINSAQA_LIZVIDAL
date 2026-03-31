@@ -1,0 +1,54 @@
+name: 📦 REGINSA Security — SCA Dependency Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  dependency-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare reports folder
+        run: mkdir -p reportes/security/dependency-check
+
+      - name: NPM audit
+        run: npm audit --audit-level=high --json > reportes/security/npm-audit.json || true
+
+      - name: OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: REGINSA-QA-Framework
+          path: .
+          format: HTML
+          out: reportes/security/dependency-check/
+          args: --failOnCVSS 9
+
+      - name: Upload dependency check artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: |
+            reportes/security/npm-audit.json
+            reportes/security/dependency-check/
+          if-no-files-found: warn
