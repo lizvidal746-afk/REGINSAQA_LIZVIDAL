@@ -1,4 +1,4 @@
-name: 🔍 REGINSA Security — Semgrep SAST
+name: 🔍 REGINSA Sec — SAST Semgrep
 
 on:
   push:

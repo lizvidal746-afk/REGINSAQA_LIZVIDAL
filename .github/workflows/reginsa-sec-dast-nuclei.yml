@@ -1,0 +1,45 @@
+name: 🔬 REGINSA Sec — DAST Nuclei Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "URL objetivo (default: secrets.REGINSA_URL)"
+        required: false
+  schedule:
+    - cron: '0 6 * * 1'  # Lunes 6am UTC
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  nuclei-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Nuclei scan
+        uses: projectdiscovery/nuclei-action@main
+        with:
+          target: ${{ github.event.inputs.target_url || secrets.REGINSA_URL }}
+          flags: "-severity critical,high,medium -exclude-type dos"
+          output: nuclei-report.jsonl
+          sarif-export: nuclei-report.sarif
+
+      - name: Upload SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: nuclei-report.sarif
+          category: nuclei-dast
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuclei-dast-report-${{ github.run_number }}
+          path: |
+            nuclei-report.jsonl
+            nuclei-report.sarif

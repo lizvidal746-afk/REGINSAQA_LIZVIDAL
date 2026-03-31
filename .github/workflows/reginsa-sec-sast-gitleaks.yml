@@ -1,4 +1,4 @@
-name: 🔐 REGINSA Security — Gitleaks Secret Detection
+name: 🔐 REGINSA Sec — SAST Gitleaks Secret Detection
 
 on:
   push:

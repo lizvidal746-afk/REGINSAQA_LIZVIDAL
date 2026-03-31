@@ -1,0 +1,91 @@
+trigger: none
+pr: none
+
+variables:
+  - name: RUN_ZAP
+    value: 'false'
+  - name: RUN_NUCLEI
+    value: 'false'
+
+stages:
+  - stage: SecretDetection
+    displayName: "🔐 Secret Detection — Gitleaks"
+    jobs:
+      - job: Gitleaks
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+            fetchDepth: 0
+          - script: |
+              curl -sSfL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_8.18.2_linux_x64.tar.gz | tar xz
+              ./gitleaks detect --source . --report-format json --report-path gitleaks-report.json --config .gitleaks.toml
+            displayName: Run Gitleaks
+          - task: PublishBuildArtifacts@1
+            condition: always()
+            inputs:
+              PathtoPublish: 'gitleaks-report.json'
+              ArtifactName: 'gitleaks-report'
+
+  - stage: SAST
+    displayName: "🔍 SAST — Semgrep"
+    dependsOn: SecretDetection
+    condition: succeededOrFailed()
+    jobs:
+      - job: Semgrep
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+          - script: |
+              pip install semgrep
+              semgrep scan --config auto --config p/owasp-top-ten --config p/typescript --config p/javascript --config p/secrets --json -o semgrep-report.json . || true
+            displayName: Run Semgrep
+          - task: PublishBuildArtifacts@1
+            condition: always()
+            inputs:
+              PathtoPublish: 'semgrep-report.json'
+              ArtifactName: 'semgrep-report'
+
+  - stage: SCA
+    displayName: "📦 SCA — Dependency Check"
+    dependsOn: SAST
+    condition: succeededOrFailed()
+    jobs:
+      - job: DependencyCheck
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '20.x'
+          - script: npm ci
+            displayName: Install dependencies
+          - script: npm audit --audit-level=high --json > npm-audit.json || true
+            displayName: npm audit
+          - task: PublishBuildArtifacts@1
+            condition: always()
+            inputs:
+              PathtoPublish: 'npm-audit.json'
+              ArtifactName: 'npm-audit-report'
+
+  - stage: DAST
+    displayName: "🌐 DAST — OWASP ZAP"
+    dependsOn: SCA
+    condition: and(succeededOrFailed(), eq(variables['RUN_ZAP'], 'true'))
+    jobs:
+      - job: OwaspZap
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+          - script: |
+              mkdir -p reportes/security
+              docker run --rm -v "$(pwd):/zap/wrk/:rw" ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t "$(REGINSA_URL)" -a -r "reportes/security/zap-baseline-report.html" -J "reportes/security/zap-baseline-report.json" -w "reportes/security/zap-baseline-report.md" -m 10
+            displayName: Run OWASP ZAP
+          - task: PublishBuildArtifacts@1
+            condition: always()
+            inputs:
+              PathtoPublish: 'reportes/security'
+              ArtifactName: 'zap-dast-report'
