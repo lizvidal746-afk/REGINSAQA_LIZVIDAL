@@ -1,0 +1,18 @@
+# Semgrep configuration for REGINSA QA Framework
+# Exclusions to avoid scanning non-source files
+paths:
+  exclude:
+    - node_modules
+    - playwright-report
+    - allure-report
+    - allure-results
+    - test-results
+    - reportes
+    - playwright/files
+    - screenshots
+    - test-files
+    - "*.pdf"
+    - "*.csv"
+    - "*.xlsx"
+    - "*.tar"
+    - "*.json"
