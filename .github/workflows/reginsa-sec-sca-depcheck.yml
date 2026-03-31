@@ -1,4 +1,4 @@
-name: 📦 REGINSA Security — SCA Dependency Check
+name: 📦 REGINSA Sec — SCA Dependency Check
 
 on:
   push:
