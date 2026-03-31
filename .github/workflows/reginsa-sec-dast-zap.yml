@@ -1,4 +1,4 @@
-name: REGINSA Security — DAST OWASP ZAP
+name: 🌐 REGINSA Sec — DAST OWASP ZAP
 
 on:
   push:
@@ -20,6 +20,8 @@ jobs:
   dast-zap:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
     env:
       REGINSA_URL: ${{ github.event.inputs.target_url || secrets.REGINSA_URL }}
     steps:

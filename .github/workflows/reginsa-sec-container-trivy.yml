@@ -1,4 +1,4 @@
-name: 🐳 REGINSA Security — Trivy Container Scan
+name: 🐳 REGINSA Sec — Container Trivy Scan
 
 on:
   push:
