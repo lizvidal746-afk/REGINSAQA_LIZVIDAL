@@ -1,0 +1,170 @@
+# AWS CodeBuild Buildspec — Pipeline de Seguridad REGINSA-QA
+# Versión: 0.2 (formato requerido por CodeBuild)
+#
+# Herramientas incluidas:
+#   ✅ Gitleaks      — Secret Detection (binario descargado)
+#   ✅ Semgrep       — SAST por patrones (instalado via pip)
+#   ✅ npm audit     — SCA de dependencias npm
+#   ✅ Trivy         — Container/Filesystem Security (instalado via script)
+#
+# Herramientas NO incluidas (y por qué):
+#   ❌ CodeQL        — Exclusivo de GitHub Actions. No puede ejecutarse fuera de GitHub.
+#   ❌ OWASP ZAP     — Requiere runtime Docker personalizado en CodeBuild.
+#                      Para DAST, usar el workflow reginsa-sec-dast-zap.yml en GitHub Actions.
+#   ❌ Nuclei        — Requiere Docker. Para DAST con Nuclei, usar reginsa-sec-dast-nuclei.yml.
+#   ❌ OWASP Dependency-Check — Sustituido por npm audit (más liviano para CodeBuild free tier).
+#
+# La URL del entorno QA se lee desde AWS Systems Manager Parameter Store
+# en /reginsa/qa/url (configurarlo antes de ejecutar).
+
+version: 0.2
+
+env:
+  parameter-store:
+    # Parámetro en AWS SSM: /reginsa/qa/url
+    # Para crearlo: aws ssm put-parameter --name /reginsa/qa/url --value "https://reginsaqa.sunedu.gob.pe/" --type String
+    REGINSA_URL: /reginsa/qa/url
+
+phases:
+
+  install:
+    runtime-versions:
+      nodejs: 20
+      python: "3.11"
+    commands:
+      - echo "=== Instalando herramientas de seguridad ==="
+
+      # Instalar dependencias del proyecto
+      - npm ci
+
+      # ── Instalar Gitleaks (binario estático, sin Docker) ──
+      - echo "Instalando Gitleaks v8.18.2..."
+      - curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz -o gitleaks.tar.gz
+      - tar xzf gitleaks.tar.gz -C /usr/local/bin/ gitleaks
+      - gitleaks version
+
+      # ── Instalar Semgrep (SAST) via pip ──
+      - echo "Instalando Semgrep..."
+      - pip3 install semgrep
+      - semgrep --version
+
+      # ── Instalar Trivy (Container/Filesystem scanner) via script oficial ──
+      - echo "Instalando Trivy..."
+      - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+      - trivy --version
+
+  pre_build:
+    commands:
+      # ── Fase 1: Secret Detection — Gitleaks ──
+      # Detecta secrets, tokens y claves hardcodeadas en el código fuente
+      - echo "=== [1/4] Secret Detection — Gitleaks ==="
+      - mkdir -p reportes/security/gitleaks
+      - >
+        gitleaks detect
+        --source .
+        --report-format json
+        --report-path reportes/security/gitleaks/gitleaks-report.json
+        --config .gitleaks.toml || true
+
+      # ── Fase 2: SCA — npm audit ──
+      # Verifica vulnerabilidades conocidas en dependencias npm
+      - echo "=== [2/4] SCA — npm audit ==="
+      - mkdir -p reportes/security/sca
+      - npm audit --audit-level=high --json > reportes/security/sca/npm-audit.json || true
+
+  build:
+    commands:
+      # ── Fase 3: SAST — Semgrep ──
+      # Análisis estático de código fuente buscando patrones inseguros (OWASP Top 10)
+      # ❌ CodeQL no está incluido: es exclusivo de GitHub Actions
+      - echo "=== [3/4] SAST — Semgrep ==="
+      - mkdir -p reportes/security/semgrep
+      - >
+        semgrep scan
+        --config auto
+        --config p/owasp-top-ten
+        --config p/typescript
+        --config p/javascript
+        --config p/secrets
+        --json
+        -o reportes/security/semgrep/semgrep-report.json
+        . || true
+
+      # ── Fase 4: Container/Filesystem Security — Trivy ──
+      # Escanea el filesystem del proyecto (dependencias, Dockerfiles, YAML IaC)
+      # Nota: en CodeBuild se usa modo "filesystem" porque no hay Docker-in-Docker disponible
+      - echo "=== [4/4] Container Security — Trivy (filesystem mode) ==="
+      - mkdir -p reportes/security/trivy
+      # Salida en tabla para el log de CodeBuild
+      - trivy fs . --severity HIGH,CRITICAL --format table || true
+      # Salida JSON para el reporte artifact
+      - >
+        trivy fs .
+        --severity HIGH,CRITICAL
+        --format json
+        --output reportes/security/trivy/trivy-fs-report.json || true
+
+  post_build:
+    commands:
+      - echo "=== Resumen de escaneos de seguridad ==="
+
+      # Resumen Gitleaks: cuenta secretos encontrados
+      - |
+        echo "Gitleaks report:" && \
+        cat reportes/security/gitleaks/gitleaks-report.json | \
+        python3 -c "
+        import sys, json
+        try:
+            data = json.load(sys.stdin)
+            count = len(data) if isinstance(data, list) else 0
+            print(f'  Secretos encontrados: {count}')
+        except Exception as e:
+            print(f'  No se pudo leer reporte: {e}')
+        " || echo "  Reporte Gitleaks no disponible"
+
+      # Resumen npm audit: cuenta vulnerabilidades por severidad
+      - |
+        echo "npm audit report:" && \
+        cat reportes/security/sca/npm-audit.json | \
+        python3 -c "
+        import sys, json
+        try:
+            data = json.load(sys.stdin)
+            vulns = data.get('metadata', {}).get('vulnerabilities', {})
+            print(f'  critical={vulns.get(\"critical\", 0)}, high={vulns.get(\"high\", 0)}, moderate={vulns.get(\"moderate\", 0)}')
+        except Exception as e:
+            print(f'  No se pudo leer reporte: {e}')
+        " || echo "  Reporte npm audit no disponible"
+
+      # Resumen Semgrep: cuenta hallazgos
+      - |
+        echo "Semgrep report:" && \
+        cat reportes/security/semgrep/semgrep-report.json | \
+        python3 -c "
+        import sys, json
+        try:
+            data = json.load(sys.stdin)
+            count = len(data.get('results', []))
+            print(f'  Hallazgos: {count}')
+        except Exception as e:
+            print(f'  No se pudo leer reporte: {e}')
+        " || echo "  Reporte Semgrep no disponible"
+
+      - echo "=== Pipeline de seguridad AWS CodeBuild completado ==="
+
+# ── Grupo de Reportes de CodeBuild ──
+# Permite visualizar los resultados JSON directamente en la consola de AWS CodeBuild
+reports:
+  security-reports:
+    files:
+      - '**/*.json'
+    base-directory: 'reportes/security'
+    discard-paths: no
+
+# ── Artifacts ──
+# Exporta todos los reportes de seguridad como artifact de CodeBuild/CodePipeline
+artifacts:
+  files:
+    - 'reportes/security/**/*'
+  discard-paths: no
+  name: security-reports-$CODEBUILD_BUILD_ID
