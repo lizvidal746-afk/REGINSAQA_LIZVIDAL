@@ -1,0 +1,285 @@
+// Pipeline declarativo de seguridad para REGINSA-QA
+// Herramientas incluidas: Gitleaks, Semgrep, npm audit, OWASP Dependency-Check, Trivy, OWASP ZAP, Nuclei
+//
+// ❌ CodeQL NO está incluido: es exclusivo de GitHub Actions y no puede ejecutarse
+//    en Jenkins ni en otros CI/CD. Para análisis SAST semántico en Jenkins se usa Semgrep.
+//
+// Requisitos previos:
+//   - Jenkins con Docker disponible en el agente
+//   - Python 3 / pip instalados en el agente (para Semgrep)
+//   - Node.js 20 instalado en el agente
+//   - Plugin "HTML Publisher" instalado (opcional, para visualizar reportes HTML)
+//   - Plugin "Pipeline" instalado (obligatorio)
+//   - Credencial Jenkins "reginsa-url" configurada con la URL del entorno QA
+
+pipeline {
+    agent any
+
+    environment {
+        // URL del entorno QA cargada desde las credenciales de Jenkins
+        // Configura esta credencial en: Jenkins → Manage Jenkins → Credentials
+        REGINSA_URL = credentials('reginsa-url')
+    }
+
+    parameters {
+        booleanParam(
+            name: 'RUN_ZAP',
+            defaultValue: false,
+            description: 'Ejecutar OWASP ZAP DAST scan (requiere Docker, tarda ~10 min)'
+        )
+        booleanParam(
+            name: 'RUN_NUCLEI',
+            defaultValue: false,
+            description: 'Ejecutar Nuclei DAST scan (requiere Docker)'
+        )
+        booleanParam(
+            name: 'RUN_TRIVY',
+            defaultValue: true,
+            description: 'Ejecutar Trivy container scan (requiere Docker)'
+        )
+    }
+
+    options {
+        // Tiempo máximo total del pipeline: 60 minutos
+        timeout(time: 60, unit: 'MINUTES')
+        // Agregar marca de tiempo a cada línea de log
+        timestamps()
+        // Mantener solo los últimos 10 builds para ahorrar espacio en disco
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+
+        // ─────────────────────────────────────────────
+        // PREPARACIÓN
+        // ─────────────────────────────────────────────
+
+        stage('Checkout') {
+            steps {
+                // Descargar el código fuente desde el repositorio configurado en el job
+                checkout scm
+            }
+        }
+
+        stage('Setup') {
+            steps {
+                // Verificar versión de Node.js e instalar dependencias npm
+                sh 'node --version'
+                sh 'npm ci'
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        // DETECCIÓN DE SECRETOS — Gitleaks
+        // Categoría: Secret Detection
+        // Descarga el binario desde GitHub Releases (evita Docker-in-Docker)
+        // ─────────────────────────────────────────────
+
+        stage('Secret Detection — Gitleaks') {
+            steps {
+                sh '''
+                    echo "=== Descargando Gitleaks ==="
+                    curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz -o gitleaks.tar.gz
+                    tar xzf gitleaks.tar.gz gitleaks
+                    echo "=== Ejecutando Gitleaks ==="
+                    ./gitleaks detect \
+                        --source . \
+                        --report-format json \
+                        --report-path gitleaks-report.json \
+                        --config .gitleaks.toml || true
+                '''
+                archiveArtifacts artifacts: 'gitleaks-report.json', allowEmptyArchive: true
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        // SAST (Análisis Estático de Código Fuente) — Semgrep
+        // Categoría: SAST
+        // Instalado vía pip para evitar Docker-in-Docker
+        //
+        // ❌ CodeQL NO incluido: es exclusivo de GitHub Actions.
+        //    Semgrep cubre reglas OWASP Top 10, TypeScript y detección de secretos.
+        // ─────────────────────────────────────────────
+
+        stage('SAST — Semgrep') {
+            steps {
+                sh '''
+                    echo "=== Instalando Semgrep ==="
+                    pip3 install semgrep || pip install semgrep
+                    echo "=== Ejecutando Semgrep ==="
+                    semgrep scan \
+                        --config auto \
+                        --config p/owasp-top-ten \
+                        --config p/typescript \
+                        --config p/javascript \
+                        --config p/secrets \
+                        --json \
+                        -o semgrep-report.json \
+                        . || true
+                '''
+                archiveArtifacts artifacts: 'semgrep-report.json', allowEmptyArchive: true
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        // SCA (Análisis de Composición de Software) — npm audit
+        // Categoría: SCA
+        // Rápido, sin Docker, verifica dependencias npm
+        // ─────────────────────────────────────────────
+
+        stage('SCA — npm audit') {
+            steps {
+                sh 'npm audit --audit-level=high --json > npm-audit-report.json || true'
+                archiveArtifacts artifacts: 'npm-audit-report.json', allowEmptyArchive: true
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        // SCA (Análisis de Composición de Software) — OWASP Dependency-Check
+        // Categoría: SCA
+        // Escaneo profundo de dependencias con base de datos NVD (CVEs)
+        // Ejecutado vía Docker para no requerir instalación local
+        // ─────────────────────────────────────────────
+
+        stage('SCA — OWASP Dependency-Check') {
+            steps {
+                sh '''
+                    echo "=== Ejecutando OWASP Dependency-Check ==="
+                    mkdir -p reportes/security/dependency-check
+                    docker run --rm \
+                        -v "$(pwd):/src" \
+                        -v "$(pwd)/reportes/security/dependency-check:/report" \
+                        owasp/dependency-check:latest \
+                        --project "REGINSA-QA" \
+                        --scan /src \
+                        --format HTML \
+                        --format JSON \
+                        --out /report \
+                        --failOnCVSS 7 || true
+                '''
+                archiveArtifacts artifacts: 'reportes/security/dependency-check/**', allowEmptyArchive: true
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        // SEGURIDAD DE CONTENEDORES — Trivy
+        // Categoría: Container Security
+        // Escanea la imagen Docker construida buscando CVEs HIGH y CRITICAL
+        // Solo se ejecuta si el parámetro RUN_TRIVY es true
+        // ─────────────────────────────────────────────
+
+        stage('Container Security — Trivy') {
+            when {
+                expression { return params.RUN_TRIVY }
+            }
+            steps {
+                sh '''
+                    echo "=== Construyendo imagen Docker para escaneo ==="
+                    docker build -t reginsa-qa:scan .
+                    mkdir -p reportes/security/trivy
+                    echo "=== Ejecutando Trivy (tabla en consola) ==="
+                    docker run --rm \
+                        -v /var/run/docker.sock:/var/run/docker.sock \
+                        aquasec/trivy:latest image \
+                        --severity HIGH,CRITICAL \
+                        --format table \
+                        reginsa-qa:scan
+                    echo "=== Generando reporte JSON de Trivy ==="
+                    docker run --rm \
+                        -v /var/run/docker.sock:/var/run/docker.sock \
+                        -v "$(pwd)/reportes/security/trivy:/output" \
+                        aquasec/trivy:latest image \
+                        --severity HIGH,CRITICAL \
+                        --format json \
+                        --output /output/trivy-report.json \
+                        reginsa-qa:scan || true
+                '''
+                archiveArtifacts artifacts: 'reportes/security/trivy/**', allowEmptyArchive: true
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        // DAST — OWASP ZAP (Prueba Dinámica sobre la app en ejecución)
+        // Categoría: DAST
+        // Solo se ejecuta si el parámetro RUN_ZAP es true
+        // Requiere que el entorno QA esté accesible en REGINSA_URL
+        // ─────────────────────────────────────────────
+
+        stage('DAST — OWASP ZAP') {
+            when {
+                expression { return params.RUN_ZAP }
+            }
+            steps {
+                sh '''
+                    echo "=== Ejecutando OWASP ZAP Baseline Scan ==="
+                    mkdir -p reportes/security/zap
+                    docker run --rm \
+                        -v "$(pwd)/reportes/security/zap:/zap/wrk/:rw" \
+                        ghcr.io/zaproxy/zaproxy:stable \
+                        zap-baseline.py \
+                        -t "${REGINSA_URL}" \
+                        -a \
+                        -r "zap-baseline-report.html" \
+                        -J "zap-baseline-report.json" \
+                        -w "zap-baseline-report.md" \
+                        -m 10 || true
+                '''
+                archiveArtifacts artifacts: 'reportes/security/zap/**', allowEmptyArchive: true
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        // DAST — Nuclei (Escaneo por templates de vulnerabilidades conocidas)
+        // Categoría: DAST
+        // Solo se ejecuta si el parámetro RUN_NUCLEI es true
+        // Complementa a ZAP: mientras ZAP es generalista, Nuclei usa templates específicos
+        // Excluye templates de tipo "dos" para no afectar la disponibilidad del entorno
+        // ─────────────────────────────────────────────
+
+        stage('DAST — Nuclei') {
+            when {
+                expression { return params.RUN_NUCLEI }
+            }
+            steps {
+                sh '''
+                    echo "=== Ejecutando Nuclei ==="
+                    mkdir -p reportes/security/nuclei
+                    docker run --rm \
+                        -v "$(pwd)/reportes/security/nuclei:/output" \
+                        projectdiscovery/nuclei:latest \
+                        -u "${REGINSA_URL}" \
+                        -severity critical,high,medium \
+                        -exclude-type dos \
+                        -jsonl -output /output/nuclei-report.jsonl \
+                        -sarif-export /output/nuclei-report.sarif || true
+                '''
+                archiveArtifacts artifacts: 'reportes/security/nuclei/**', allowEmptyArchive: true
+            }
+        }
+
+    }
+
+    post {
+        always {
+            echo '=== RESUMEN DE SEGURIDAD ==='
+            echo 'Revise los artifacts para ver los reportes detallados.'
+            echo 'Reportes generados en: reportes/security/'
+            // Publicar reportes HTML si el plugin HTML Publisher está instalado
+            // Para instalar: Jenkins → Manage Plugins → buscar "HTML Publisher"
+            publishHTML(target: [
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'reportes/security',
+                reportFiles: '**/*.html',
+                reportName: 'Security Reports'
+            ])
+        }
+        failure {
+            echo '⚠️ Alguna etapa de seguridad falló. Revise los logs y artifacts.'
+        }
+        success {
+            echo '✅ Pipeline de seguridad completado exitosamente.'
+        }
+    }
+}
