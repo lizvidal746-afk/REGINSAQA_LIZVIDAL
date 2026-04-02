@@ -13,7 +13,9 @@ on:
           - functional
           - regression
           - performance
+          - k6
           - security
+          - sonar
       workers:
         description: Número de workers Playwright
         required: false
@@ -38,12 +40,41 @@ on:
         description: Ambiente
         required: false
         default: qa
+      k6_output:
+        description: Salida k6 (local|cloud)
+        required: false
+        default: local
+      k6_sleep_seconds:
+        description: Sleep por iteracion k6
+        required: false
+        default: "0"
+      k6_perf_duration:
+        description: Duracion k6 (45s, 2m, 5m)
+        required: false
+        default: "2m"
+      k6_vus:
+        description: VUs k6
+        required: false
+        default: "1"
+      k6_expect_rate_limit:
+        description: Esperar rate limit (1|0)
+        required: false
+        default: "1"
+      k6_enforce_ok_rate:
+        description: Exigir ok_rate (1|0)
+        required: false
+        default: "0"
+      sonar_host_url:
+        description: SonarQube URL (si vacio usa secret SONAR_HOST_URL)
+        required: false
+        default: ""
 
 jobs:
   qa:
     runs-on: ubuntu-latest
     env:
       REGINSA_URL: ${{ secrets.REGINSA_URL }}
+      BASE_URL: ${{ secrets.REGINSA_URL }}
       REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
       REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
       REGINSA_USER_2: ${{ secrets.REGINSA_USER_2 }}
@@ -65,6 +96,8 @@ jobs:
       REGINSA_TARGET_REGISTROS: ${{ inputs.registros }}
       REGINSA_ENVIRONMENT: ${{ inputs.environment }}
       REGINSA_CASO04_SKIP_EXHAUSTED_PAGES: "1"
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
     steps:
       - uses: actions/checkout@v4
 
@@ -90,7 +123,24 @@ jobs:
               esac ;;
             regression) npm run test:regression ;;
             performance) npm run test:performance ;;
-            security) npm run test:security ;;
+            k6)
+              case "${{ inputs.case_target }}" in
+                00) pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso00-login.ps1 -K6Output "${{ inputs.k6_output }}" -K6Cantidad "${{ inputs.registros }}" -K6Vus "${{ inputs.k6_vus }}" -PerfDuration "${{ inputs.k6_perf_duration }}" -K6SleepSeconds "${{ inputs.k6_sleep_seconds }}" -GrafanaProjectId "${{ secrets.K6_CLOUD_PROJECT_ID }}" -GrafanaToken "${{ secrets.K6_CLOUD_TOKEN }}" ;;
+                01) pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso01-local.ps1 -Mode k6 -K6Output "${{ inputs.k6_output }}" -K6Cantidad "${{ inputs.registros }}" -K6Vus "${{ inputs.k6_vus }}" -PerfDuration "${{ inputs.k6_perf_duration }}" -K6SleepSeconds "${{ inputs.k6_sleep_seconds }}" -GrafanaProjectId "${{ secrets.K6_CLOUD_PROJECT_ID }}" -GrafanaToken "${{ secrets.K6_CLOUD_TOKEN }}" ;;
+                02) pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso02-local.ps1 -Mode k6 -K6Output "${{ inputs.k6_output }}" -K6Cantidad "${{ inputs.registros }}" -K6Vus "${{ inputs.k6_vus }}" -PerfDuration "${{ inputs.k6_perf_duration }}" -K6SleepSeconds "${{ inputs.k6_sleep_seconds }}" -K6ExpectRateLimit "${{ inputs.k6_expect_rate_limit }}" -K6EnforceOkRate "${{ inputs.k6_enforce_ok_rate }}" -GrafanaProjectId "${{ secrets.K6_CLOUD_PROJECT_ID }}" -GrafanaToken "${{ secrets.K6_CLOUD_TOKEN }}" ;;
+                03) pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso03-local.ps1 -Mode k6 -K6Output "${{ inputs.k6_output }}" -K6Cantidad "${{ inputs.registros }}" -K6Vus "${{ inputs.k6_vus }}" -PerfDuration "${{ inputs.k6_perf_duration }}" -K6SleepSeconds "${{ inputs.k6_sleep_seconds }}" -K6ExpectRateLimit "${{ inputs.k6_expect_rate_limit }}" -K6EnforceOkRate "${{ inputs.k6_enforce_ok_rate }}" -GrafanaProjectId "${{ secrets.K6_CLOUD_PROJECT_ID }}" -GrafanaToken "${{ secrets.K6_CLOUD_TOKEN }}" ;;
+                04) pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 -K6Output "${{ inputs.k6_output }}" -K6Cantidad "${{ inputs.registros }}" -K6Vus "${{ inputs.k6_vus }}" -PerfDuration "${{ inputs.k6_perf_duration }}" -K6SleepSeconds "${{ inputs.k6_sleep_seconds }}" -K6ExpectRateLimit "${{ inputs.k6_expect_rate_limit }}" -K6EnforceOkRate "${{ inputs.k6_enforce_ok_rate }}" -GrafanaProjectId "${{ secrets.K6_CLOUD_PROJECT_ID }}" -GrafanaToken "${{ secrets.K6_CLOUD_TOKEN }}" ;;
+                *) echo "case_target invalido para k6: ${{ inputs.case_target }}"; exit 1 ;;
+              esac ;;
+            security)
+              pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/generar-reportes-owasp-fechados.ps1 -Target "${{ secrets.REGINSA_URL }}" -BaseDir "reportes/security"
+              ;;
+            sonar)
+              if [ -n "${{ inputs.sonar_host_url }}" ]; then
+                export SONAR_HOST_URL="${{ inputs.sonar_host_url }}"
+              fi
+              pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/escanear-repos-sonar.ps1 -Projects frontend,backend,enlinea
+              ;;
           esac
 
       - name: Upload reports

@@ -35,7 +35,7 @@ jobs:
         shell: powershell
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_HOST_URL_SECRET: ${{ secrets.SONAR_HOST_URL }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
     steps:
       - name: Checkout
@@ -52,38 +52,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Sonar scan with gate blocking
+      - name: Run Sonar scan (3 repos centralizados)
         run: |
-          $sonarHostUrl = $env:SONAR_HOST_URL_SECRET
           $dispatchHost = "${{ github.event.inputs.sonar_host_url }}"
           if (-not [string]::IsNullOrWhiteSpace($dispatchHost)) {
-            $sonarHostUrl = $dispatchHost
+            $env:SONAR_HOST_URL = $dispatchHost
           }
 
-          if ([string]::IsNullOrWhiteSpace($sonarHostUrl)) {
-            throw 'SONAR_HOST_URL missing'
+          if ([string]::IsNullOrWhiteSpace($env:SONAR_HOST_URL)) {
+            throw 'SONAR_HOST_URL secret missing'
           }
           if ([string]::IsNullOrWhiteSpace($env:SONAR_TOKEN)) {
-            throw 'SONAR_TOKEN missing'
+            throw 'SONAR_TOKEN secret missing'
           }
 
-          $args = @(
-            '-Dsonar.host.url=' + $sonarHostUrl,
-            '-Dsonar.token=' + $env:SONAR_TOKEN,
-            '-Dsonar.qualitygate.wait=true',
-            '-Dsonar.qualitygate.timeout=600'
-          )
-
-          if ('${{ github.event_name }}' -eq 'pull_request') {
-            $args += '-Dsonar.pullrequest.key=${{ github.event.pull_request.number }}'
-            $args += '-Dsonar.pullrequest.branch=${{ github.head_ref }}'
-            $args += '-Dsonar.pullrequest.base=${{ github.base_ref }}'
-          }
-          elseif ('${{ github.event_name }}' -eq 'push') {
-            $args += '-Dsonar.branch.name=${{ github.ref_name }}'
-          }
-
-          npx sonar-scanner @args
+          # Escanea frontend, backend y enlinea con sus carpetas especificas
+          # Sin crear archivos dentro de los repos clonados
+          pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/escanear-repos-sonar.ps1 -Projects frontend,backend,enlinea
 
       - name: Build Sonar quality gate summary
         shell: powershell
@@ -92,7 +77,7 @@ jobs:
 
           $sonarHostUrl = "${{ github.event.inputs.sonar_host_url }}"
           if ([string]::IsNullOrWhiteSpace($sonarHostUrl)) {
-            $sonarHostUrl = $env:SONAR_HOST_URL_SECRET
+            $sonarHostUrl = $env:SONAR_HOST_URL
           }
 
           if ([string]::IsNullOrWhiteSpace($sonarHostUrl)) {
@@ -104,7 +89,7 @@ jobs:
 
           $projectKeysRaw = "${{ github.event.inputs.project_keys }}"
           if ([string]::IsNullOrWhiteSpace($projectKeysRaw)) {
-            $projectKeysRaw = 'reginsa-qa-framework'
+            $projectKeysRaw = 'si091reginsafrontend,si091reginsabackend,si091reginsaenlinea'
           }
 
           $projectKeys = $projectKeysRaw.Split(',') | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }

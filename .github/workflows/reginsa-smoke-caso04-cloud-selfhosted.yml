@@ -1,11 +1,60 @@
-name: REGINSA Smoke Caso04 Cloud Placeholder
+name: REGINSA Smoke Caso04 Cloud (Self-hosted)
 
 on:
   workflow_dispatch:
+    inputs:
+      k6_output:
+        description: "Salida k6: local|cloud"
+        required: false
+        default: "cloud"
+      cantidad:
+        description: "Cantidad objetivo"
+        required: false
+        default: "3"
+      upload_artifacts:
+        description: "Upload artifacts (true/false)"
+        required: false
+        default: "true"
 
 jobs:
-  info:
-    runs-on: ubuntu-latest
+  smoke-caso04:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: cmd
+
     steps:
-      - name: Placeholder
-        run: echo "Use dedicated k6 caso04 workflow."
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run smoke k6 caso04
+        env:
+          RUN_OUTPUT: ${{ github.event.inputs.k6_output || 'cloud' }}
+          RUN_CANTIDAD: ${{ github.event.inputs.cantidad || '3' }}
+        run: |
+          powershell -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 -K6Output %RUN_OUTPUT% -K6Cantidad %RUN_CANTIDAD% -K6Vus 1 -PerfDuration 45s -K6SleepSeconds 0.8 -K6ExpectRateLimit 1 -K6EnforceOkRate 0
+
+      - name: Upload artifacts
+        if: always() && github.event.inputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-caso04-selfhosted
+          path: |
+            reportes/*.json
+            reportes/**/*.json
+          if-no-files-found: warn

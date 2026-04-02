@@ -281,7 +281,7 @@ function reportRateLimit(res, endpoint) {
   if (res.status >= 500 && res.status < 600) HTTP_5XX_TOTAL.add(1);
   if (limited) {
     HTTP_429_TOTAL.add(1);
-    console.warn(`⚠️ 429 en ${endpoint}`);
+    console.warn(`[WARN] 429 en ${endpoint}`);
   }
   return limited;
 }

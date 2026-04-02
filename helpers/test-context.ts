@@ -28,8 +28,7 @@ export function getTestContext(testInfo: TestInfo): TestContext {
     1;
   const workers = (testInfo.config?.workers as number | undefined) ?? 1;
   const isMassive = repeatEach > 1 || repeatIndex > 0;
-  // Para casos con repeat-each en paralelo, asigna candidato por índice de repeat
-  // (0,1,2,...) y evita saltos/collisiones por worker.
+  // Slot estable por repeatIndex para mantener selección consecutiva sin saltos.
   const selectionSlot = repeatIndex;
 
   return {

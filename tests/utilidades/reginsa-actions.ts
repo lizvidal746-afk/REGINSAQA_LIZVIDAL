@@ -787,21 +787,39 @@ export async function completarCabeceraReconsideracion(
 
   const presentoInput = scope.locator('input#presentoReconsideracion').first();
   const presentoBox = scope.locator('p-checkbox[inputid="presentoReconsideracion"] .p-checkbox-box').first();
-  if (await presentoInput.isVisible().catch(() => false)) {
-    for (let intento = 0; intento < 3; intento++) {
-      const enabled = await presentoInput.isEnabled().catch(() => false);
-      const checked = await presentoInput.isChecked().catch(() => false);
-      if (checked) break;
-      if (enabled) {
-        if (await presentoBox.isVisible().catch(() => false)) {
-          await presentoBox.click({ force: true });
-        } else {
-          await scope.locator('label[for="presentoReconsideracion"]').click({ force: true }).catch(() => {});
-        }
+
+  const estadoPresento = async () => {
+    const visible = await presentoInput.isVisible().catch(() => false);
+    const enabled = await presentoInput.isEnabled().catch(() => false);
+    const inputChecked = await presentoInput.isChecked().catch(() => false);
+    const ariaChecked = await presentoInput.getAttribute('aria-checked').catch(() => null);
+    const boxClass = await presentoBox.getAttribute('class').catch(() => '');
+    const checked = inputChecked || ariaChecked === 'true' || boxClass.includes('p-highlight');
+    return { visible, enabled, checked };
+  };
+
+  const forzarPresentoMarcado = async () => {
+    for (let intento = 0; intento < 6; intento++) {
+      const estado = await estadoPresento();
+      if (estado.checked) return true;
+      if (!estado.enabled) {
         await page.waitForTimeout(150);
-      } else {
-        await page.waitForTimeout(150);
+        continue;
       }
+      if (await presentoBox.isVisible().catch(() => false)) {
+        await presentoBox.click({ force: true });
+      } else {
+        await scope.locator('label[for="presentoReconsideracion"]').click({ force: true }).catch(() => {});
+      }
+      await page.waitForTimeout(180);
+    }
+    return (await estadoPresento()).checked;
+  };
+
+  if (await presentoInput.isVisible().catch(() => false)) {
+    const presentoOk = await forzarPresentoMarcado();
+    if (!presentoOk) {
+      throw new Error('No se pudo marcar "¿Presentó recurso de reconsideración?".');
     }
   }
 
@@ -999,26 +1017,19 @@ export async function completarCabeceraReconsideracion(
     fechaOk = await setFechaPorCalendario();
   }
 
-  // Revalidar checkbox presentó reconsideración al final
+  // Revalidar checkbox presentó reconsideración al final sin desmarcar accidentalmente
   if (await presentoInput.isVisible().catch(() => false)) {
-    const checkedFinal = await presentoInput.isChecked().catch(() => false);
+    const checkedFinal = (await estadoPresento()).checked;
     if (!checkedFinal) {
-      if (await presentoBox.isVisible().catch(() => false)) {
-        await presentoBox.click({ force: true });
-      } else {
-        await scope.locator('label[for="presentoReconsideracion"]').click({ force: true }).catch(() => {});
+      const presentoOkFinal = await forzarPresentoMarcado();
+      if (!presentoOkFinal) {
+        throw new Error('No se pudo confirmar el check "¿Presentó recurso de reconsideración?" al final.');
       }
-      await page.waitForTimeout(150);
     }
   }
 
-  const checkPresento = scope.locator('input#presentoReconsideracion');
-  if (await checkPresento.count().catch(() => 0)) {
-    const enabled = await checkPresento.isEnabled().catch(() => false);
-    if (enabled && !(await checkPresento.isChecked().catch(() => false))) {
-      await scope.locator('label[for="presentoReconsideracion"]').click({ force: true }).catch(() => {});
-      await page.waitForTimeout(150);
-    }
+  if (!(await seccionReconsideracion.isVisible().catch(() => false))) {
+    throw new Error('La sección de reconsideración no quedó visible tras completar cabecera.');
   }
 
   return numeroReconsideracion;

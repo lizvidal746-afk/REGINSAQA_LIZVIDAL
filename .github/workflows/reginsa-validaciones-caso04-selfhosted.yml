@@ -69,7 +69,7 @@ jobs:
         run: npx playwright install chromium
 
       - name: Run validaciones Caso 04
-        run: npx playwright test tests/casos-prueba/04-reconsiderar-con-sanciones-validaciones.plantilla.spec.ts --workers=1 --repeat-each=1 --project=chromium
+        run: npx playwright test tests/casos-prueba/04-reconsiderar-con-sanciones-validaciones.plantilla.spec.ts --workers=${{ github.event.inputs.workers || '1' }} --repeat-each=${{ github.event.inputs.repeat_each || '1' }} --project=chromium
 
       - name: Upload artifacts
         if: always() && github.event.inputs.upload_artifacts == 'true'

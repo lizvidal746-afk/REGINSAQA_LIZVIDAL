@@ -48,7 +48,7 @@
       ]
     },
     {
-      "name": "2) DetalleInfraccionSancion/Listar",
+      "name": "2) DetalleInfraccionSancion/ListarPaginado",
       "description": "Objetivo: obtener detalle con sanciones a actualizar | Reglas: listado debe traer al menos un detalle elegible | Exito: status 200 y detalle_id detectado | Evidencia: variable detalle_id seteada",
       "request": {
         "method": "POST",
@@ -61,9 +61,9 @@
           "raw": "{\n  \"nPageNumber\": 1,\n  \"nPageSize\": 20,\n  \"conSanciones\": true\n}"
         },
         "url": {
-          "raw": "{{base_api}}/DetalleInfraccionSancion/Listar",
+          "raw": "{{base_api}}/DetalleInfraccionSancion/ListarPaginado",
           "host": ["{{base_api}}"],
-          "path": ["DetalleInfraccionSancion", "Listar"]
+          "path": ["DetalleInfraccionSancion", "ListarPaginado"]
         }
       },
       "event": [

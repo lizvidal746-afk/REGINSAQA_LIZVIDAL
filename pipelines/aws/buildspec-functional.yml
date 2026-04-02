@@ -39,19 +39,19 @@ phases:
       - |
         case "$CASE_TARGET" in
           01)
-            npx playwright test --grep="01-AGREGAR ADMINISTRADO" --workers="$PW_WORKERS" --repeat-each="$PW_REPEAT_EACH" --project="$PW_PROJECT"
+            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-test01-scale.ps1 --workers="$PW_WORKERS" --repeat-each="$PW_REPEAT_EACH" --project="$PW_PROJECT"
             ;;
           02)
-            npx playwright test --grep="02-REGISTRAR SANCIÓN" --workers="$PW_WORKERS" --repeat-each="$PW_REPEAT_EACH" --project="$PW_PROJECT"
+            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-test02-scale.ps1 --workers="$PW_WORKERS" --repeat-each="$PW_REPEAT_EACH" --project="$PW_PROJECT"
             ;;
           03)
-            npx playwright test --grep="03-RECONSIDERAR SIN SANCIONES" --workers="$PW_WORKERS" --repeat-each="$PW_REPEAT_EACH" --project="$PW_PROJECT"
+            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-test03-scale.ps1 --workers="$PW_WORKERS" --repeat-each="$PW_REPEAT_EACH" --project="$PW_PROJECT"
             ;;
           04)
-            npx playwright test --grep="04-RECONSIDERAR CON SANCIONES" --workers="$PW_WORKERS" --repeat-each="$PW_REPEAT_EACH" --project="$PW_PROJECT"
+            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-test04-scale.ps1 --workers="$PW_WORKERS" --repeat-each="$PW_REPEAT_EACH" --project="$PW_PROJECT"
             ;;
           suite)
-            npx playwright test --grep="01-AGREGAR ADMINISTRADO|02-REGISTRAR SANCIÓN|03-RECONSIDERAR SIN SANCIONES|04-RECONSIDERAR CON SANCIONES" --workers="$PW_WORKERS" --repeat-each="$PW_REPEAT_EACH" --project="$PW_PROJECT"
+            npm run test:functional:suite -- --workers="$PW_WORKERS" --repeat-each="$PW_REPEAT_EACH" --project="$PW_PROJECT"
             ;;
           *)
             echo "ERROR: CASE_TARGET inválido: $CASE_TARGET";

@@ -1275,6 +1275,60 @@
 				"--reporter=line"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "tmp-run-k6-caso04-cantidad1",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"k6:04:local",
+				"--",
+				"--cantidad=1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-run-k6-caso04-cantidad1-filelog",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"if not exist reportes\\logs mkdir reportes\\logs & npm run k6:04:local -- --cantidad=1 > reportes\\logs\\k6-caso04-run-latest.log 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-run-k6-caso04-cantidad1-pslog",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"Set-Location 'd:\\SUNEDU\\AUTOMATIZACION\\REGINSA'; New-Item -ItemType Directory -Path 'reportes/logs' -Force | Out-Null; npm run k6:04:local -- --cantidad=1 *> 'reportes/logs/k6-caso04-run-latest.log'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-convert-k6-log-utf8",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"Set-Location 'd:\\SUNEDU\\AUTOMATIZACION\\REGINSA'; Get-Content -Path 'reportes/logs/k6-caso04-run-latest.log' -Encoding Unicode | Set-Content -Path 'reportes/logs/k6-caso04-run-latest.utf8.log' -Encoding UTF8"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "validate-k6-caso04-local-2",
+			"type": "shell",
+			"command": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 -K6Output local -K6Cantidad 2"
 		}
 	]
 }

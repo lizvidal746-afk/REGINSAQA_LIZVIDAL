@@ -12,6 +12,7 @@ parameters:
       - performance
       - k6
       - security
+      - sonar
   - name: workers
     type: string
     default: '4'
@@ -133,10 +134,36 @@ stages:
                   *) echo "caseTarget inválido para k6: ${{ parameters.caseTarget }}"; exit 1 ;;
                 esac
               fi
-              if [ "${{ parameters.testType }}" = "security" ]; then npm run test:security; fi
+              if [ "${{ parameters.testType }}" = "security" ]; then
+                pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/generar-reportes-owasp-fechados.ps1 -Target "$(REGINSA_URL)" -BaseDir "reportes/security"
+              fi
+              if [ "${{ parameters.testType }}" = "sonar" ]; then
+                # Requiere SonarQube accesible desde el agente (self-hosted o URL publica)
+                # Configurar variable SONAR_HOST_URL y secreto SONAR_TOKEN en el pipeline
+                pwsh -NoProfile -ExecutionPolicy Bypass \
+                  -File scripts/security/escanear-repos-sonar.ps1 \
+                  -Projects frontend,backend,enlinea \
+                  -SonarHostUrl "$(SONAR_HOST_URL)" \
+                  -SonarToken "$(SONAR_TOKEN)"
+              fi
             displayName: Run selected suite
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: 'reportes'
+              ArtifactName: 'reportes'
+              publishLocation: 'Container'
           - task: PublishBuildArtifacts@1
             inputs:
               PathtoPublish: 'playwright-report'
               ArtifactName: 'playwright-report'
+              publishLocation: 'Container'
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: 'allure-report'
+              ArtifactName: 'allure-report'
+              publishLocation: 'Container'
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: 'test-results'
+              ArtifactName: 'test-results'
               publishLocation: 'Container'

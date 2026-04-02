@@ -37,13 +37,14 @@ jobs:
 
       - name: Run Newman Caso 01
         run: |
-          if not exist reportes\newman mkdir reportes\newman
-          npx newman run API_TEST/postman/reginsa-caso01-api-test.collection.json -e API_TEST/postman/reginsa-caso01-api-test.environment.json --env-var base_api=%REGINSA_API_BASE% --env-var usuario=%REGINSA_USER% --env-var contrasena=%REGINSA_PASS% --reporters cli,junit --reporter-junit-export reportes/newman/caso01-api-test.xml
+          npm run api:test:caso01
 
       - name: Upload artifacts
         if: always() && github.event.inputs.upload_artifacts == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: postman-caso01-selfhosted
-          path: reportes/newman/caso01-api-test.xml
+          path: |
+            reportes/newman/caso01-api-test.xml
+            reportes/newman/caso01-api-test.json
           if-no-files-found: warn

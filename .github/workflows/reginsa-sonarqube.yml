@@ -1,4 +1,13 @@
-name: REGINSA SonarQube Placeholder
+name: REGINSA SonarQube (Info)
+
+# Este workflow solo informa. El escaneo real requiere un runner self-hosted
+# con acceso a SonarQube local (localhost:9000).
+# Usar: reginsa-sonarqube-selfhosted.yml con runner [self-hosted, windows]
+#
+# Para usar SonarCloud (gratis, sin runner propio):
+#   - Crear cuenta en sonarcloud.io
+#   - Cambiar SONAR_HOST_URL a https://sonarcloud.io
+#   - Agregar SONAR_ORGANIZATION al secret y a los args del scanner
 
 on:
   workflow_dispatch:
@@ -7,5 +16,13 @@ jobs:
   info:
     runs-on: ubuntu-latest
     steps:
-      - name: Placeholder
-        run: echo "Workflow placeholder. Use dedicated Sonar workflow in repository."
+      - name: Info
+        run: |
+          echo "Para escaneo completo de los 3 repos usa:"
+          echo "  .github/workflows/reginsa-sonarqube-selfhosted.yml"
+          echo "  Requiere runner self-hosted Windows con acceso a SonarQube."
+          echo ""
+          echo "Proyectos configurados:"
+          echo "  si091reginsafrontend  -> SI091_REGINSA_FRONTEND-1"
+          echo "  si091reginsabackend   -> SI091_REGINSA_BACKEND"
+          echo "  si091reginsaenlinea   -> SI091_REGINSA_ENLINEA"

@@ -1,0 +1,77 @@
+version: 0.2
+
+# SonarQube scan de los 3 repos fuente (Frontend, Backend, Enlinea)
+# Requiere que SonarQube sea accesible desde el agente CodeBuild.
+# Opciones:
+#   a) Self-hosted runner en red privada con acceso a localhost:9000
+#   b) SonarQube expuesto con IP publica o VPN
+#   c) SonarCloud (cambiar SONAR_HOST_URL a https://sonarcloud.io)
+#
+# Variables en CodeBuild project (o como Parameter Store / Secrets Manager):
+#   SONAR_HOST_URL  - URL base de SonarQube, ej: http://192.168.1.100:9000
+#   SONAR_TOKEN     - Token de autenticacion SonarQube (almacenar como secret)
+
+env:
+  variables:
+    PROJECTS: "frontend,backend,enlinea"
+  secrets-manager:
+    SONAR_TOKEN: "reginsa/sonar:token"
+  # O bien usar parameter-store:
+  # parameter-store:
+  #   SONAR_HOST_URL: "/reginsa/sonar/host_url"
+  #   SONAR_TOKEN: "/reginsa/sonar/token"
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "[install] npm ci"
+      - npm ci
+      - echo "[install] verify powershell"
+      - |
+        if ! command -v pwsh >/dev/null 2>&1; then
+          echo "Instalando PowerShell..."
+          wget -q https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb
+          dpkg -i packages-microsoft-prod.deb
+          apt-get update
+          apt-get install -y powershell
+        fi
+      - pwsh -Version
+
+  pre_build:
+    commands:
+      - echo "[pre_build] SONAR_HOST_URL=$SONAR_HOST_URL PROJECTS=$PROJECTS"
+      - |
+        if [ -z "$SONAR_HOST_URL" ]; then
+          echo "ERROR: SONAR_HOST_URL no definida.";
+          exit 1;
+        fi
+      - |
+        if [ -z "$SONAR_TOKEN" ]; then
+          echo "ERROR: SONAR_TOKEN no definida.";
+          exit 1;
+        fi
+      - echo "[pre_build] Repos clonados:"
+      - ls -d SI091_REGINSA_FRONTEND-1 SI091_REGINSA_BACKEND SI091_REGINSA_ENLINEA 2>/dev/null || true
+
+  build:
+    commands:
+      - echo "[build] Ejecutando escaneo SonarQube de repos fuente"
+      - |
+        pwsh -NoProfile -ExecutionPolicy Bypass \
+          -File scripts/security/escanear-repos-sonar.ps1 \
+          -Projects "$PROJECTS" \
+          -SonarHostUrl "$SONAR_HOST_URL" \
+          -SonarToken "$SONAR_TOKEN"
+
+  post_build:
+    commands:
+      - echo "[post_build] Escaneo completado"
+      - ls reportes/security/ 2>/dev/null || echo "(sin reportes generados)"
+
+artifacts:
+  files:
+    - "reportes/security/**/*"
+  name: sonarqube-results-$(date +%Y%m%d-%H%M%S)
+  discard-paths: no

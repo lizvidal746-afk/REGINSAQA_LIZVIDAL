@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   parameters {
-    choice(name: 'TEST_TYPE', choices: ['smoke', 'functional', 'regression', 'performance', 'k6', 'security'], description: 'Tipo de suite')
+    choice(name: 'TEST_TYPE', choices: ['smoke', 'functional', 'regression', 'performance', 'k6', 'security', 'sonar'], description: 'Tipo de suite')
     choice(name: 'CASE_TARGET', choices: ['00', '01', '02', '03', '04', 'suite'], description: 'Caso funcional objetivo')
     string(name: 'WORKERS', defaultValue: '4', description: 'Workers Playwright')
     string(name: 'REPEAT_EACH', defaultValue: '1', description: 'Repeat each')
@@ -70,8 +70,30 @@ pipeline {
               error("CASE_TARGET inválido para TEST_TYPE=k6: ${params.CASE_TARGET}")
             }
           } else if (params.TEST_TYPE == 'security') {
-            sh 'npm run test:security'
+            sh 'pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/generar-reportes-owasp-fechados.ps1 -Target "${REGINSA_URL}" -BaseDir "reportes/security"'
           }
+        }
+      }
+    }
+
+    stage('SonarQube Scan') {
+      when {
+        expression { params.TEST_TYPE == 'sonar' }
+      }
+      steps {
+        script {
+          // Requiere Jenkins con acceso a SonarQube local (localhost:9000)
+          // Configurar en Jenkins: Manage Jenkins > Configure System > SonarQube servers
+          // Agregar credenciales SONAR_TOKEN en Jenkins credentials store
+          withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
+            env.SONAR_TOKEN = SONAR_TOKEN
+          }
+          sh '''
+            pwsh -NoProfile -ExecutionPolicy Bypass \
+              -File scripts/security/escanear-repos-sonar.ps1 \
+              -Projects frontend,backend,enlinea \
+              -SonarHostUrl "${SONAR_HOST_URL:-http://localhost:9000}"
+          '''
         }
       }
     }

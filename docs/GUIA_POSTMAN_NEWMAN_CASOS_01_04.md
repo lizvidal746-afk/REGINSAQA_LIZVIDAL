@@ -74,11 +74,13 @@ Variables de collection:
 ## Caso 03
 
 - Cabecera elegible para reconsideracion sin sanciones.
+- Endpoint alineado a Swagger QA: `POST /api/CabeceraInfraccionSancion/ListarPaginado`.
 - Exito: guardar reconsideracion y listar detalle sin error funcional.
 
 ## Caso 04
 
 - Detalle con sanciones existente.
+- Endpoint alineado a Swagger QA: `POST /api/DetalleInfraccionSancion/ListarPaginado`.
 - Actualizar reconsideracion antes de confirmar.
 - Exito: actualizar + confirmar con 200/201 y `bSuccess != false`.
 

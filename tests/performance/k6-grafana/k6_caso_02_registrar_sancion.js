@@ -40,6 +40,21 @@ function buildRunId() {
 }
 
 const RUN_ID = buildRunId();
+
+function resolveRunSequence() {
+  const explicit = parseIntEnv(__ENV.K6_PREFIX_SEQUENCE, 0);
+  if (explicit > 0) return explicit;
+
+  const fromRunId = String(RUN_ID || '').match(/(\d+)$/);
+  if (fromRunId && fromRunId[1]) {
+    const parsed = parseIntEnv(fromRunId[1], 0);
+    if (parsed > 0) return parsed;
+  }
+
+  return 0;
+}
+
+const RUN_SEQUENCE = resolveRunSequence();
 let debugErrorCount = 0;
 
 const requestedIterations = Number.parseInt(__ENV.K6_FIXED_ITERATIONS || __ENV.K6_TOTAL_REGISTROS || '1', 10);
@@ -506,9 +521,9 @@ function generarPayload(globalIdx) {
   const cantidadMedidas = medidasPorRegistro();
   const totalObjetivo = Number.isFinite(totalRegistros) ? Math.max(1, totalRegistros) : 1;
 
-  const seqVu = String(__VU || 1).padStart(2, '0');
-  const seqIter = String((__ITER || 0) + 1).padStart(3, '0');
-  const correlativo = `${seqVu}${seqIter}`;
+  const baseRun = RUN_SEQUENCE > 0 ? RUN_SEQUENCE * 1000 : 0;
+  const correlativoNumerico = baseRun + Math.max(1, globalIdx + 1);
+  const correlativo = String(correlativoNumerico).padStart(5, '0');
   const entidad = pickEntidad(globalIdx);
 
   const casos = catalogo8Casos();

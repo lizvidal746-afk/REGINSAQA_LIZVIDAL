@@ -48,7 +48,7 @@
       ]
     },
     {
-      "name": "2) CabeceraInfraccionSancion/Listar",
+      "name": "2) CabeceraInfraccionSancion/ListarPaginado",
       "description": "Objetivo: obtener cabeceras elegibles sin sanciones | Reglas: debe existir al menos una cabecera pendiente con filtros aplicados | Exito: status 200 y cabecera_id detectado | Evidencia: variable cabecera_id seteada",
       "request": {
         "method": "POST",
@@ -61,9 +61,9 @@
           "raw": "{\n  \"nPageNumber\": 1,\n  \"nPageSize\": 20,\n  \"sinSanciones\": true,\n  \"reconsideracionPendiente\": true\n}"
         },
         "url": {
-          "raw": "{{base_api}}/CabeceraInfraccionSancion/Listar",
+          "raw": "{{base_api}}/CabeceraInfraccionSancion/ListarPaginado",
           "host": ["{{base_api}}"],
-          "path": ["CabeceraInfraccionSancion", "Listar"]
+          "path": ["CabeceraInfraccionSancion", "ListarPaginado"]
         }
       },
       "event": [
@@ -123,7 +123,7 @@
       ]
     },
     {
-      "name": "4) DetalleInfraccionSancion/Listar",
+      "name": "4) DetalleInfraccionSancion/ListarPaginado",
       "description": "Objetivo: verificar detalle posterior a reconsideracion sin sanciones | Reglas: backend debe responder consistentemente para la cabecera procesada | Exito: status 200 y respuesta JSON controlada | Evidencia: assertion Respuesta controlada",
       "request": {
         "method": "POST",
@@ -136,9 +136,9 @@
           "raw": "{\n  \"nPageNumber\": 1,\n  \"nPageSize\": 20,\n  \"idCabeceraInfraccionSancion\": {{cabecera_id}},\n  \"sinSanciones\": true\n}"
         },
         "url": {
-          "raw": "{{base_api}}/DetalleInfraccionSancion/Listar",
+          "raw": "{{base_api}}/DetalleInfraccionSancion/ListarPaginado",
           "host": ["{{base_api}}"],
-          "path": ["DetalleInfraccionSancion", "Listar"]
+          "path": ["DetalleInfraccionSancion", "ListarPaginado"]
         }
       },
       "event": [
