@@ -5,7 +5,7 @@ Documento operativo para ejecutar seguridad de forma continua y con evidencia au
 ## 1. Matriz principal
 
 | Tipo de prueba | Herramienta | Frecuencia | Criterio de pase | Evidencia |
-|----------------|-------------|------------|------------------|-----------|
+| ---------------- | ------------- | ------------ | ------------------ | ----------- |
 
 | DAST baseline | OWASP ZAP (`npm run security:owasp:baseline:es`) | Diario o por despliegue QA | Sin nuevos hallazgos High en baseline | `reportes/security/zap-baseline-report.*` |
 | DAST full | OWASP ZAP (`zap_mode=full`) | Semanal | Tendencia controlada y plan de remediacion por Medium/Low | Artefactos de workflow OWASP |
@@ -17,7 +17,7 @@ Documento operativo para ejecutar seguridad de forma continua y con evidencia au
 ## 1.1 Herramientas por tipo de test importante
 
 | Tipo de test | Herramientas usadas en REGINSA | Modo recomendado |
-|--------------|--------------------------------|------------------|
+| -------------- | -------------------------------- | ------------------ |
 
 | DAST rapido | OWASP ZAP baseline | Script/pipeline |
 | DAST cobertura real | OWASP ZAP Desktop manual/autenticado | Manual guiado + active scan focalizado |

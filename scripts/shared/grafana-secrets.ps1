@@ -5,12 +5,24 @@ function Get-GrafanaSecretsStorePath {
 
 function Protect-GrafanaSecretValue([string]$plainText) {
   if ([string]::IsNullOrWhiteSpace($plainText)) { return '' }
-  $secure = ConvertTo-SecureString -String $plainText -AsPlainText -Force
-  return ConvertFrom-SecureString -SecureString $secure
+  try {
+    $secure = ConvertTo-SecureString -String $plainText -AsPlainText -Force
+    return ConvertFrom-SecureString -SecureString $secure
+  }
+  catch {
+    # DPAPI no disponible: fallback a base64 para persistencia local
+    return 'b64:' + [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($plainText))
+  }
 }
 
 function Unprotect-GrafanaSecretValue([string]$cipherText) {
   if ([string]::IsNullOrWhiteSpace($cipherText)) { return '' }
+  # Fallback base64 (cuando DPAPI no estuvo disponible al guardar)
+  if ($cipherText.StartsWith('b64:')) {
+    try {
+      return [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($cipherText.Substring(4)))
+    } catch { return '' }
+  }
   try {
     $secure = ConvertTo-SecureString -String $cipherText
     $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
@@ -81,7 +93,8 @@ function Resolve-GrafanaCloudSecrets {
   param(
     [string]$GrafanaProjectId,
     [string]$GrafanaToken,
-    [switch]$PersistProvided
+    [switch]$PersistProvided,
+    [switch]$Interactive
   )
 
   $fromStore = Get-StoredGrafanaCloudSecrets
@@ -90,6 +103,8 @@ function Resolve-GrafanaCloudSecrets {
     $GrafanaProjectId
   } elseif (-not [string]::IsNullOrWhiteSpace($fromStore.ProjectId)) {
     $fromStore.ProjectId
+  } elseif (-not [string]::IsNullOrWhiteSpace($env:K6_CLOUD_PROJECT_ID)) {
+    $env:K6_CLOUD_PROJECT_ID
   } else {
     ''
   }
@@ -98,13 +113,34 @@ function Resolve-GrafanaCloudSecrets {
     $GrafanaToken
   } elseif (-not [string]::IsNullOrWhiteSpace($fromStore.Token)) {
     $fromStore.Token
+  } elseif (-not [string]::IsNullOrWhiteSpace($env:K6_CLOUD_TOKEN)) {
+    $env:K6_CLOUD_TOKEN
   } else {
     ''
   }
 
+  # Prompt interactivo: solo cuando -Interactive y algun valor sigue vacio.
+  if ($Interactive) {
+    if ([string]::IsNullOrWhiteSpace($resolvedProject) -and [string]::IsNullOrWhiteSpace($resolvedToken)) {
+      Write-Host ''
+      Write-Host '[Grafana Cloud] Credenciales no encontradas. Ingresalas una vez (se guardan localmente):' -ForegroundColor Yellow
+      $resolvedProject = (Read-Host '  Project ID').Trim()
+      $resolvedToken   = (Read-Host '  Token      ').Trim()
+    } elseif ([string]::IsNullOrWhiteSpace($resolvedProject)) {
+      Write-Host '[Grafana Cloud] Project ID no encontrado.' -ForegroundColor Yellow
+      $resolvedProject = (Read-Host '  Project ID').Trim()
+    } elseif ([string]::IsNullOrWhiteSpace($resolvedToken)) {
+      Write-Host '[Grafana Cloud] Token no encontrado.' -ForegroundColor Yellow
+      $resolvedToken   = (Read-Host '  Token      ').Trim()
+    }
+  }
+
+  # Persistir cuando PersistProvided o Interactive completaron valores.
   $persisted = $false
-  if ($PersistProvided -and ((-not [string]::IsNullOrWhiteSpace($GrafanaProjectId)) -or (-not [string]::IsNullOrWhiteSpace($GrafanaToken)))) {
-    $persisted = Save-GrafanaCloudSecrets -projectId $resolvedProject -token $resolvedToken
+  if ((-not [string]::IsNullOrWhiteSpace($resolvedProject)) -and (-not [string]::IsNullOrWhiteSpace($resolvedToken))) {
+    if ($PersistProvided -or $Interactive) {
+      $persisted = Save-GrafanaCloudSecrets -projectId $resolvedProject -token $resolvedToken
+    }
   }
 
   return @{

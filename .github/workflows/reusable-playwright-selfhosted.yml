@@ -1,0 +1,253 @@
+name: Reusable Playwright (Self-hosted)
+
+on:
+  workflow_call:
+    inputs:
+      caso:
+        description: "Caso: 00|01|02|03|04|suite_01_04"
+        required: true
+        type: string
+      mode:
+        description: "Modo: fast|scale|demo|validaciones"
+        required: false
+        default: "fast"
+        type: string
+      workers:
+        description: "Playwright workers"
+        required: false
+        default: "3"
+        type: string
+      repeat_each:
+        description: "Playwright repeat-each"
+        required: false
+        default: "1"
+        type: string
+      pw_retries:
+        description: "Playwright retries"
+        required: false
+        default: "0"
+        type: string
+      install_dependencies:
+        description: "Run npm ci (true/false)"
+        required: false
+        default: "true"
+        type: string
+      install_browser:
+        description: "Install Playwright browser (true/false)"
+        required: false
+        default: "true"
+        type: string
+      prepare_data:
+        description: "Run reset + prewarm before tests (true/false)"
+        required: false
+        default: "false"
+        type: string
+      generate_reports:
+        description: "Generate post-test reports (true/false)"
+        required: false
+        default: "false"
+        type: string
+      minimal_evidence:
+        description: "Minimal evidence mode for speed (true/false)"
+        required: false
+        default: "true"
+        type: string
+      evaluate_outcomes:
+        description: "Evaluate Playwright results gate (true/false)"
+        required: false
+        default: "true"
+        type: string
+      gate_mode:
+        description: "Gate mode: strict|tolerant"
+        required: false
+        default: "strict"
+        type: string
+      max_failed_allowed:
+        description: "Allowed failed tests when gate_mode=tolerant"
+        required: false
+        default: "0"
+        type: string
+      upload_artifacts:
+        description: "Upload artifacts (true/false)"
+        required: false
+        default: "true"
+        type: string
+      reginsa_url:
+        description: "Override URL REGINSA (optional)"
+        required: false
+        default: ""
+        type: string
+      timeout_minutes:
+        description: "Job timeout in minutes"
+        required: false
+        default: "180"
+        type: string
+
+jobs:
+  playwright:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: ${{ fromJSON(inputs.timeout_minutes) }}
+    defaults:
+      run:
+        shell: cmd
+    env:
+      REGINSA_URL: ${{ inputs.reginsa_url || secrets.REGINSA_URL }}
+      BASE_URL: ${{ inputs.reginsa_url || secrets.REGINSA_URL }}
+      REGINSA_CREDENTIALS_JSON: ${{ secrets.REGINSA_CREDENTIALS_JSON || '' }}
+      REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
+      REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
+      REGINSA_USER_2: ${{ secrets.REGINSA_USER_2 }}
+      REGINSA_PASS_2: ${{ secrets.REGINSA_PASS_2 }}
+      REGINSA_USER_3: ${{ secrets.REGINSA_USER_3 }}
+      REGINSA_PASS_3: ${{ secrets.REGINSA_PASS_3 }}
+      REGINSA_USER_4: ${{ secrets.REGINSA_USER_4 }}
+      REGINSA_PASS_4: ${{ secrets.REGINSA_PASS_4 }}
+      REGINSA_USER_5: ${{ secrets.REGINSA_USER_5 }}
+      REGINSA_PASS_5: ${{ secrets.REGINSA_PASS_5 }}
+      REGINSA_USER_6: ${{ secrets.REGINSA_USER_6 }}
+      REGINSA_PASS_6: ${{ secrets.REGINSA_PASS_6 }}
+      REGINSA_USER_7: ${{ secrets.REGINSA_USER_7 }}
+      REGINSA_PASS_7: ${{ secrets.REGINSA_PASS_7 }}
+      REGINSA_USER_8: ${{ secrets.REGINSA_USER_8 }}
+      REGINSA_PASS_8: ${{ secrets.REGINSA_PASS_8 }}
+      REGINSA_STRICT_VERIFY: "1"
+      REGINSA_PW_RETRIES: ${{ inputs.pw_retries }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify environment
+        shell: cmd
+        run: |
+          echo === Node.js ===
+          node --version
+          echo === npm ===
+          npm --version
+          echo === Working directory ===
+          cd
+
+      - name: Install dependencies
+        if: inputs.install_dependencies == 'true'
+        shell: cmd
+        run: |
+          if not exist node_modules\@playwright\test (
+            echo [CI] node_modules no encontrado, ejecutando npm ci...
+            npm ci
+          ) else (
+            echo [CI] node_modules ya existe, skip npm ci
+          )
+
+      - name: Install Playwright browsers
+        if: inputs.install_browser == 'true'
+        shell: cmd
+        run: npx playwright install chromium --with-deps 2>nul || npx playwright install chromium
+
+      - name: Reset operational run
+        if: inputs.prepare_data == 'true'
+        run: npm run iteracion:reiniciar
+
+      - name: Prewarm data pool
+        if: inputs.prepare_data == 'true'
+        run: npm run pool:prewarm
+
+      - name: Set evidence mode
+        if: inputs.minimal_evidence == 'true'
+        shell: cmd
+        run: |
+          echo REGINSA_REPORTER_MODE=minimal>> %GITHUB_ENV%
+          echo REGINSA_TRACE=off>> %GITHUB_ENV%
+          echo REGINSA_SCREENSHOT=off>> %GITHUB_ENV%
+          echo REGINSA_VIDEO=off>> %GITHUB_ENV%
+
+      - name: Resolve test command
+        id: resolve
+        shell: pwsh
+        run: |
+          $caso = '${{ inputs.caso }}'
+          $mode = '${{ inputs.mode }}'
+          $workers = '${{ inputs.workers }}'
+          $repeatEach = '${{ inputs.repeat_each }}'
+
+          if ($mode -eq 'validaciones') {
+            $spec = "tests/casos-prueba/${caso.PadLeft(2,'0')}-*-validaciones.plantilla.spec.ts"
+            $cmd = "npx playwright test --project=chromium --workers=$workers --repeat-each=$repeatEach `"$spec`""
+          } elseif ($mode -eq 'fast') {
+            $cmd = "powershell -ExecutionPolicy Bypass -File scripts/run-test${caso.PadLeft(2,'0')}-fast.ps1"
+          } elseif ($mode -eq 'scale') {
+            $cmd = "powershell -ExecutionPolicy Bypass -File scripts/run-test${caso.PadLeft(2,'0')}-scale.ps1"
+          } elseif ($mode -eq 'demo') {
+            $cmd = "powershell -ExecutionPolicy Bypass -File scripts/run-test${caso.PadLeft(2,'0')}-demo.ps1"
+          } else {
+            $grepMap = @{
+              '00' = '00-LOGIN'
+              '01' = '01-AGREGAR ADMINISTRADO'
+              '02' = '02-REGISTRAR SANCIÓN'
+              '03' = '03-RECONSIDERAR SIN SANCIONES'
+              '04' = '04-RECONSIDERAR CON SANCIONES'
+              'suite_01_04' = '01-AGREGAR ADMINISTRADO|02-REGISTRAR SANCIÓN|03-RECONSIDERAR SIN SANCIONES|04-RECONSIDERAR CON SANCIONES'
+            }
+            $grep = $grepMap[$caso]
+            if (-not $grep) { $grep = $grepMap['01'] }
+            $cmd = "npx playwright test --project=chromium --workers=$workers --repeat-each=$repeatEach --grep `"$grep`""
+          }
+
+          "test_command=$cmd" >> $env:GITHUB_OUTPUT
+          Write-Host "Resolved command: $cmd"
+
+      - name: Run Playwright tests
+        shell: cmd
+        env:
+          REGINSA_WORKERS: ${{ inputs.workers }}
+          REGINSA_HEADLESS: "1"
+        run: ${{ steps.resolve.outputs.test_command }}
+
+      - name: Generate post-test reports
+        if: always() && inputs.generate_reports == 'true'
+        shell: cmd
+        run: npm run posttest:01
+
+      - name: Evaluate results gate
+        if: always() && inputs.evaluate_outcomes == 'true'
+        shell: pwsh
+        run: |
+          $resultsFile = "test-results/results.json"
+          if (-not (Test-Path $resultsFile)) {
+            Write-Host "[WARN] Archivo de resultados no encontrado, skip gate."
+            exit 0
+          }
+          $results = Get-Content $resultsFile | ConvertFrom-Json
+          $total = $results.stats.expected + $results.stats.unexpected + $results.stats.flaky
+          $failed = $results.stats.unexpected
+          $gateMode = '${{ inputs.gate_mode }}'
+          $maxFailed = [int]'${{ inputs.max_failed_allowed }}'
+
+          Write-Host "Total: $total | Failed: $failed | Gate: $gateMode | MaxFailed: $maxFailed"
+
+          if ($gateMode -eq 'strict' -and $failed -gt 0) {
+            throw "GATE STRICT: $failed tests fallidos."
+          }
+          if ($gateMode -eq 'tolerant' -and $failed -gt $maxFailed) {
+            throw "GATE TOLERANT: $failed tests fallidos (maximo permitido: $maxFailed)."
+          }
+          Write-Host "Gate PASSED."
+
+      - name: Upload artifacts
+        if: always() && inputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-caso${{ inputs.caso }}-${{ inputs.mode }}-selfhosted
+          path: |
+            test-results/
+            playwright-report/
+            allure-results/
+            errors/
+          if-no-files-found: warn

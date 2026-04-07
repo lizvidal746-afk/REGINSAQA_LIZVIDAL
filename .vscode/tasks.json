@@ -1329,6 +1329,325 @@
 			"label": "validate-k6-caso04-local-2",
 			"type": "shell",
 			"command": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 -K6Output local -K6Cantidad 2"
+		},
+		{
+			"label": "tmp-check-security-prereqs",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$tools=@('docker','node','npm','sonar-scanner','java'); foreach($tool in $tools){ Write-Host \"=== $tool ===\"; $cmd=Get-Command $tool -ErrorAction SilentlyContinue; if($null -eq $cmd){ Write-Host 'NO DISPONIBLE'; continue }; try { & $tool '--version' 2>&1 | Out-String | Write-Host } catch { Write-Host $_.Exception.Message } }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-check-sonar-and-target",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"Write-Host '=== npm sonar-scanner ==='; try { npm exec sonar-scanner -- --version 2>&1 | Out-String | Write-Host } catch { Write-Host $_.Exception.Message }; Write-Host '=== REGINSA_URL ==='; if ([string]::IsNullOrWhiteSpace($env:REGINSA_URL)) { Write-Host 'NO DEFINIDA' } else { Write-Host $env:REGINSA_URL }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-run-trivy-verify",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/run-trivy.ps1",
+				"-ProjectDir",
+				".",
+				"-OutputDir",
+				"reportes/security/trivy-verify"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-run-trivy-verify-after-fix",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/run-trivy.ps1",
+				"-ProjectDir",
+				".",
+				"-OutputDir",
+				"reportes/security/trivy-verify"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-run-depcheck-verify",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/run-dependency-check.ps1",
+				"-ProjectDir",
+				".",
+				"-OutputDir",
+				"reportes/security/dependency-check-verify"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-validate-zap-qa-2026-04-02",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/run-owasp-baseline-and-translate.ps1",
+				"-Target",
+				"https://reginsaqa.sunedu.gob.pe/",
+				"-OutputDir",
+				"reportes/security/zap-qa-2026-04-02"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-validate-nuclei-qa-2026-04-02",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/run-nuclei.ps1",
+				"-Target",
+				"https://reginsaqa.sunedu.gob.pe/",
+				"-OutputDir",
+				"reportes/security/nuclei-qa-2026-04-02"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-revalidate-nuclei-qa-2026-04-02",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/run-nuclei.ps1",
+				"-Target",
+				"https://reginsaqa.sunedu.gob.pe/",
+				"-OutputDir",
+				"reportes/security/nuclei-qa-2026-04-02"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-revalidate-nuclei-qa-2026-04-02-v2",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/run-nuclei.ps1",
+				"-Target",
+				"https://reginsaqa.sunedu.gob.pe/",
+				"-OutputDir",
+				"reportes/security/nuclei-qa-2026-04-02"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-revalidate-nuclei-qa-2026-04-02-v3",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/run-nuclei.ps1",
+				"-Target",
+				"https://reginsaqa.sunedu.gob.pe/",
+				"-OutputDir",
+				"reportes/security/nuclei-qa-2026-04-02"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-revalidate-trivy-2026-04-02",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/run-trivy.ps1",
+				"-ProjectDir",
+				".",
+				"-OutputDir",
+				"reportes/security/trivy-verify"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-revalidate-trivy-2026-04-02-v2",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/run-trivy.ps1",
+				"-ProjectDir",
+				".",
+				"-OutputDir",
+				"reportes/security/trivy-verify"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-revalidate-trivy-2026-04-02-v3",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/run-trivy.ps1",
+				"-ProjectDir",
+				".",
+				"-OutputDir",
+				"reportes/security/trivy-verify"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-revalidate-trivy-2026-04-02-v4",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/run-trivy.ps1",
+				"-ProjectDir",
+				".",
+				"-OutputDir",
+				"reportes/security/trivy-verify"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-revalidate-depcheck-2026-04-02-v2",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/run-dependency-check.ps1",
+				"-ProjectDir",
+				".",
+				"-OutputDir",
+				"reportes/security/dependency-check-verify"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-check-security-processes",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Get-Process | Where-Object { $_.ProcessName -match 'docker|java|trivy|dependency-check' } | Select-Object ProcessName,Id,StartTime | Format-Table -AutoSize"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-check-security-processes-2",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Get-Process | Where-Object { $_.ProcessName -match 'docker|java|trivy|dependency-check' } | Select-Object ProcessName,Id,StartTime | Format-Table -AutoSize"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-trivy-summary",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$json = Get-Content 'reportes/security/trivy-verify/trivy-report.json' -Raw | ConvertFrom-Json; $v = @($json.Results | Where-Object { $_.Vulnerabilities } | ForEach-Object { $_.Vulnerabilities }); $high = @($v | Where-Object { $_.Severity -eq 'HIGH' }).Count; $critical = @($v | Where-Object { $_.Severity -eq 'CRITICAL' }).Count; Write-Host \"HIGH=$high\"; Write-Host \"CRITICAL=$critical\"; Write-Host \"TOTAL=$($v.Count)\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-revalidate-depcheck-2026-04-02-v3",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/security/run-dependency-check.ps1",
+				"-ProjectDir",
+				".",
+				"-OutputDir",
+				"reportes/security/dependency-check-verify"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "fix-md-lint",
+			"type": "shell",
+			"command": "node scripts/tmp-fix-md-lint.mjs"
+		},
+		{
+			"label": "fix-md-lint-p2",
+			"type": "shell",
+			"command": "node scripts/tmp-fix-md-lint-p2.mjs"
+		},
+		{
+			"label": "cleanup-tmp-scripts",
+			"type": "shell",
+			"command": "del scripts\\tmp-fix-md-lint.mjs scripts\\tmp-fix-md-lint.ps1 scripts\\tmp-fix-md-lint-p2.mjs"
+		},
+		{
+			"label": "git-commit-push-reginsa",
+			"type": "shell",
+			"command": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/git-commit-push.ps1",
+			"isBackground": false,
+			"problemMatcher": []
 		}
 	]
 }

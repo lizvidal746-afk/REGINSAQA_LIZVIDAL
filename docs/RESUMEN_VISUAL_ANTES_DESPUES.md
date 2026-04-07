@@ -2,7 +2,7 @@
 
 ## Estructura Actual (Caótica)
 
-```
+```text
 tests/
 ├── funcionales/                    ❌ Solo 1 archivo
 │   └── 01-login-smoke.spec.ts
@@ -44,6 +44,7 @@ reports/                            ❌ Reportes sin consolidar
 ```
 
 **Problemas:**
+
 - 🔴 E2E tiene solo 1 test → no cubre todos los casos
 - 🔴 k6 duplicado (local vs grafana) → mantenimiento doble
 - 🔴 Postman separado de tests → se olvida ejecutar
@@ -55,7 +56,7 @@ reports/                            ❌ Reportes sin consolidar
 
 ## 🎯 Estructura Propuesta (Profesional)
 
-```
+```text
 tests/                              ✅ TODO centralizado
 ├── e2e/                           ✅ Playwright (Casos 01-04 × 3 niveles)
 │   ├── cases/
@@ -143,6 +144,7 @@ scripts/
 ## npm Scripts: Antes vs Después
 
 ### ❌ ANTES (Fragmentado)
+
 ```bash
 npm run test:01
 npm run test:02
@@ -155,6 +157,7 @@ npm run test:security
 ```
 
 ### ✅ DESPUÉS (Profesional)
+
 ```bash
 # E2E
 npm run test:e2e              # Todos
@@ -191,7 +194,7 @@ npm run report:dashboard      # Genera HTML dashboard
 ## 📈 Matriz de Ejecución
 
 | Evento | E2E | API | k6 | ZAP | Sonar | Duración | npm run |
-|--------|-----|-----|-----|-----|-------|----------|---------|
+| -------- | ----- | ----- | ----- | ----- | ------- | ---------- | --------- |
 | **Commit local** (pre-hook) | ✓smoke | - | - | - | ✓fast | 1 min | `test:smoke` |
 | **PR/MR** | ✓smoke | ✓rápido | - | - | ✓fast | 3 min | `test:smoke` |
 | **Merge** | ✓regresión | ✓all | - | - | ✓full | 20 min | `test:suite:regression` |
@@ -204,6 +207,7 @@ npm run report:dashboard      # Genera HTML dashboard
 ## 🔄 Flujo de Ejecución Ejemplo: Caso 04
 
 ### ❌ ANTES
+
 ```bash
 # 1. Playwright
 playwright test --grep "04-RECONSIDERAR"
@@ -224,6 +228,7 @@ postman collection run API_TEST/postman/...
 ```
 
 ### ✅ DESPUÉS
+
 ```bash
 # TODO en un comando
 npm run test:suite:full -- --caso=04
@@ -245,7 +250,7 @@ npm run report:dashboard                # Abre dashboard.html
 ## 🏆 Beneficios Medibles
 
 | Métrica | Antes | Después | Mejora |
-|---------|-------|---------|--------|
+| --------- | ------- | --------- | -------- |
 | Tiempo encontrar test | 5 min | 1 min | **5x** |
 | Tiempo ejecutar suite completa | 40 min (manual steps) | 10 min (1 comando) | **4x** |
 | Reportes consolidados | ❌ No | ✅ Sí | **100%** |
@@ -258,7 +263,7 @@ npm run report:dashboard                # Abre dashboard.html
 
 ## 💾 Estimación de Tamaño
 
-```
+```text
 ANTES:
 ├── tests/              ~50 archivos
 ├── API_TEST/           ~20 archivos
@@ -286,9 +291,10 @@ Cambio en complejidad: -70% (merced a la estructura)
 ## 🎬 Pasos para Empezar
 
 ### Opción A: Migración Completa (Recomendada)
+
 **Duración:** 2.5 horas | **Esfuerzo:** Alto | **Resultado:** 100% profesional
 
-```
+```text
 1. Crear carpetas (5 min)
 2. Mover archivos (20 min)
 3. Actualizar package.json (15 min)
@@ -299,6 +305,7 @@ Cambio en complejidad: -70% (merced a la estructura)
 ```
 
 ### Opción B: Gradual (Recomendada si estás ocupado)
+
 **Duración:** 4 sesiones × 45 min | **Esfuerzo:** Bajo | **Resultado:** 100% al final
 
 **Sesión 1:** Crear estructura + READMEs
@@ -307,6 +314,7 @@ Cambio en complejidad: -70% (merced a la estructura)
 **Sesión 4:** Crear shared/ + npm scripts
 
 ### Opción C: Solo Documentación (No recomendada)
+
 **Duración:** Ya está done | **Resultado:** Plan listo para después
 
 ---

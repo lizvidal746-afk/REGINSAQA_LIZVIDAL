@@ -26,7 +26,7 @@ jobs:
     timeout-minutes: 45
     defaults:
       run:
-        shell: powershell
+        shell: cmd
 
     steps:
       - name: Checkout
@@ -35,7 +35,16 @@ jobs:
           fetch-depth: 1
           clean: false
 
+      - name: Verify environment
+        shell: cmd
+        run: |
+          echo === Working directory ===
+          cd
+          echo === Workspace contents ===
+          dir /b
+
       - name: Evaluate gate
+        shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
 

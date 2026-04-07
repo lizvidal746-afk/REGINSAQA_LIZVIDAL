@@ -83,9 +83,11 @@
 - Estado final: **GO / GO con observaciones / NO-GO**
 - Justificación (máximo 3 líneas):
 - Acciones acordadas:
+
   1.
   2.
   3.
+
 - Fecha objetivo de re-prueba:
 
 ## 7) Comparativo entre perfiles (mismo día)

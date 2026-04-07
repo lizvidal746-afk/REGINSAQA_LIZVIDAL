@@ -2,7 +2,7 @@
 
 ## 1. Estructura de Librerías Compartidas
 
-```
+```text
 tests/
 ├── shared/                          # Librerías reutilizables
 │   ├── utils/
@@ -61,6 +61,7 @@ tests/
 ## 2. Ejemplo: Auth Service Compartida
 
 ### 2.1 shared/auth/auth-service.ts
+
 ```typescript
 // Servicio de autenticación único - usado por todos los test types
 
@@ -104,7 +105,7 @@ export class AuthService {
       });
 
       const token = response.data.token;
-      
+
       if (cacheKey) {
         this.tokenCache.set(cacheKey, {
           token,
@@ -129,7 +130,7 @@ export class AuthService {
     maxRetries: number = 3
   ): Promise<string> {
     let lastError;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         Logger.debug(`[Attempt ${attempt}/${maxRetries}] Getting token...`);
@@ -156,10 +157,10 @@ export class AuthService {
       // Decodificar JWT (sin verificar firma)
       const parts = token.split('.');
       if (parts.length !== 3) return false;
-      
+
       const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
       const exp = payload.exp * 1000; // Convertir a ms
-      
+
       return exp > Date.now();
     } catch {
       return false;
@@ -188,7 +189,8 @@ export interface TokenInfo {
 }
 ```
 
-### 2.2 Cómo usarla en E2E (Playwright):
+### 2.2 Cómo usarla en E2E (Playwright)
+
 ```typescript
 // tests/e2e/fixtures/auth.fixture.ts
 import { test as base } from '@playwright/test';
@@ -207,14 +209,14 @@ export const test = base.extend({
       process.env.ADMIN_PASSWORD!,
       'admin_session'
     );
-    
+
     // Inyectar token en localStorage/sessionStorage
     await page.goto(process.env.BASE_URL!);
     await page.evaluate(t => {
       localStorage.setItem('authToken', t);
       sessionStorage.setItem('jwt', t);
     }, token);
-    
+
     await use(page);
   },
 });
@@ -222,7 +224,8 @@ export const test = base.extend({
 export { expect };
 ```
 
-### 2.3 Cómo usarla en k6:
+### 2.3 Cómo usarla en k6
+
 ```javascript
 // tests/performance/lib/auth-handler.js
 import http from 'k6/http';
@@ -266,7 +269,8 @@ export function clearCache() {
 }
 ```
 
-### 2.4 Cómo usarla en Postman (pre-request script):
+### 2.4 Cómo usarla en Postman (pre-request script)
+
 ```javascript
 // tests/api/pre-scripts/auth-setup.js
 // (Se ejecuta vía pm.sendRequest en pre-request)
@@ -308,6 +312,7 @@ await authService.getToken(
 ## 3. Ejemplo: Test Data Compartida
 
 ### 3.1 shared/fixtures/test-accounts.ts
+
 ```typescript
 // Cuentas de prueba - compartidas entre tests
 
@@ -352,6 +357,7 @@ export const TEST_ENTITIES = [
 ```
 
 ### 3.2 shared/fixtures/payloads/sancion-payloads.ts
+
 ```typescript
 // Payloads de reutilizables para sanciones
 
@@ -366,14 +372,14 @@ export function generateSancionPayload(overrides?: Partial<SancionPayload>): San
     medidaCorrectiva: 'CLAUSURA_TEMPORAL',
     ...overrides,
   };
-  
+
   return base;
 }
 
 export function generateSancionesEnMasa(cantidad: number): SancionPayload[] {
-  return Array.from({ length: cantidad }, (_, i) => 
-    generateSancionPayload({ 
-      expediente: `EXP-${Date.now()}-${i + 1}` 
+  return Array.from({ length: cantidad }, (_, i) =>
+    generateSancionPayload({
+      expediente: `EXP-${Date.now()}-${i + 1}`
     })
   );
 }
@@ -389,11 +395,12 @@ export interface SancionPayload {
 }
 ```
 
-### 3.3 Usar en k6:
+### 3.3 Usar en k6
+
 ```javascript
 // tests/performance/scripts/caso-02-register-sancion/local.js
 
-import { generateSancionPayload, generateSancionesEnMasa } 
+import { generateSancionPayload, generateSancionesEnMasa }
   from '../../fixtures/sancion-payloads.js';
 
 export default function () {
@@ -413,6 +420,7 @@ export default function () {
 ## 4. Ejemplo: HTTP Client Compartida
 
 ### 4.1 shared/utils/http-client.ts
+
 ```typescript
 // Cliente HTTP reutilizable con retry, logging, etc.
 
@@ -441,25 +449,25 @@ export class HttpClient {
   }
 
   async get<T>(endpoint: string, config?: AxiosRequestConfig): Promise<T> {
-    return this.executeWithRetry(() => 
+    return this.executeWithRetry(() =>
       this.client.get<T>(endpoint, config)
     );
   }
 
   async post<T>(endpoint: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    return this.executeWithRetry(() => 
+    return this.executeWithRetry(() =>
       this.client.post<T>(endpoint, data, config)
     );
   }
 
   async put<T>(endpoint: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    return this.executeWithRetry(() => 
+    return this.executeWithRetry(() =>
       this.client.put<T>(endpoint, data, config)
     );
   }
 
   async delete<T>(endpoint: string, config?: AxiosRequestConfig): Promise<T> {
-    return this.executeWithRetry(() => 
+    return this.executeWithRetry(() =>
       this.client.delete<T>(endpoint, config)
     );
   }
@@ -475,7 +483,7 @@ export class HttpClient {
     } catch (error) {
       if (attempt < this.retryPolicy.maxRetries) {
         const delay = Math.min(
-          this.retryPolicy.initialDelayMs * 
+          this.retryPolicy.initialDelayMs *
           Math.pow(this.retryPolicy.backoffMultiplier, attempt - 1),
           this.retryPolicy.maxDelayMs
         );
@@ -496,7 +504,8 @@ export class HttpClient {
 }
 ```
 
-### 4.2 Usar en tests E2E:
+### 4.2 Usar en tests E2E
+
 ```typescript
 // tests/e2e/utils/api-helper.ts
 import { HttpClient } from '../../shared/utils/http-client';
@@ -524,6 +533,7 @@ export class AdminApiHelper {
 ## 5. Ejemplo: Logger Centralizado
 
 ### 5.1 shared/utils/logger.ts
+
 ```typescript
 // Logger único - salida consistente en E2E, k6, Postman, etc.
 
@@ -568,7 +578,8 @@ export class Logger {
 export const logger = new Logger();
 ```
 
-### 5.2 Uso en tests:
+### 5.2 Uso en tests
+
 ```javascript
 // k6
 import { Logger } from '../../../shared/utils/logger';
@@ -582,6 +593,7 @@ log.success('Test completed');
 ## 6. Validadores Compartidos
 
 ### 6.1 shared/utils/validators.ts
+
 ```typescript
 // Validadores reutilizables
 
@@ -627,7 +639,8 @@ export class Validators {
 
 ## 7. Estructura de Imports
 
-### 7.1 Desde E2E (Playwright):
+### 7.1 Desde E2E (Playwright)
+
 ```typescript
 // tests/e2e/cases/caso-01/01-login.spec.ts
 
@@ -642,7 +655,8 @@ test('Login exitoso', async ({ page, authenticatedPage }) => {
 });
 ```
 
-### 7.2 Desde k6:
+### 7.2 Desde k6
+
 ```javascript
 // tests/performance/scripts/caso-02/local.js
 
@@ -656,13 +670,14 @@ export default function () {
     __ENV.ADMIN_PASSWORD,
     'admin'
   );
-  
+
   const sancion = generateSancionPayload();
   // ...
 }
 ```
 
-### 7.3 Desde Postman (variables):
+### 7.3 Desde Postman (variables)
+
 ```javascript
 // pre-request script en collection
 
@@ -690,12 +705,13 @@ export * from './api-contracts/sancion.contracts';
 ```
 
 Luego importar así:
+
 ```typescript
-import { 
-  AuthService, 
-  Logger, 
+import {
+  AuthService,
+  Logger,
   TEST_ACCOUNTS,
-  generateSancionPayload 
+  generateSancionPayload
 } from '../../../shared';
 ```
 
@@ -715,18 +731,21 @@ import {
 ## 10. Implementación Step-by-Step
 
 ### Semana 1: Setup
+
 1. Crear carpeta `tests/shared/`
 2. Crear auth service
 3. Crear fixtures básicas
 4. Crear logger
 
 ### Semana 2: Expansion
+
 1. Http client
 2. Validators
 3. Retry policy
 4. API contracts
 
 ### Semana 3: Integration
+
 1. Integrar en E2E
 2. Integrar en k6
 3. Integrar en Postman

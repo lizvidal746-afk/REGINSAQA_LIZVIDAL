@@ -1,0 +1,14 @@
+﻿{
+    "generatedAt":  "2026-04-06T15:18:49",
+    "output":  "cloud",
+    "cantidad":  10,
+    "sleepSeconds":  0,
+    "vus":  10,
+    "casos":  {
+                  "02":  {
+                             "ok":  false,
+                             "finishedAt":  "2026-04-06T15:18:49",
+                             "exitCode":  1
+                         }
+              }
+}

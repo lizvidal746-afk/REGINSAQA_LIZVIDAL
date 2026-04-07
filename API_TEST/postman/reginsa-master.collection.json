@@ -43,18 +43,24 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "const now = Date.now();",
-              "const rnd = Math.floor(Math.random() * 100000);",
-              "const ruc = `2${String(now).slice(-8)}${String(rnd).padStart(2, '0')}`.slice(0, 11);",
-              "const razon = `POSTMAN RS ${now}`;",
-              "const comercial = `POSTMAN NC ${now}`;",
+              "// Pool compartido Caso 01: el runner (run-newman-completo.ps1) puede inyectar",
+              "// ruc_nuevo/razon_social_nueva/nombre_comercial_nuevo desde k6-caso01-dataset.json",
+              "// o administrados-pool.json. Solo se genera aleatoriamente si estan vacios.",
+              "const poolRuc       = String(pm.environment.get('ruc_nuevo')              || '').trim();",
+              "const poolRazon     = String(pm.environment.get('razon_social_nueva')     || '').trim();",
+              "const poolComercial = String(pm.environment.get('nombre_comercial_nuevo') || '').trim();",
+              "const poolActivo    = poolRuc.length === 11 && poolRazon.length > 0;",
+              "const ruc       = poolActivo ? poolRuc       : `2${String(Date.now()).slice(-8)}${String(Math.floor(Math.random()*100)).padStart(2,'0')}`.slice(0,11);",
+              "const razon     = poolActivo ? poolRazon     : `POSTMAN RS ${Date.now()}`;",
+              "const comercial = poolActivo ? (poolComercial || poolRazon) : `POSTMAN NC ${Date.now()}`;",
               "pm.collectionVariables.set('ruc_nuevo', ruc);",
               "pm.collectionVariables.set('razon_social_nueva', razon);",
               "pm.collectionVariables.set('nombre_comercial_nuevo', comercial);",
               "pm.environment.set('ruc_nuevo', ruc);",
               "pm.environment.set('razon_social_nueva', razon);",
               "pm.environment.set('nombre_comercial_nuevo', comercial);",
-              "console.log(`[C01][TRAZA] ruc_nuevo=${ruc} | razon_social_nueva=${razon} | nombre_comercial_nuevo=${comercial}`);"
+              "const origen = poolActivo ? '[POOL]' : '[RANDOM]';",
+              "console.log(`[C01][TRAZA]${origen} ruc_nuevo=${ruc} | razon_social_nueva=${razon}`);"
             ]
           }
         }
@@ -345,6 +351,7 @@
               "const now = Date.now();",
               "const correlativo = now % 100000;",
               "const fecha = new Date();",
+              "fecha.setDate(fecha.getDate() - 5); // Frontend valida maxDate = hoy-2 (FvB VAL-02); usar fecha pasada para happy path",
               "const fechaYmd = fecha.toISOString().split('T')[0];",
               "pm.collectionVariables.set('correlativo', String(correlativo));",
               "pm.collectionVariables.set('numero_expediente', `EXP N ${correlativo}-2026`);",
@@ -1530,6 +1537,31 @@
     {
       "name": "06 - Administrado Búsqueda y Eliminación",
       "description": "Casos de búsqueda de administrados por RUC y razón social, limpiar filtros y eliminación de entidad en módulo Administrado.",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Derivar filtros de búsqueda desde el pool Caso 01 si están vacíos.",
+              "// ruc_nuevo y razon_social_nueva vienen de la ejecución de Case 01 o del runner.",
+              "const rucNuevo   = pm.collectionVariables.get('ruc_nuevo')          || pm.environment.get('ruc_nuevo')          || '';",
+              "const razonNueva = pm.collectionVariables.get('razon_social_nueva') || pm.environment.get('razon_social_nueva') || '';",
+              "const rucActual  = String(pm.environment.get('ruc_busqueda')   || '').trim();",
+              "const razonActual = String(pm.environment.get('razon_busqueda') || '').trim();",
+              "if (!rucActual && rucNuevo.length === 11) {",
+              "  pm.environment.set('ruc_busqueda', rucNuevo);",
+              "  console.log('[C06][TRAZA] ruc_busqueda derivado de ruc_nuevo:', rucNuevo);",
+              "}",
+              "if (!razonActual && razonNueva.length > 0) {",
+              "  const partial = razonNueva.slice(0, 8);",
+              "  pm.environment.set('razon_busqueda', partial);",
+              "  console.log('[C06][TRAZA] razon_busqueda derivado de razon_social_nueva (parcial):', partial);",
+              "}"
+            ]
+          }
+        }
+      ],
       "item": [
         {
           "name": "06.1) Entidad/Listar - Búsqueda por RUC",
@@ -1599,7 +1631,9 @@
                   "pm.test('[C06] Respuesta tiene estructura válida', () => pm.expect(body).to.be.an('object'));",
                   "const rows = Array.isArray(body?.oData) ? body.oData : [];",
                   "if (rows.length > 0) {",
-                  "  pm.collectionVariables.set('id_entidad_encontrada', rows[0].id_entidad || rows[0].idEntidad || '');",
+                  "  const idEnt = rows[0].id_entidad || rows[0].idEntidad || rows[0].IdEntidad || rows[0].ID_ENTIDAD || rows[0].id || '';",
+                  "  pm.collectionVariables.set('id_entidad_encontrada', String(idEnt));",
+                  "  pm.environment.set('id_entidad_encontrada', String(idEnt));",
                   "}"
                 ]
               }
@@ -1642,16 +1676,16 @@
         },
         {
           "name": "06.4) Entidad/Eliminar - Eliminar administrado",
-          "description": "Elimina administrado por id_entidad. PRECONDICIÓN: entidad sin sanciones activas. Acepta 200 (ok) o 409 (tiene dependencias).",
+          "description": "Elimina administrado por id_entidad_encontrada (encontrado en 06.2). PRECONDICIÓN: entidad sin sanciones activas. Acepta 200 (ok) o 409 (tiene dependencias).",
           "request": {
             "method": "DELETE",
             "header": [
               { "key": "Authorization", "value": "{{auth_header}}" }
             ],
             "url": {
-              "raw": "{{base_api}}/Entidad/Eliminar/{{id_entidad}}",
+              "raw": "{{base_api}}/Entidad/Eliminar/{{id_entidad_encontrada}}",
               "host": ["{{base_api}}"],
-              "path": ["Entidad", "Eliminar", "{{id_entidad}}"]
+              "path": ["Entidad", "Eliminar", "{{id_entidad_encontrada}}"]
             }
           },
           "event": [

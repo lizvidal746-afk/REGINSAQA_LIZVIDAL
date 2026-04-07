@@ -8,7 +8,7 @@ param(
   [int]$PoolSize = 8,
   [string]$EnvFile = '',
 
-  [int]$K6Cantidad = 3,
+  [int]$K6Cantidad = 1,
   [double]$K6SleepSeconds = -1,
   [int]$K6Vus = 1,
   [string]$PerfDuration = '2m',
@@ -47,6 +47,11 @@ function Resolve-NonEmpty([string]$primary, [string]$fallback) {
 $grafanaSecretsHelper = Join-Path $PSScriptRoot 'shared/grafana-secrets.ps1'
 if (Test-Path $grafanaSecretsHelper) {
   . $grafanaSecretsHelper
+}
+
+if ([string]::IsNullOrWhiteSpace($env:K6_LOCAL_IPS)) {
+  $ipDetector = Join-Path $PSScriptRoot 'shared/detect-k6-ips.ps1'
+  if (Test-Path $ipDetector) { & $ipDetector }
 }
 
 function Get-CliOption([string]$name) {
@@ -99,6 +104,14 @@ if (-not [string]::IsNullOrWhiteSpace($cantidadRaw)) {
   }
 }
 
+$vusRaw = Resolve-NonEmpty (Get-CliOption 'vus') $env:npm_config_vus
+if (-not [string]::IsNullOrWhiteSpace($vusRaw)) {
+  $vusParsed = 0
+  if ([int]::TryParse($vusRaw, [ref]$vusParsed) -and $vusParsed -gt 0) {
+    $K6Vus = $vusParsed
+  }
+}
+
 $slotRaw = Resolve-NonEmpty (Get-CliOption 'slot') $env:npm_config_slot
 if (-not [string]::IsNullOrWhiteSpace($slotRaw)) {
   $parsedSlot = 0
@@ -130,7 +143,7 @@ $GrafanaProjectId = Resolve-NonEmpty $GrafanaProjectId (Resolve-NonEmpty (Get-Cl
 $GrafanaToken = Resolve-NonEmpty $GrafanaToken (Resolve-NonEmpty (Get-CliOption 'token') $env:npm_config_token)
 
 if (Get-Command Resolve-GrafanaCloudSecrets -ErrorAction SilentlyContinue) {
-  $resolvedGrafanaSecrets = Resolve-GrafanaCloudSecrets -GrafanaProjectId $GrafanaProjectId -GrafanaToken $GrafanaToken -PersistProvided
+  $resolvedGrafanaSecrets = Resolve-GrafanaCloudSecrets -GrafanaProjectId $GrafanaProjectId -GrafanaToken $GrafanaToken -PersistProvided -Interactive:($K6Output -eq 'cloud')
   $GrafanaProjectId = [string]$resolvedGrafanaSecrets.ProjectId
   $GrafanaToken = [string]$resolvedGrafanaSecrets.Token
 }
@@ -138,10 +151,7 @@ if (Get-Command Resolve-GrafanaCloudSecrets -ErrorAction SilentlyContinue) {
 $ApiUser = Resolve-NonEmpty $ApiUser (Resolve-NonEmpty (Get-CliOption 'user') $env:npm_config_user)
 $ApiPass = Resolve-NonEmpty $ApiPass (Resolve-NonEmpty (Get-CliOption 'pass') $env:npm_config_pass)
 
-if ($K6Output -eq 'local' -and -not [string]::IsNullOrWhiteSpace($GrafanaProjectId) -and -not [string]::IsNullOrWhiteSpace($GrafanaToken)) {
-  $K6Output = 'cloud'
-  Write-Output 'Detectado --project/--token: activando K6Output=cloud automaticamente.'
-}
+# Respetar K6Output tal como fue indicado: local=local, cloud=cloud.
 
 $baseApiFinal = Resolve-NonEmpty $BaseApi $env:REGINSA_API_BASE
 if ([string]::IsNullOrWhiteSpace($baseApiFinal)) {
@@ -202,6 +212,9 @@ $env:K6_LOGIN_CHECK_ENDPOINT = Resolve-NonEmpty $env:K6_LOGIN_CHECK_ENDPOINT '/E
 $env:K6_LOGIN_CHECK_METHOD = Resolve-NonEmpty $env:K6_LOGIN_CHECK_METHOD 'GET'
 $env:K6_EXPECT_RATE_LIMIT = Resolve-NonEmpty $env:K6_EXPECT_RATE_LIMIT '0'
 $env:K6_ENFORCE_OK_RATE = Resolve-NonEmpty $env:K6_ENFORCE_OK_RATE '1'
+# Limpiar env vars de corrida anterior para que el generador incremente correctamente
+Remove-Item Env:K6_PREFIX_SEQUENCE -ErrorAction SilentlyContinue
+Remove-Item Env:K6_RUN_ID -ErrorAction SilentlyContinue
 $k6PrefixInfo = $null
 try {
   $k6PrefixRaw = & node scripts/generar-k6-prefijo-global.js
@@ -283,4 +296,4 @@ if ($LASTEXITCODE -ne 0) {
   throw "Fallo: Caso 00 login k6 (exit=$LASTEXITCODE)"
 }
 
-Write-Output '`nProceso completado.'
+Write-Output "`nProceso completado."

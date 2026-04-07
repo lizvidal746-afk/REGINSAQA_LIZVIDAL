@@ -8,9 +8,9 @@ on:
         required: false
         default: "02"
       k6_output:
-        description: "Output: local|cloud"
+        description: "Output: local|cloud (cloud requiere K6_CLOUD_TOKEN secret)"
         required: false
-        default: "cloud"
+        default: "local"
       cantidad:
         description: "Cantidad total de iteraciones/registros"
         required: false
@@ -70,11 +70,34 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Verify environment
+        shell: cmd
+        run: |
+          echo === Node.js ===
+          node --version
+          echo === npm ===
+          npm --version
+          echo === Working directory ===
+          cd
+          echo === Workspace contents ===
+          dir /b
+
       - name: Install dependencies
-        run: npm ci
+        shell: cmd
+        run: |
+          if not exist node_modules (
+            echo [CI] node_modules no encontrado, ejecutando npm ci...
+            npm ci
+          ) else (
+            echo [CI] node_modules ya existe, skip npm ci
+          )
 
       - name: Setup k6
         uses: grafana/setup-k6-action@v1
+
+      - name: Verify k6
+        shell: cmd
+        run: k6 version || echo [WARN] k6 no encontrado, instalar manualmente en el runner
 
       - name: Prepare reports folder
         run: if not exist reportes mkdir reportes
@@ -82,7 +105,7 @@ jobs:
       - name: Run k6 case
         env:
           CASE_TARGET: ${{ github.event.inputs.case_target || '02' }}
-          RUN_OUTPUT: ${{ github.event.inputs.k6_output || 'cloud' }}
+          RUN_OUTPUT_REQUESTED: ${{ github.event.inputs.k6_output || 'local' }}
           RUN_CANTIDAD: ${{ github.event.inputs.cantidad || '10' }}
           RUN_VUS: ${{ github.event.inputs.vus || '1' }}
           RUN_DURATION: ${{ github.event.inputs.perf_duration || '2m' }}
@@ -91,52 +114,50 @@ jobs:
           RUN_ENFORCE_OK: ${{ github.event.inputs.k6_enforce_ok_rate || '0' }}
           RUN_PROJECT_INPUT: ${{ github.event.inputs.grafana_project_id || '' }}
           RUN_TOKEN_INPUT: ${{ github.event.inputs.grafana_token || '' }}
+          K6_CLOUD_TOKEN: ${{ secrets.K6_CLOUD_TOKEN }}
+          K6_CLOUD_PROJECT_ID: ${{ secrets.K6_CLOUD_PROJECT_ID }}
+        shell: pwsh
         run: |
-          @echo off
-          setlocal
+          $output = $env:RUN_OUTPUT_REQUESTED
+          if ($output -eq 'cloud' -and (-not $env:K6_CLOUD_TOKEN -or -not $env:K6_CLOUD_PROJECT_ID)) {
+            if (-not $env:RUN_TOKEN_INPUT -or -not $env:RUN_PROJECT_INPUT) {
+              Write-Host "[WARN] Cloud token no configurado, fallback a output=local"
+              $output = 'local'
+            }
+          }
+          if (-not (Test-Path reportes)) { New-Item -ItemType Directory -Path reportes | Out-Null }
 
-          set PROJECT_ARG=
-          set TOKEN_ARG=
+          $projectArg = @()
+          $tokenArg = @()
+          if ($env:RUN_PROJECT_INPUT) { $projectArg = @('--project', $env:RUN_PROJECT_INPUT) }
+          elseif ($env:K6_CLOUD_PROJECT_ID) { $projectArg = @('--project', $env:K6_CLOUD_PROJECT_ID) }
+          if ($env:RUN_TOKEN_INPUT) { $tokenArg = @('--token', $env:RUN_TOKEN_INPUT) }
+          elseif ($env:K6_CLOUD_TOKEN) { $tokenArg = @('--token', $env:K6_CLOUD_TOKEN) }
 
-          if not "%RUN_PROJECT_INPUT%"=="" (
-            set PROJECT_ARG= --project=%RUN_PROJECT_INPUT%
-          ) else if not "%K6_CLOUD_PROJECT_ID%"=="" (
-            set PROJECT_ARG= --project=%K6_CLOUD_PROJECT_ID%
-          )
+          $common = @('-K6Output', $output, '-K6Cantidad', $env:RUN_CANTIDAD, '-K6Vus', $env:RUN_VUS, '-PerfDuration', $env:RUN_DURATION, '-K6SleepSeconds', $env:RUN_SLEEP)
 
-          if not "%RUN_TOKEN_INPUT%"=="" (
-            set TOKEN_ARG= --token=%RUN_TOKEN_INPUT%
-          ) else if not "%K6_CLOUD_TOKEN%"=="" (
-            set TOKEN_ARG= --token=%K6_CLOUD_TOKEN%
-          )
-
-          if /I "%CASE_TARGET%"=="00" (
-            powershell -ExecutionPolicy Bypass -File scripts/run-caso00-login.ps1 -K6Output %RUN_OUTPUT% -K6Cantidad %RUN_CANTIDAD% -K6Vus %RUN_VUS% -PerfDuration %RUN_DURATION% -K6SleepSeconds %RUN_SLEEP% %PROJECT_ARG% %TOKEN_ARG%
-            goto :eof
-          )
-
-          if /I "%CASE_TARGET%"=="01" (
-            powershell -ExecutionPolicy Bypass -File scripts/run-caso01-local.ps1 -Mode k6 -K6Output %RUN_OUTPUT% -K6Cantidad %RUN_CANTIDAD% -K6Vus %RUN_VUS% -PerfDuration %RUN_DURATION% -K6SleepSeconds %RUN_SLEEP% %PROJECT_ARG% %TOKEN_ARG%
-            goto :eof
-          )
-
-          if /I "%CASE_TARGET%"=="02" (
-            powershell -ExecutionPolicy Bypass -File scripts/run-caso02-local.ps1 -Mode k6 -K6Output %RUN_OUTPUT% -K6Cantidad %RUN_CANTIDAD% -K6Vus %RUN_VUS% -PerfDuration %RUN_DURATION% -K6SleepSeconds %RUN_SLEEP% -K6ExpectRateLimit %RUN_EXPECT_LIMIT% -K6EnforceOkRate %RUN_ENFORCE_OK% %PROJECT_ARG% %TOKEN_ARG%
-            goto :eof
-          )
-
-          if /I "%CASE_TARGET%"=="03" (
-            powershell -ExecutionPolicy Bypass -File scripts/run-caso03-local.ps1 -Mode k6 -K6Output %RUN_OUTPUT% -K6Cantidad %RUN_CANTIDAD% -K6Vus %RUN_VUS% -PerfDuration %RUN_DURATION% -K6SleepSeconds %RUN_SLEEP% -K6ExpectRateLimit %RUN_EXPECT_LIMIT% -K6EnforceOkRate %RUN_ENFORCE_OK% %PROJECT_ARG% %TOKEN_ARG%
-            goto :eof
-          )
-
-          if /I "%CASE_TARGET%"=="04" (
-            powershell -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 -K6Output %RUN_OUTPUT% -K6Cantidad %RUN_CANTIDAD% -K6Vus %RUN_VUS% -PerfDuration %RUN_DURATION% -K6SleepSeconds %RUN_SLEEP% -K6ExpectRateLimit %RUN_EXPECT_LIMIT% -K6EnforceOkRate %RUN_ENFORCE_OK% %PROJECT_ARG% %TOKEN_ARG%
-            goto :eof
-          )
-
-          echo ERROR: case_target invalido. Use 00, 01, 02, 03 o 04.
-          exit /b 1
+          switch ($env:CASE_TARGET) {
+            '00' {
+              & powershell.exe -ExecutionPolicy Bypass -File scripts/run-caso00-login.ps1 @common @projectArg @tokenArg
+            }
+            '01' {
+              & powershell.exe -ExecutionPolicy Bypass -File scripts/run-caso01-local.ps1 -Mode k6 @common @projectArg @tokenArg
+            }
+            '02' {
+              & powershell.exe -ExecutionPolicy Bypass -File scripts/run-caso02-local.ps1 -Mode k6 @common -K6ExpectRateLimit $env:RUN_EXPECT_LIMIT -K6EnforceOkRate $env:RUN_ENFORCE_OK @projectArg @tokenArg
+            }
+            '03' {
+              & powershell.exe -ExecutionPolicy Bypass -File scripts/run-caso03-local.ps1 -Mode k6 @common -K6ExpectRateLimit $env:RUN_EXPECT_LIMIT -K6EnforceOkRate $env:RUN_ENFORCE_OK @projectArg @tokenArg
+            }
+            '04' {
+              & powershell.exe -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 @common -K6ExpectRateLimit $env:RUN_EXPECT_LIMIT -K6EnforceOkRate $env:RUN_ENFORCE_OK @projectArg @tokenArg
+            }
+            default {
+              Write-Error "ERROR: case_target invalido. Use 00, 01, 02, 03 o 04."
+              exit 1
+            }
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Upload k6 artifacts
         if: always() && github.event.inputs.upload_artifacts == 'true'

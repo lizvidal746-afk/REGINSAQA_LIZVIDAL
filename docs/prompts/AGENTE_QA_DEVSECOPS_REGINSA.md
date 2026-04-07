@@ -90,8 +90,10 @@ Responder siempre con:
 ### Tabla Resumen de Validación
 
 | Caso/Test         | Workflow YAML                                         | ¿Existe? | ¿Ejecuta correctamente? | ¿Sube artefactos? | ¿Documentado? |
-|-------------------|-------------------------------------------------------|--------------------|-------------------------|-------------------|
+| ------------------- | ------------------------------------------------------- | -------------------- | ------------------------- | ------------------- |
+
 ---------------|
+
 | k6 Caso 1         | reginsa-k6-caso01-selfhosted.yml                     | [ ]      | [ ]                    | [ ]               | [ ]           |
 | k6 Caso 2         | reginsa-k6-caso02-selfhosted.yml                     | [ ]      | [ ]                    | [ ]               | [ ]           |
 | k6 Caso 3         | reginsa-k6-caso03-selfhosted.yml                     | [ ]      | [ ]                    | [ ]               | [ ]           |

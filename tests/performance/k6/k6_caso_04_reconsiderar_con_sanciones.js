@@ -22,6 +22,9 @@ const BASE_API = __ENV.BASE_API || __ENV.BASE_URL || 'https://reginsaapiqa.suned
 /** @constant {boolean} DEBUG_ERRORS - Habilita logs detallados de errores */
 const DEBUG_ERRORS = (__ENV.K6_DEBUG_ERRORS || '1') === '1';
 
+const HTTP_DETAIL_MODE = (__ENV.K6_HTTP_DETAIL_MODE || 'all').toLowerCase();
+const HTTP_PUBLIC_NAME = (__ENV.K6_HTTP_PUBLIC_NAME || 'Caso04').trim() || 'Caso04';
+
 /** @constant {number} DEBUG_LIMIT - Límite de logs de errores por iteración */
 const DEBUG_LIMIT = Math.max(1, Number.parseInt(__ENV.K6_DEBUG_ERRORS_MAX || '8', 10) || 8);
 
@@ -284,7 +287,8 @@ function obtainTokenByLogin() {
     for (const payload of payloads) {
       const response = http.post(url, JSON.stringify(payload), {
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        timeout: AUTH_TIMEOUT_MS
+        timeout: AUTH_TIMEOUT_MS,
+        tags: { name: HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : 'Auth/Login' }
       });
       
       if (response.status >= 200 && response.status < 300) {
@@ -390,6 +394,7 @@ console.log(`[caso04] Estrategia: tomar primeros ${MAX_REGISTROS} registros en o
 
 export const options = {
   ...(CLOUD_PROJECT_ID > 0 ? { cloud: { projectID: CLOUD_PROJECT_ID, name: `caso04-${K6_MODE}` } } : {}),
+  systemTags: ['status', 'method', 'name', 'scenario', 'group', 'check', 'error'],
   tags: { caso: '04', modo: K6_MODE },
   scenarios: {
     caso04_reconsiderar_sanciones: {
@@ -515,7 +520,8 @@ function listarCabecerasPaginadas(pageNumber, pageSize, token) {
     };
 
     const response = http.post(`${BASE_API}${ENDPOINT_LISTAR_CABECERA}`, JSON.stringify(payload), {
-      headers: getJsonHeaders(token)
+      headers: getJsonHeaders(token),
+      tags: { name: HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : 'CabeceraInfraccionSancion/ListarPaginado' }
     });
 
     const success = check(response, {
@@ -570,7 +576,8 @@ function listarDetalles(idCabecera, token) {
     sFilterValue: ''
   };
   const response = http.post(`${BASE_API}${ENDPOINT_LISTAR_DETALLE}`, JSON.stringify(payload), {
-    headers: getJsonHeaders(token)
+    headers: getJsonHeaders(token),
+    tags: { name: HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : 'DetalleInfraccionSancion/ListarPaginado' }
   });
   reportStatus(response, `ListarDetalles[c=${idCabecera}]`);
   const success = isBusinessSuccess(response);
@@ -655,7 +662,8 @@ function toggleDetalle(detalle, cabeceraId, token) {
     console.log(`[caso04][toggle] Reconsidera ya marcado, aplicando ciclo: desmarcar -> marcar`);
     const payloadDesmarcar = buildDetallePayload(0, originalBitPago);
     const respDesmarcar = http.put(`${BASE_API}${ENDPOINT_ACTUALIZAR_DETALLE}/${detalleId}`, JSON.stringify(payloadDesmarcar), {
-      headers: getJsonHeaders(token)
+      headers: getJsonHeaders(token),
+      tags: { name: HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : 'DetalleInfraccionSancion/DesmarcarReconsidera' }
     });
     reportStatus(respDesmarcar, `DesmarcarReconsidera[${detalleId}]`);
     sleep(0.5);
@@ -663,7 +671,8 @@ function toggleDetalle(detalle, cabeceraId, token) {
 
   const payloadReconsidera = buildDetallePayload(1, originalBitPago);
   const respMarcar = http.put(`${BASE_API}${ENDPOINT_ACTUALIZAR_DETALLE}/${detalleId}`, JSON.stringify(payloadReconsidera), {
-    headers: getJsonHeaders(token)
+    headers: getJsonHeaders(token),
+    tags: { name: HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : 'DetalleInfraccionSancion/MarcarReconsidera' }
   });
   reportStatus(respMarcar, `MarcarReconsidera[${detalleId}]`);
 
@@ -672,7 +681,8 @@ function toggleDetalle(detalle, cabeceraId, token) {
     console.log(`[caso04][toggle] Pago no estaba marcado, marcando...`);
     const payloadPago = buildDetallePayload(1, 1);
     const respPago = http.put(`${BASE_API}${ENDPOINT_ACTUALIZAR_DETALLE}/${detalleId}`, JSON.stringify(payloadPago), {
-      headers: getJsonHeaders(token)
+      headers: getJsonHeaders(token),
+      tags: { name: HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : 'DetalleInfraccionSancion/MarcarPago' }
     });
     reportStatus(respPago, `MarcarPago[${detalleId}]`);
     nuevoBitPago = 1;
@@ -740,7 +750,8 @@ function actualizarCabecera(cabecera, ordinalConsecutivo, token) {
 
   // ✅ PUT CON ID EN URL (exactamente como en el HAR)
   const response = http.put(`${BASE_API}${ENDPOINT_ACTUALIZAR_CABECERA}/${idCabecera}`, cabMultipart, {
-    headers: { 'Authorization': normalizeBearer(token), 'Accept': 'application/json, text/plain, */*' }
+    headers: { 'Authorization': normalizeBearer(token), 'Accept': 'application/json, text/plain, */*' },
+    tags: { name: HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : 'CabeceraInfraccionSancion/Actualizar' }
   });
   
   // ✅ Manejar respuesta vacía o no JSON

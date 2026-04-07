@@ -1,0 +1,81 @@
+name: Reusable Postman Caso (Self-hosted)
+
+on:
+  workflow_call:
+    inputs:
+      caso:
+        description: "Caso en formato 01..04"
+        required: true
+        type: string
+      upload_artifacts:
+        description: "Upload artifacts (true/false)"
+        required: false
+        default: "true"
+        type: string
+    secrets:
+      REGINSA_API_BASE:
+        required: false
+      REGINSA_USER:
+        required: false
+      REGINSA_PASS:
+        required: false
+
+jobs:
+  postman:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: cmd
+    env:
+      REGINSA_API_BASE: ${{ secrets.REGINSA_API_BASE }}
+      REGINSA_USER: ${{ secrets.REGINSA_USER }}
+      REGINSA_PASS: ${{ secrets.REGINSA_PASS }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify environment
+        shell: cmd
+        run: |
+          echo === Node.js ===
+          node --version
+          echo === npm ===
+          npm --version
+          echo === Working directory ===
+          cd
+          echo === Workspace contents ===
+          dir /b
+
+      - name: Install dependencies
+        shell: cmd
+        run: |
+          if not exist node_modules (
+            echo [CI] node_modules no encontrado, ejecutando npm ci...
+            npm ci
+          ) else (
+            echo [CI] node_modules ya existe, skip npm ci
+          )
+
+      - name: Run Newman Caso
+        run: |
+          npm run api:test:caso${{ inputs.caso }}
+
+      - name: Upload artifacts
+        if: always() && inputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: postman-caso${{ inputs.caso }}-selfhosted
+          path: |
+            reportes/newman/caso${{ inputs.caso }}-api-test.xml
+            reportes/newman/caso${{ inputs.caso }}-api-test.json
+          if-no-files-found: warn

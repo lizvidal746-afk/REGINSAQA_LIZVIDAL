@@ -15,6 +15,7 @@ pipeline {
     string(name: 'K6_VUS', defaultValue: '1', description: 'VUs k6')
     choice(name: 'K6_EXPECT_RATE_LIMIT', choices: ['1', '0'], description: 'Esperar rate limit')
     choice(name: 'K6_ENFORCE_OK_RATE', choices: ['0', '1'], description: 'Exigir ok_rate')
+    choice(name: 'SECURITY_TOOL', choices: ['all', 'zap', 'nuclei', 'gitleaks', 'semgrep', 'trivy', 'depcheck', 'npm-audit'], description: 'Herramienta de seguridad a ejecutar')
   }
 
   environment {
@@ -56,21 +57,100 @@ pipeline {
           } else if (params.TEST_TYPE == 'performance') {
             sh 'npm run test:performance'
           } else if (params.TEST_TYPE == 'k6') {
+            // Fallback: si piden cloud pero no hay token, usar local
+            def k6Out = params.K6_OUTPUT
+            if (k6Out == 'cloud' && (!env.K6_CLOUD_TOKEN || !env.K6_CLOUD_PROJECT_ID)) {
+              echo "[WARN] Cloud token no configurado, fallback a output=local"
+              k6Out = 'local'
+            }
+            def projId = env.K6_CLOUD_PROJECT_ID ?: ''
+            def tok = env.K6_CLOUD_TOKEN ?: ''
             if (params.CASE_TARGET == '00') {
-              sh "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso00-login.ps1 -K6Output ${params.K6_OUTPUT} -K6Cantidad ${params.REGISTROS} -K6Vus ${params.K6_VUS} -PerfDuration ${params.K6_PERF_DURATION} -K6SleepSeconds ${params.K6_SLEEP_SECONDS} -GrafanaProjectId '${env.K6_CLOUD_PROJECT_ID ?: ''}' -GrafanaToken '${env.K6_CLOUD_TOKEN ?: ''}'"
+              sh "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso00-login.ps1 -K6Output ${k6Out} -K6Cantidad ${params.REGISTROS} -K6Vus ${params.K6_VUS} -PerfDuration ${params.K6_PERF_DURATION} -K6SleepSeconds ${params.K6_SLEEP_SECONDS} -GrafanaProjectId '${projId}' -GrafanaToken '${tok}'"
             } else if (params.CASE_TARGET == '01') {
-              sh "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso01-local.ps1 -Mode k6 -K6Output ${params.K6_OUTPUT} -K6Cantidad ${params.REGISTROS} -K6Vus ${params.K6_VUS} -PerfDuration ${params.K6_PERF_DURATION} -K6SleepSeconds ${params.K6_SLEEP_SECONDS} -GrafanaProjectId '${env.K6_CLOUD_PROJECT_ID ?: ''}' -GrafanaToken '${env.K6_CLOUD_TOKEN ?: ''}'"
+              sh "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso01-local.ps1 -Mode k6 -K6Output ${k6Out} -K6Cantidad ${params.REGISTROS} -K6Vus ${params.K6_VUS} -PerfDuration ${params.K6_PERF_DURATION} -K6SleepSeconds ${params.K6_SLEEP_SECONDS} -GrafanaProjectId '${projId}' -GrafanaToken '${tok}'"
             } else if (params.CASE_TARGET == '02') {
-              sh "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso02-local.ps1 -Mode k6 -K6Output ${params.K6_OUTPUT} -K6Cantidad ${params.REGISTROS} -K6Vus ${params.K6_VUS} -PerfDuration ${params.K6_PERF_DURATION} -K6SleepSeconds ${params.K6_SLEEP_SECONDS} -K6ExpectRateLimit ${params.K6_EXPECT_RATE_LIMIT} -K6EnforceOkRate ${params.K6_ENFORCE_OK_RATE} -GrafanaProjectId '${env.K6_CLOUD_PROJECT_ID ?: ''}' -GrafanaToken '${env.K6_CLOUD_TOKEN ?: ''}'"
+              sh "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso02-local.ps1 -Mode k6 -K6Output ${k6Out} -K6Cantidad ${params.REGISTROS} -K6Vus ${params.K6_VUS} -PerfDuration ${params.K6_PERF_DURATION} -K6SleepSeconds ${params.K6_SLEEP_SECONDS} -K6ExpectRateLimit ${params.K6_EXPECT_RATE_LIMIT} -K6EnforceOkRate ${params.K6_ENFORCE_OK_RATE} -GrafanaProjectId '${projId}' -GrafanaToken '${tok}'"
             } else if (params.CASE_TARGET == '03') {
-              sh "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso03-local.ps1 -Mode k6 -K6Output ${params.K6_OUTPUT} -K6Cantidad ${params.REGISTROS} -K6Vus ${params.K6_VUS} -PerfDuration ${params.K6_PERF_DURATION} -K6SleepSeconds ${params.K6_SLEEP_SECONDS} -K6ExpectRateLimit ${params.K6_EXPECT_RATE_LIMIT} -K6EnforceOkRate ${params.K6_ENFORCE_OK_RATE} -GrafanaProjectId '${env.K6_CLOUD_PROJECT_ID ?: ''}' -GrafanaToken '${env.K6_CLOUD_TOKEN ?: ''}'"
+              sh "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso03-local.ps1 -Mode k6 -K6Output ${k6Out} -K6Cantidad ${params.REGISTROS} -K6Vus ${params.K6_VUS} -PerfDuration ${params.K6_PERF_DURATION} -K6SleepSeconds ${params.K6_SLEEP_SECONDS} -K6ExpectRateLimit ${params.K6_EXPECT_RATE_LIMIT} -K6EnforceOkRate ${params.K6_ENFORCE_OK_RATE} -GrafanaProjectId '${projId}' -GrafanaToken '${tok}'"
             } else if (params.CASE_TARGET == '04') {
-              sh "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 -K6Output ${params.K6_OUTPUT} -K6Cantidad ${params.REGISTROS} -K6Vus ${params.K6_VUS} -PerfDuration ${params.K6_PERF_DURATION} -K6SleepSeconds ${params.K6_SLEEP_SECONDS} -K6ExpectRateLimit ${params.K6_EXPECT_RATE_LIMIT} -K6EnforceOkRate ${params.K6_ENFORCE_OK_RATE} -GrafanaProjectId '${env.K6_CLOUD_PROJECT_ID ?: ''}' -GrafanaToken '${env.K6_CLOUD_TOKEN ?: ''}'"
+              sh "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 -K6Output ${k6Out} -K6Cantidad ${params.REGISTROS} -K6Vus ${params.K6_VUS} -PerfDuration ${params.K6_PERF_DURATION} -K6SleepSeconds ${params.K6_SLEEP_SECONDS} -K6ExpectRateLimit ${params.K6_EXPECT_RATE_LIMIT} -K6EnforceOkRate ${params.K6_ENFORCE_OK_RATE} -GrafanaProjectId '${projId}' -GrafanaToken '${tok}'"
             } else {
               error("CASE_TARGET inválido para TEST_TYPE=k6: ${params.CASE_TARGET}")
             }
           } else if (params.TEST_TYPE == 'security') {
-            sh 'pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/generar-reportes-owasp-fechados.ps1 -Target "${REGINSA_URL}" -BaseDir "reportes/security"'
+            def tool = params.SECURITY_TOOL
+
+            // --- Gitleaks ---
+            if (tool == 'all' || tool == 'gitleaks') {
+              sh '''
+                echo "=== [SEC] Gitleaks — Secret Detection ==="
+                mkdir -p reportes/security/gitleaks
+                curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz -o /tmp/gitleaks.tar.gz
+                tar xzf /tmp/gitleaks.tar.gz -C /usr/local/bin/ gitleaks
+                gitleaks detect --source . --report-format json --report-path reportes/security/gitleaks/gitleaks-report.json --config .gitleaks.toml || true
+              '''
+            }
+
+            // --- Semgrep ---
+            if (tool == 'all' || tool == 'semgrep') {
+              sh '''
+                echo "=== [SEC] Semgrep — SAST ==="
+                mkdir -p reportes/security/semgrep
+                pip3 install --quiet semgrep || pip install --quiet semgrep
+                semgrep scan --config auto --config p/owasp-top-ten --config p/typescript --config p/javascript --config p/secrets --json -o reportes/security/semgrep/semgrep-report.json . || true
+              '''
+            }
+
+            // --- npm audit ---
+            if (tool == 'all' || tool == 'npm-audit' || tool == 'depcheck') {
+              sh '''
+                echo "=== [SEC] npm audit — SCA ==="
+                mkdir -p reportes/security/sca
+                npm audit --audit-level=high --json > reportes/security/sca/npm-audit.json || true
+              '''
+            }
+
+            // --- Dependency-Check ---
+            if (tool == 'all' || tool == 'depcheck') {
+              sh '''
+                echo "=== [SEC] OWASP Dependency-Check — SCA ==="
+                mkdir -p reportes/security/dependency-check
+                docker run --rm -v "$(pwd):/src" -v "$(pwd)/reportes/security/dependency-check:/report" \
+                  owasp/dependency-check:latest --project "REGINSA-QA" --scan /src \
+                  --format HTML --format JSON --out /report --failOnCVSS 9 || true
+              '''
+            }
+
+            // --- Trivy ---
+            if (tool == 'all' || tool == 'trivy') {
+              sh '''
+                echo "=== [SEC] Trivy — Container/Filesystem ==="
+                mkdir -p reportes/security/trivy
+                curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+                trivy fs . --severity HIGH,CRITICAL --format json --output reportes/security/trivy/trivy-fs-report.json || true
+              '''
+            }
+
+            // --- OWASP ZAP ---
+            if (tool == 'all' || tool == 'zap') {
+              sh 'echo "=== [SEC] OWASP ZAP — DAST ==="'
+              sh "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/generar-reportes-owasp-fechados.ps1 -Target \"\${REGINSA_URL}\" -BaseDir \"reportes/security\""
+            }
+
+            // --- Nuclei ---
+            if (tool == 'all' || tool == 'nuclei') {
+              sh """
+                echo "=== [SEC] Nuclei — DAST ==="
+                mkdir -p reportes/security/nuclei
+                docker run --rm -v "\$(pwd)/reportes/security/nuclei:/output" \
+                  projectdiscovery/nuclei:latest \
+                  -u "\${REGINSA_URL}" \
+                  -severity critical,high,medium -exclude-tags dos \
+                  -jsonl -output /output/nuclei-report.jsonl \
+                  -sarif-export /output/nuclei-report.sarif || true
+              """
+            }
           }
         }
       }

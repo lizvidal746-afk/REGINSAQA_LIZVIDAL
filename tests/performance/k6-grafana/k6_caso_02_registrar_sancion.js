@@ -2,6 +2,7 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import exec from 'k6/execution';
 import { Counter, Rate } from 'k6/metrics';
+import { ipPoolParams, logPoolStatus, getAssignedIP, getIpLastOctet } from './helpers/ip-pool.js';
 
 const BASE_API = __ENV.BASE_API || 'https://reginsaapiqa.sunedu.gob.pe/api';
 const BURST_MODE = (__ENV.K6_BURST_MODE || '0') === '1';
@@ -24,7 +25,7 @@ const CABECERA_MODE = (__ENV.K6_CABECERA_MODE || 'form_pascal').toLowerCase();
 const ADMIN_SELECTION_MODE = (__ENV.K6_ADMIN_SELECTION_MODE || 'round_robin').toLowerCase();
 const RIS_MODE = (__ENV.K6_RIS_MODE || 'random').toLowerCase();
 const SANCION_MODE = (__ENV.K6_SANCION_MODE || 'sequence').toLowerCase();
-const HTTP_DETAIL_MODE = (__ENV.K6_HTTP_DETAIL_MODE || 'guardar_only').toLowerCase();
+const HTTP_DETAIL_MODE = (__ENV.K6_HTTP_DETAIL_MODE || 'all').toLowerCase();
 const HTTP_PUBLIC_NAME = (__ENV.K6_HTTP_PUBLIC_NAME || 'CabeceraInfraccionSancion/Crear').trim() || 'CabeceraInfraccionSancion/Crear';
 const FORCE_SINGLE_SANCION = (__ENV.K6_FORCE_SINGLE_SANCION || '1') === '1';
 const FORCE_SINGLE_MEDIDA = (__ENV.K6_FORCE_SINGLE_MEDIDA || '1') === '1';
@@ -56,6 +57,9 @@ function resolveRunSequence() {
 
 const RUN_SEQUENCE = resolveRunSequence();
 let debugErrorCount = 0;
+
+// ── Registros por iteración (para informe) ────────────────────────────────
+const caso02Records = [];
 
 const requestedIterations = Number.parseInt(__ENV.K6_FIXED_ITERATIONS || __ENV.K6_TOTAL_REGISTROS || '1', 10);
 const iterations = Number.isFinite(requestedIterations) ? Math.max(1, requestedIterations) : 1;
@@ -104,11 +108,11 @@ const HTTP_4XX_NON_429_MAX = Math.max(0, parseIntEnv(__ENV.K6_HTTP_4XX_NON_429_M
 const ENFORCE_OK_RATE = (__ENV.K6_ENFORCE_OK_RATE || (EXPECT_RATE_LIMIT ? '0' : '1')) === '1';
 const ALLOW_HTTP_FAILED_THRESHOLD = (__ENV.K6_ENFORCE_HTTP_FAILED || (EXPECT_RATE_LIMIT ? '0' : '1')) === '1';
 
+logPoolStatus();
+
 export const options = {
   ...(CLOUD_PROJECT_ID > 0 ? { cloud: { projectID: CLOUD_PROJECT_ID, name: `caso02-${K6_MODE}` } } : {}),
-  ...(HTTP_DETAIL_MODE === 'guardar_only'
-    ? { systemTags: ['status', 'method', 'name', 'scenario', 'group', 'check', 'error'] }
-    : {}),
+  systemTags: ['status', 'method', 'name', 'scenario', 'group', 'check', 'error'],
   tags: {
     caso: '02',
     modo: K6_MODE
@@ -135,7 +139,7 @@ export const options = {
   }
 };
 
-const AUTO_LOGIN_ENABLED = (__ENV.K6_AUTO_LOGIN || '1') === '1';
+const AUTO_LOGIN_ENABLED = (__ENV.K6_AUTO_LOGIN || '0') === '1';
 const AUTH_ENDPOINT = String(__ENV.REGINSA_AUTH_ENDPOINT || __ENV.K6_AUTH_LOGIN_ENDPOINT || '/Auth/Login').trim();
 const AUTH_USER_FIELD = String(__ENV.REGINSA_AUTH_USER_FIELD || 'usuario').trim() || 'usuario';
 const AUTH_PASS_FIELD = String(__ENV.REGINSA_AUTH_PASS_FIELD || 'contrasena').trim() || 'contrasena';
@@ -281,7 +285,8 @@ function obtainTokenByLogin() {
         timeout: `${AUTH_TIMEOUT_MS}ms`,
         tags: {
           name: HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : 'Auth/Login'
-        }
+        },
+        ...ipPoolParams()
       });
 
       if (response.status < 200 || response.status >= 300) {
@@ -327,10 +332,13 @@ function formHeaders() {
 }
 
 function withRequestTags(requestOptions, endpointName) {
-  const visibleName = HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : endpointName;
+  const _ipSuffix = getIpLastOctet();
+  const _ipPfx = _ipSuffix ? `IP ${_ipSuffix} ` : '';
+  const visibleName = `${_ipPfx}${HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : endpointName}`;
   const base = requestOptions || {};
   return {
     ...base,
+    ...ipPoolParams(),
     tags: {
       ...(base.tags || {}),
       name: visibleName
@@ -628,6 +636,17 @@ function extractCabeceraIdFromBody(response) {
   return null;
 }
 
+function listarParaVisibilidad(data) {
+  const res = http.post(
+    `${BASE_API}/CabeceraInfraccionSancion/Listar`,
+    JSON.stringify({ nPageNumber: 1, nPageSize: 1 }),
+    withRequestTags(headers(), 'CabeceraInfraccionSancion/Listar')
+  );
+  // Solo contabilizar rate limiting; no afectar thresholds 4xx/5xx
+  RATE_LIMITED_REQUESTS.add(res.status === 429);
+  if (res.status === 429) HTTP_429_TOTAL.add(1);
+}
+
 function buscarCabeceraRecienCreada(data) {
   const payloads = [
     {
@@ -752,6 +771,18 @@ function crearCabecera(data) {
   }
 
   const idDirecto = extractCabeceraIdFromJson(safeJson(res)) || extractCabeceraIdFromBody(res);
+
+  if (HTTP_DETAIL_MODE === 'all') {
+    if (idDirecto) {
+      // Visibilidad Grafana: una sola llamada Listar sin afectar thresholds
+      listarParaVisibilidad(data);
+      return idDirecto;
+    }
+    // Sin idDirecto, intentar recuperar ID via Listar real
+    const idListado = buscarCabeceraRecienCreada(data);
+    return idListado || null;
+  }
+
   if (idDirecto) return idDirecto;
 
   const idListado = buscarCabeceraRecienCreada(data);
@@ -906,6 +937,16 @@ export default function () {
   REGISTRO_EXPECTED_RATE.add(Boolean(registroOk || iterationRateLimited));
   if (registroOk) {
     REGISTRO_OK_TOTAL.add(1);
+    caso02Records.push({
+      ip: getAssignedIP() || 'local',
+      idEntidad: data.IdEntidad,
+      expediente: data.NumeroExpediente,
+      resolucion: data.NumeroResolucion,
+      fechaResolucion: data.FechaResolucion,
+      cabeceraId: cabeceraId,
+      status: 'ok',
+      fechaRegistro: new Date().toISOString()
+    });
   }
 
   check({ registroOk, limited: iterationRateLimited }, {
@@ -927,4 +968,15 @@ export default function () {
   }
 
   sleep(K6_SLEEP_SECONDS);
+}
+
+export function handleSummary(_data) {
+  const output = {
+    run_id: RUN_ID,
+    modo: __ENV.K6_OUTPUT || 'local',
+    fecha: new Date().toISOString().split('T')[0],
+    ip_pool: (__ENV.K6_LOCAL_IPS || '').trim(),
+    registros: caso02Records
+  };
+  return { 'reportes/k6-caso02-registros.json': JSON.stringify(output, null, 2) };
 }

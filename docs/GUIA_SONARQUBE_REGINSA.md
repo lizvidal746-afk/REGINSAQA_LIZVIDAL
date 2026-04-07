@@ -1,5 +1,18 @@
 # GUIA SONARQUBE REGINSA
 
+## Estado del documento
+
+Este documento queda en estado **deprecado** para evitar duplicidad.
+
+Guia canonica vigente:
+
+- `docs/manuales/GUIA_SONARQUBE.md`
+
+Uso recomendado:
+
+1. Seguir la guia canonica para ejecucion operativa.
+2. Mantener este archivo solo como referencia historica.
+
 Documento exclusivo para analisis estatico de codigo (SAST) con SonarQube.
 
 ## 1. Objetivo

@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-04-06T20:18:49.495Z",
+  "run": {
+    "output": "",
+    "cantidad": null,
+    "vus": null
+  },
+  "totals": {
+    "totalCases": 5,
+    "executed": 0,
+    "passed": 0,
+    "failed": 0,
+    "withSummary": 1,
+    "totalHttpReqs": 0
+  },
+  "cases": [
+    {
+      "caseId": "00",
+      "executed": false,
+      "ok": null,
+      "summaryFile": "",
+      "httpReqs": null,
+      "failRate": null,
+      "p95": null,
+      "avg": null,
+      "customRateKey": "",
+      "customRate": null
+    },
+    {
+      "caseId": "01",
+      "executed": false,
+      "ok": null,
+      "summaryFile": "",
+      "httpReqs": null,
+      "failRate": null,
+      "p95": null,
+      "avg": null,
+      "customRateKey": "",
+      "customRate": null
+    },
+    {
+      "caseId": "02",
+      "executed": false,
+      "ok": null,
+      "summaryFile": "",
+      "httpReqs": null,
+      "failRate": null,
+      "p95": null,
+      "avg": null,
+      "customRateKey": "",
+      "customRate": null
+    },
+    {
+      "caseId": "03",
+      "executed": false,
+      "ok": null,
+      "summaryFile": "",
+      "httpReqs": null,
+      "failRate": null,
+      "p95": null,
+      "avg": null,
+      "customRateKey": "",
+      "customRate": null
+    },
+    {
+      "caseId": "04",
+      "executed": false,
+      "ok": null,
+      "summaryFile": "reportes/k6-caso04-summary.json",
+      "httpReqs": null,
+      "failRate": null,
+      "p95": null,
+      "avg": null,
+      "customRateKey": "cabecera_ok_rate",
+      "customRate": null
+    }
+  ]
+}

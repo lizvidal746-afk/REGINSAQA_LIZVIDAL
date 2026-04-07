@@ -1,0 +1,186 @@
+name: Reusable K6 Performance (Self-hosted)
+
+on:
+  workflow_call:
+    inputs:
+      caso:
+        description: "Caso k6: 00|01|02|03|04|op"
+        required: true
+        type: string
+      cantidad:
+        description: "Cantidad objetivo"
+        required: false
+        default: "3"
+        type: string
+      k6_output:
+        description: "Salida k6: local|cloud"
+        required: false
+        default: "local"
+        type: string
+      k6_http_detail_mode:
+        description: "HTTP detail mode: all|guardar_only"
+        required: false
+        default: "all"
+        type: string
+      sleep_seconds:
+        description: "Sleep entre iteraciones"
+        required: false
+        default: "0"
+        type: string
+      fixed_vus:
+        description: "VUs para k6"
+        required: false
+        default: "1"
+        type: string
+      fixed_iterations:
+        description: "Total iteraciones k6"
+        required: false
+        default: ""
+        type: string
+      expect_rate_limit:
+        description: "Esperar rate limit (1|0)"
+        required: false
+        default: "0"
+        type: string
+      enforce_ok_rate:
+        description: "Exigir ok_rate (1|0)"
+        required: false
+        default: "1"
+        type: string
+      local_ips:
+        description: "IP pool: auto|off|comma-separated"
+        required: false
+        default: "auto"
+        type: string
+      upload_artifacts:
+        description: "Upload artifacts (true/false)"
+        required: false
+        default: "true"
+        type: string
+      timeout_minutes:
+        description: "Job timeout in minutes"
+        required: false
+        default: "120"
+        type: string
+
+jobs:
+  k6:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: ${{ fromJSON(inputs.timeout_minutes) }}
+    defaults:
+      run:
+        shell: cmd
+    env:
+      REGINSA_URL: ${{ secrets.REGINSA_URL }}
+      REGINSA_API_BASE: ${{ secrets.REGINSA_API_BASE }}
+      REGINSA_USER: ${{ secrets.REGINSA_USER }}
+      REGINSA_PASS: ${{ secrets.REGINSA_PASS }}
+      REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
+      REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify environment
+        shell: cmd
+        run: |
+          echo === Node.js ===
+          node --version
+          echo === npm ===
+          npm --version
+
+      - name: Install dependencies
+        shell: cmd
+        run: |
+          if not exist node_modules (
+            echo [CI] node_modules no encontrado, ejecutando npm ci...
+            npm ci
+          ) else (
+            echo [CI] node_modules ya existe, skip npm ci
+          )
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Detect IP pool
+        if: inputs.local_ips == 'auto'
+        id: ips
+        shell: pwsh
+        run: |
+          $detectScript = "scripts/shared/detect-k6-ips.ps1"
+          if (Test-Path $detectScript) {
+            $ips = & pwsh -NoProfile -ExecutionPolicy Bypass -File $detectScript
+            "local_ips=$ips" >> $env:GITHUB_OUTPUT
+          } else {
+            "local_ips=" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Run k6 caso
+        shell: pwsh
+        env:
+          K6_CLOUD_TOKEN: ${{ secrets.K6_CLOUD_TOKEN }}
+          K6_CLOUD_PROJECT_ID: ${{ secrets.K6_CLOUD_PROJECT_ID }}
+        run: |
+          $caso = '${{ inputs.caso }}'
+          $outputRequested = '${{ inputs.k6_output }}'
+
+          if ($outputRequested -eq 'cloud' -and (-not $env:K6_CLOUD_TOKEN -or -not $env:K6_CLOUD_PROJECT_ID)) {
+            Write-Host "[WARN] Cloud token no configurado, fallback a output=local"
+            $outputRequested = 'local'
+          }
+
+          $scriptMap = @{
+            '00' = 'scripts/run-caso00-login.ps1'
+            '01' = 'scripts/run-caso01-local.ps1'
+            '02' = 'scripts/run-caso02-local.ps1'
+            '03' = 'scripts/run-caso03-local.ps1'
+            '04' = 'scripts/run-caso04-local.ps1'
+            'op' = 'scripts/run-k6-operacion-api.ps1'
+          }
+          $script = $scriptMap[$caso]
+          if (-not $script) { throw "Caso k6 no valido: $caso" }
+
+          $psArgs = @('-ExecutionPolicy', 'Bypass', '-File', $script, '-K6Output', $outputRequested)
+
+          if ($caso -ne '00') {
+            $psArgs += @('-K6Cantidad', '${{ inputs.cantidad }}')
+          }
+
+          $psArgs += @(
+            '-K6HttpDetailMode', '${{ inputs.k6_http_detail_mode }}',
+            '-K6SleepSeconds', '${{ inputs.sleep_seconds }}'
+          )
+
+          if ('${{ inputs.expect_rate_limit }}' -eq '1') {
+            $psArgs += @('-K6ExpectRateLimit', '1', '-K6EnforceOkRate', '0')
+          }
+
+          $detectedIps = '${{ steps.ips.outputs.local_ips }}'
+          $requestedIps = '${{ inputs.local_ips }}'
+          $ipsToUse = if ($requestedIps -eq 'auto') { $detectedIps } elseif ($requestedIps -ne 'off') { $requestedIps } else { '' }
+
+          if ($ipsToUse) {
+            $env:K6_LOCAL_IPS = $ipsToUse
+          }
+
+          Write-Host "Running: pwsh $($psArgs -join ' ')"
+          & pwsh @psArgs
+
+      - name: Upload artifacts
+        if: always() && inputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-caso${{ inputs.caso }}-selfhosted
+          path: |
+            reportes/k6-*
+            reportes/logs/
+          if-no-files-found: warn

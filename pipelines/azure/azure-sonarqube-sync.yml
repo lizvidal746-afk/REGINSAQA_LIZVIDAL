@@ -1,0 +1,146 @@
+# Pipeline Azure DevOps: SonarQube Scan + Sync bugs a Work Items
+#
+# Prerrequisitos:
+#   1. Variables de pipeline (marcar como secretas):
+#      - SONAR_HOST_URL: URL de SonarQube (ej: http://192.168.1.100:9000)
+#      - SONAR_TOKEN:    Token de autenticación SonarQube
+#      - AZDO_TOKEN:     PAT con scope Work Items Read & Write (opcional, para sync)
+#
+#   2. Instalar pwsh en el agente (o usar vmImage: ubuntu-latest)
+#
+# Ejecución:
+#   - Manual con parámetros (trigger: none)
+#   - testType = scan | sync | full
+#     scan = solo escaneo SonarQube
+#     sync = solo sincronizar bugs a Work Items
+#     full = escaneo + sync (default)
+
+trigger: none
+pr: none
+
+parameters:
+  - name: testType
+    displayName: "Tipo de ejecución"
+    type: string
+    default: full
+    values:
+      - scan
+      - sync
+      - full
+  - name: projectKeys
+    displayName: "Project keys (separados por coma)"
+    type: string
+    default: "si091reginsafrontend,si091reginsabackend,si091reginsaenlinea"
+  - name: dryRun
+    displayName: "Modo dry-run (no crea Work Items reales)"
+    type: boolean
+    default: false
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  SONAR_HOST_URL: $(SONAR_HOST_URL)
+  SONAR_TOKEN: $(SONAR_TOKEN)
+
+stages:
+  - stage: SonarQube
+    displayName: "SonarQube Scan + Sync"
+    jobs:
+      - job: ScanAndSync
+        displayName: "Escaneo y sincronización"
+        steps:
+          - checkout: self
+            fetchDepth: 0
+
+          - task: NodeTool@0
+            displayName: "Setup Node.js 20"
+            inputs:
+              versionSpec: "20.x"
+
+          - script: npm ci
+            displayName: "Instalar dependencias"
+
+          # ─── Paso 1: Verificar entorno ───
+          - script: |
+              echo "=== Entorno ==="
+              node --version
+              npm --version
+              echo "SONAR_HOST_URL=$SONAR_HOST_URL"
+              echo "Proyectos: ${{ parameters.projectKeys }}"
+              echo "Tipo: ${{ parameters.testType }}"
+            displayName: "Verificar entorno"
+
+          # ─── Paso 2: Escaneo SonarQube ───
+          - script: |
+              if ! command -v pwsh >/dev/null 2>&1; then
+                echo "Instalando PowerShell..."
+                wget -q https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb
+                sudo dpkg -i packages-microsoft-prod.deb
+                sudo apt-get update
+                sudo apt-get install -y powershell
+              fi
+              PROJECTS=$(echo "${{ parameters.projectKeys }}" | sed 's/si091reginsa//g' | sed 's/,/,/g')
+              pwsh -NoProfile -ExecutionPolicy Bypass \
+                -File scripts/security/escanear-repos-sonar.ps1 \
+                -Projects "$PROJECTS"
+            displayName: "Escaneo SonarQube (3 repos)"
+            condition: and(succeeded(), or(eq('${{ parameters.testType }}', 'scan'), eq('${{ parameters.testType }}', 'full')))
+            env:
+              SONAR_HOST_URL: $(SONAR_HOST_URL)
+              SONAR_TOKEN: $(SONAR_TOKEN)
+
+          # ─── Paso 3: Quality Gate Summary ───
+          - script: |
+              pwsh -NoProfile -ExecutionPolicy Bypass -Command '
+                $ErrorActionPreference = "Stop"
+                $sonarHostUrl = $env:SONAR_HOST_URL
+                $tokenBytes = [System.Text.Encoding]::ASCII.GetBytes($env:SONAR_TOKEN + ":")
+                $basicToken = [Convert]::ToBase64String($tokenBytes)
+                $headers = @{ Authorization = "Basic $basicToken" }
+
+                $projectKeys = "${{ parameters.projectKeys }}".Split(",") | ForEach-Object { $_.Trim() }
+
+                foreach ($pk in $projectKeys) {
+                  try {
+                    $url = "$sonarHostUrl/api/qualitygates/project_status?projectKey=$pk"
+                    $res = Invoke-RestMethod -Method Get -Uri $url -Headers $headers
+                    $status = $res.projectStatus.status
+                    Write-Host "[GATE] $pk = $status"
+                  } catch {
+                    Write-Host "[GATE] $pk = ERROR ($($_.Exception.Message))"
+                  }
+                }
+              '
+            displayName: "Quality Gate Summary"
+            condition: and(succeeded(), or(eq('${{ parameters.testType }}', 'scan'), eq('${{ parameters.testType }}', 'full')))
+            env:
+              SONAR_HOST_URL: $(SONAR_HOST_URL)
+              SONAR_TOKEN: $(SONAR_TOKEN)
+
+          # ─── Paso 4: Sync a Azure DevOps Work Items ───
+          - script: |
+              ARGS=""
+              if [ "${{ parameters.dryRun }}" = "True" ]; then
+                ARGS="--dry-run"
+              fi
+              node scripts/sonar-to-azdo-sync.js $ARGS
+            displayName: "Sync SonarQube → Azure DevOps Work Items"
+            condition: and(succeeded(), or(eq('${{ parameters.testType }}', 'sync'), eq('${{ parameters.testType }}', 'full')))
+            env:
+              SONAR_HOST_URL: $(SONAR_HOST_URL)
+              SONAR_TOKEN: $(SONAR_TOKEN)
+              AZDO_ORG: $(System.CollectionUri)
+              AZDO_PROJECT: $(System.TeamProject)
+              AZDO_TOKEN: $(AZDO_TOKEN)
+              SONAR_PROJECT_KEYS: ${{ parameters.projectKeys }}
+
+          # ─── Paso 5: Publicar artefactos ───
+          - task: PublishBuildArtifacts@1
+            displayName: "Publicar reportes"
+            condition: always()
+            inputs:
+              PathtoPublish: "reportes/security"
+              ArtifactName: "sonarqube-reports"
+              publishLocation: "Container"
+            continueOnError: true

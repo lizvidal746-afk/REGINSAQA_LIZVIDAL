@@ -1,5 +1,18 @@
 # GUIA POSTMAN + NEWMAN Casos 01-04
 
+## Estado del documento
+
+Este documento queda en estado **deprecado** para evitar duplicidad.
+
+Guia canonica vigente:
+
+- `docs/manuales/GUIA_POSTMAN_NEWMAN.md`
+
+Uso recomendado:
+
+1. Seguir la guia canonica para ejecucion operativa.
+2. Mantener este archivo solo como referencia historica de detalle.
+
 Documento exclusivo para API functional testing con Postman y Newman.
 
 Nota operativa:

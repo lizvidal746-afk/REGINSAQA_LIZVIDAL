@@ -6,6 +6,8 @@ variables:
     value: 'false'
   - name: RUN_NUCLEI
     value: 'false'
+  - name: RUN_TRIVY
+    value: 'true'
 
 stages:
   - stage: SecretDetection
@@ -89,3 +91,50 @@ stages:
             inputs:
               PathtoPublish: 'reportes/security'
               ArtifactName: 'zap-dast-report'
+
+  - stage: Trivy
+    displayName: "🐳 Container Security — Trivy"
+    dependsOn: SCA
+    condition: and(succeededOrFailed(), eq(variables['RUN_TRIVY'], 'true'))
+    jobs:
+      - job: TrivyScan
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+          - script: |
+              curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+              mkdir -p reportes/security/trivy
+              trivy fs . --severity HIGH,CRITICAL --format table || true
+              trivy fs . --severity HIGH,CRITICAL --format json --output reportes/security/trivy/trivy-fs-report.json || true
+            displayName: Run Trivy filesystem scan
+          - task: PublishBuildArtifacts@1
+            condition: always()
+            inputs:
+              PathtoPublish: 'reportes/security/trivy'
+              ArtifactName: 'trivy-report'
+
+  - stage: Nuclei
+    displayName: "🔬 DAST — Nuclei"
+    dependsOn: DAST
+    condition: and(succeededOrFailed(), eq(variables['RUN_NUCLEI'], 'true'))
+    jobs:
+      - job: NucleiScan
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+          - script: |
+              mkdir -p reportes/security/nuclei
+              docker run --rm -v "$(pwd)/reportes/security/nuclei:/output" \
+                projectdiscovery/nuclei:latest \
+                -u "$(REGINSA_URL)" \
+                -severity critical,high,medium -exclude-tags dos \
+                -jsonl -output /output/nuclei-report.jsonl \
+                -sarif-export /output/nuclei-report.sarif || true
+            displayName: Run Nuclei DAST scan
+          - task: PublishBuildArtifacts@1
+            condition: always()
+            inputs:
+              PathtoPublish: 'reportes/security/nuclei'
+              ArtifactName: 'nuclei-dast-report'

@@ -12,11 +12,13 @@ param(
   [ValidateSet('local','cloud')]
   [string]$K6Output = 'local',
 
-  [int]$K6Cantidad = 2,
+  [int]$K6Cantidad = 1,
   [double]$K6SleepSeconds = -1,
   [int]$K6Vus = 0,
   [ValidateSet('fresh','mixed')]
   [string]$K6DatasetStrategy = 'fresh',
+  [ValidateSet('all','guardar_only')]
+  [string]$K6HttpDetailMode = 'all',
   [string]$PerfDuration = '10m',
 
   [string]$BaseUrl = '',
@@ -56,6 +58,11 @@ function Resolve-NonEmpty([string]$primary, [string]$fallback) {
 $grafanaSecretsHelper = Join-Path $PSScriptRoot 'shared/grafana-secrets.ps1'
 if (Test-Path $grafanaSecretsHelper) {
   . $grafanaSecretsHelper
+}
+
+if ([string]::IsNullOrWhiteSpace($env:K6_LOCAL_IPS)) {
+  $ipDetector = Join-Path $PSScriptRoot 'shared/detect-k6-ips.ps1'
+  if (Test-Path $ipDetector) { & $ipDetector }
 }
 
 function Get-CliOption([string]$name) {
@@ -154,6 +161,14 @@ if (-not [string]::IsNullOrWhiteSpace($cantidadRaw)) {
   }
 }
 
+$vusRaw = Resolve-NonEmpty (Get-CliOption 'vus') $env:npm_config_vus
+if (-not [string]::IsNullOrWhiteSpace($vusRaw)) {
+  $vusParsed = 0
+  if ([int]::TryParse($vusRaw, [ref]$vusParsed) -and $vusParsed -gt 0) {
+    $K6Vus = $vusParsed
+  }
+}
+
 $datasetStrategyRaw = Resolve-NonEmpty (Get-CliOption 'datasetstrategy') (Resolve-NonEmpty $env:npm_config_datasetstrategy $env:K6_DATASET_STRATEGY)
 if (-not [string]::IsNullOrWhiteSpace($datasetStrategyRaw)) {
   $normalizedStrategy = $datasetStrategyRaw.Trim().ToLowerInvariant()
@@ -166,7 +181,7 @@ $GrafanaProjectId = Resolve-NonEmpty $GrafanaProjectId (Resolve-NonEmpty (Get-Cl
 $GrafanaToken = Resolve-NonEmpty $GrafanaToken (Resolve-NonEmpty (Get-CliOption 'token') $env:npm_config_token)
 
 if (Get-Command Resolve-GrafanaCloudSecrets -ErrorAction SilentlyContinue) {
-  $resolvedGrafanaSecrets = Resolve-GrafanaCloudSecrets -GrafanaProjectId $GrafanaProjectId -GrafanaToken $GrafanaToken -PersistProvided
+  $resolvedGrafanaSecrets = Resolve-GrafanaCloudSecrets -GrafanaProjectId $GrafanaProjectId -GrafanaToken $GrafanaToken -PersistProvided -Interactive:($K6Output -eq 'cloud')
   $GrafanaProjectId = [string]$resolvedGrafanaSecrets.ProjectId
   $GrafanaToken = [string]$resolvedGrafanaSecrets.Token
 }
@@ -206,6 +221,10 @@ $env:K6_SLEEP_SECONDS = $k6SleepFinal
 $env:K6_DATASET_STRATEGY = $K6DatasetStrategy
 $env:K6_EXPECT_RATE_LIMIT = '1'
 $env:K6_ENFORCE_OK_RATE = '0'
+$env:K6_HTTP_DETAIL_MODE = $K6HttpDetailMode
+# Limpiar env vars de corrida anterior para que el generador incremente correctamente
+Remove-Item Env:K6_PREFIX_SEQUENCE -ErrorAction SilentlyContinue
+Remove-Item Env:K6_RUN_ID -ErrorAction SilentlyContinue
 $k6PrefixInfo = $null
 try {
   $k6PrefixRaw = & node scripts/generar-k6-prefijo-global.js
@@ -234,17 +253,6 @@ if (-not [string]::IsNullOrWhiteSpace($cloudToken)) {
 
 if (-not [string]::IsNullOrWhiteSpace($apiAuthHeaderFinal)) {
   $env:K6_AUTH_HEADER = $apiAuthHeaderFinal
-  $env:K6_AUTO_LOGIN = '0'
-}
-
-if (-not [string]::IsNullOrWhiteSpace($apiUserFinal)) {
-  $env:REGINSA_USER = $apiUserFinal
-}
-if (-not [string]::IsNullOrWhiteSpace($apiPassFinal)) {
-  $env:REGINSA_PASS = $apiPassFinal
-}
-if ((-not [string]::IsNullOrWhiteSpace($env:REGINSA_USER)) -and (-not [string]::IsNullOrWhiteSpace($env:REGINSA_PASS)) -and [string]::IsNullOrWhiteSpace($apiAuthHeaderFinal)) {
-  $env:K6_AUTO_LOGIN = '1'
 }
 
 Write-Host "=== RUN CASO 01 LOCAL ===" -ForegroundColor Green

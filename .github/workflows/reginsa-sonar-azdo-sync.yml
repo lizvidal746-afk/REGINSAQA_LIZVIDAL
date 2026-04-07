@@ -1,0 +1,99 @@
+name: REGINSA SonarQube → Azure DevOps Sync
+
+on:
+  # Se ejecuta automáticamente después del workflow de SonarQube
+  workflow_run:
+    workflows: ["REGINSA SonarQube (Self-hosted)"]
+    types: [completed]
+
+  # También se puede ejecutar manualmente
+  workflow_dispatch:
+    inputs:
+      project_keys:
+        description: "Project keys SonarQube (separados por coma)"
+        required: false
+        default: "si091reginsafrontend,si091reginsabackend,si091reginsaenlinea"
+      dry_run:
+        description: "Modo dry-run (no crea Work Items reales)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  sync:
+    runs-on: [self-hosted, windows]
+    # Solo correr si el workflow de SonarQube fue exitoso (o si es manual)
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    timeout-minutes: 15
+
+    env:
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      AZDO_ORG: ${{ secrets.AZDO_ORG }}
+      AZDO_PROJECT: ${{ secrets.AZDO_PROJECT }}
+      AZDO_TOKEN: ${{ secrets.AZDO_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        shell: cmd
+        run: |
+          if not exist node_modules (
+            echo [CI] npm ci...
+            npm ci
+          ) else (
+            echo [CI] node_modules ya existe
+          )
+
+      - name: Validate secrets
+        shell: pwsh
+        run: |
+          $missing = @()
+          if ([string]::IsNullOrWhiteSpace($env:SONAR_HOST_URL)) { $missing += 'SONAR_HOST_URL' }
+          if ([string]::IsNullOrWhiteSpace($env:SONAR_TOKEN))    { $missing += 'SONAR_TOKEN' }
+          if ([string]::IsNullOrWhiteSpace($env:AZDO_ORG))       { $missing += 'AZDO_ORG' }
+          if ([string]::IsNullOrWhiteSpace($env:AZDO_PROJECT))   { $missing += 'AZDO_PROJECT' }
+          if ([string]::IsNullOrWhiteSpace($env:AZDO_TOKEN))     { $missing += 'AZDO_TOKEN' }
+
+          if ($missing.Count -gt 0) {
+            Write-Host "::error::Secretos faltantes: $($missing -join ', ')"
+            Write-Host ""
+            Write-Host "Configurar en: Repo → Settings → Secrets and variables → Actions"
+            Write-Host "  SONAR_HOST_URL: URL de SonarQube (ej: http://localhost:9000)"
+            Write-Host "  SONAR_TOKEN:    Token de autenticación SonarQube"
+            Write-Host "  AZDO_ORG:       Organización Azure DevOps (ej: mi-empresa)"
+            Write-Host "  AZDO_PROJECT:   Proyecto Azure DevOps (ej: REGINSA)"
+            Write-Host "  AZDO_TOKEN:     PAT con scope Work Items Read & Write"
+            exit 1
+          }
+
+          Write-Host "[OK] Todos los secretos configurados"
+
+      - name: Sync SonarQube → Azure DevOps
+        shell: pwsh
+        env:
+          SONAR_PROJECT_KEYS: ${{ github.event.inputs.project_keys || 'si091reginsafrontend,si091reginsabackend,si091reginsaenlinea' }}
+        run: |
+          $dryRun = "${{ github.event.inputs.dry_run }}"
+          $args = @()
+          if ($dryRun -eq 'true') {
+            $args += '--dry-run'
+          }
+
+          Write-Host "[SYNC] Proyectos: $env:SONAR_PROJECT_KEYS"
+          Write-Host "[SYNC] Dry-run: $dryRun"
+          Write-Host ""
+
+          node scripts/sonar-to-azdo-sync.js @args

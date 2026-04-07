@@ -18,11 +18,11 @@ on:
       install_dependencies:
         description: "Run npm ci (true/false)"
         required: false
-        default: "false"
+        default: "true"
       install_browser:
         description: "Install Playwright browser (true/false)"
         required: false
-        default: "false"
+        default: "true"
       prepare_data:
         description: "Run reset + prewarm (true/false)"
         required: false
@@ -97,13 +97,33 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Verify environment
+        shell: cmd
+        run: |
+          echo === Node.js ===
+          node --version
+          echo === npm ===
+          npm --version
+          echo === Working directory ===
+          cd
+          echo === Workspace contents ===
+          dir /b
+
       - name: Install dependencies
         if: ${{ github.event.inputs.install_dependencies == 'true' }}
-        run: npm ci
+        shell: cmd
+        run: |
+          if not exist node_modules\@playwright\test (
+            echo [CI] node_modules no encontrado, ejecutando npm ci...
+            npm ci
+          ) else (
+            echo [CI] node_modules ya existe, skip npm ci
+          )
 
-      - name: Install Playwright browser
+      - name: Install Playwright browsers
         if: ${{ github.event.inputs.install_browser == 'true' }}
-        run: npx playwright install chromium
+        shell: cmd
+        run: npx playwright install chromium --with-deps 2>nul || npx playwright install chromium
 
       - name: Prepare data
         if: ${{ github.event.inputs.prepare_data == 'true' }}

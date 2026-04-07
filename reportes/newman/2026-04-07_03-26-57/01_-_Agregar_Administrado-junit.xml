@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="REGINSA - Colección Maestra (Todos los Casos)" tests="1" time="0.090">
+  <testsuite name="01 - Agregar Administrado / 01.2) Entidad/Crear - Éxito" id="08e3911e-1d02-4525-872f-d695b665ba0a" timestamp="2026-04-07T08:27:21.873Z" tests="5" failures="1" errors="1" time="0.090">
+    <system-err><![CDATA[Iteration: 0
+
+---
+testScriptError: AssertionFailure: [C01] Status esperado (200/201/409)
+    at postProcessContext (C:\Users\usitd04\AppData\Roaming\npm\node_modules\newman\node_modules\postman-runtime\lib\runner\extensions\event.command.js:41:17)
+    at PostmanCollectionRun.<anonymous> (C:\Users\usitd04\AppData\Roaming\npm\node_modules\newman\node_modules\postman-runtime\lib\runner\extensions\event.command.js:513:39)
+    at PostmanSandbox.<anonymous> (C:\Users\usitd04\AppData\Roaming\npm\node_modules\newman\node_modules\postman-sandbox\lib\postman-sandbox.js:139:13)
+    at Object.onceWrapper (node:events:639:26)
+    at PostmanSandbox.emit (node:events:524:28)
+    at context.__uvm_emit (C:\Users\usitd04\AppData\Roaming\npm\node_modules\newman\node_modules\uvm\lib\bridge.js:71:21)
+    at Object.dispatch (evalmachine.<anonymous>:20:13)
+    at Object.<anonymous> (evalmachine.<anonymous>:66:7860)
+    at t.exports.terminate (evalmachine.<anonymous>:66:22105)
+    at Immediate._onImmediate (evalmachine.<anonymous>:66:5993)
+    at process.processImmediate (node:internal/timers:485:21)
+---
+]]></system-err>
+    <testcase name="[C01] Status esperado (200/201/409)" time="0.090" classname="01AgregarAdministrado012EntidadCrearExito">
+      <failure type="AssertionFailure" message="expected [ 200, 201, 409 ] to include 429">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: reginsa-master-col-2026.]]>
+        <![CDATA[Collection name: REGINSA - Colección Maestra (Todos los Casos).]]>
+        <![CDATA[Request name: 01 - Agregar Administrado / 01.2) Entidad/Crear - Éxito.]]>
+        <![CDATA[Test description: [C01] Status esperado (200/201/409).]]>
+        <![CDATA[Error message: expected [ 200, 201, 409 ] to include 429.]]>
+        <![CDATA[Stacktrace: AssertionError: expected [ 200, 201, 409 ] to include 429
+   at Object.eval sandbox-script.js:1:1).]]>
+      </failure>
+    </testcase>
+    <testcase name="[C01] Tiempo respuesta &lt; 5s" time="0.090" classname="01AgregarAdministrado012EntidadCrearExito"/>
+    <testcase name="[C01][TRAZA] ruc_nuevo presente" time="0.090" classname="01AgregarAdministrado012EntidadCrearExito"/>
+    <testcase name="[C01][TRAZA] razon_social_nueva presente" time="0.090" classname="01AgregarAdministrado012EntidadCrearExito"/>
+    <testcase name="[C01] 409 controlado (dataset preexistente)" time="0.090" classname="01AgregarAdministrado012EntidadCrearExito"/>
+  </testsuite>
+</testsuites>

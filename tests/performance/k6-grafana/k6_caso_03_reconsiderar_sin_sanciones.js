@@ -2,6 +2,7 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import exec from 'k6/execution';
 import { Counter, Rate } from 'k6/metrics';
+import { ipPoolParams, logPoolStatus, getIpLastOctet } from './helpers/ip-pool.js';
 
 const BASE_API = __ENV.BASE_API || __ENV.BASE_URL || 'https://reginsaapiqa.sunedu.gob.pe/api';
 const BURST_MODE = (__ENV.K6_BURST_MODE || '0') === '1';
@@ -27,9 +28,9 @@ function parseFloatEnv(value, fallback) {
 }
 
 const EXPECT_RATE_LIMIT = (__ENV.K6_EXPECT_RATE_LIMIT || '1') === '1';
-const HTTP_DETAIL_MODE = (__ENV.K6_HTTP_DETAIL_MODE || 'guardar_only').toLowerCase();
+const HTTP_DETAIL_MODE = (__ENV.K6_HTTP_DETAIL_MODE || 'all').toLowerCase();
 const HTTP_PUBLIC_NAME = (__ENV.K6_HTTP_PUBLIC_NAME || 'Reconsideracion/GuardarCabecera').trim() || 'Reconsideracion/GuardarCabecera';
-const AUTO_LOGIN_ENABLED = (__ENV.K6_AUTO_LOGIN || '1') === '1';
+const AUTO_LOGIN_ENABLED = (__ENV.K6_AUTO_LOGIN || '0') === '1';
 const AUTH_ENDPOINT = String(__ENV.REGINSA_AUTH_ENDPOINT || __ENV.K6_AUTH_LOGIN_ENDPOINT || '/Auth/Login').trim();
 const AUTH_USER_FIELD = String(__ENV.REGINSA_AUTH_USER_FIELD || 'usuario').trim() || 'usuario';
 const AUTH_PASS_FIELD = String(__ENV.REGINSA_AUTH_PASS_FIELD || 'contrasena').trim() || 'contrasena';
@@ -86,12 +87,11 @@ const ENFORCE_OK_RATE = (__ENV.K6_ENFORCE_OK_RATE || (EXPECT_RATE_LIMIT ? '0' : 
 const ALLOW_HTTP_FAILED_THRESHOLD = (__ENV.K6_ENFORCE_HTTP_FAILED || (EXPECT_RATE_LIMIT ? '0' : '1')) === '1';
 
 console.log(`[caso03] modo=${K6_MODE} cantidad=${iterations} vus=${vus} sleep=${K6_SLEEP_SECONDS} project=${CLOUD_PROJECT_ID || 'local'}`);
+logPoolStatus();
 
 export const options = {
   ...(CLOUD_PROJECT_ID > 0 ? { cloud: { projectID: CLOUD_PROJECT_ID, name: `caso03-${K6_MODE}` } } : {}),
-  ...(HTTP_DETAIL_MODE === 'guardar_only'
-    ? { systemTags: ['status', 'method', 'name', 'scenario', 'group', 'check', 'error'] }
-    : {}),
+  systemTags: ['status', 'method', 'name', 'scenario', 'group', 'check', 'error'],
   tags: {
     caso: '03',
     modo: K6_MODE
@@ -243,7 +243,8 @@ function obtainTokenByLogin() {
     for (const payload of payloads) {
       const response = http.post(url, JSON.stringify(payload), {
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        timeout: `${AUTH_TIMEOUT_MS}ms`
+        timeout: `${AUTH_TIMEOUT_MS}ms`,
+        ...ipPoolParams()
       });
       if (response.status < 200 || response.status >= 300) continue;
       const token = extractTokenFromData(safeJson(response));
@@ -321,10 +322,13 @@ function isBusinessSuccess(response, requireData) {
 }
 
 function withRequestTags(baseOptions, endpointName) {
-  const visibleName = HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : endpointName;
+  const _ipSuffix = getIpLastOctet();
+  const _ipPfx = _ipSuffix ? `IP ${_ipSuffix} ` : '';
+  const visibleName = `${_ipPfx}${HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : endpointName}`;
   const options = baseOptions || {};
   return {
     ...options,
+    ...ipPoolParams(),
     tags: {
       ...(options.tags || {}),
       name: visibleName

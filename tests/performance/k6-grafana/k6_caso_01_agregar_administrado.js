@@ -2,6 +2,7 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import exec from 'k6/execution';
 import { Counter, Rate } from 'k6/metrics';
+import { ipPoolParams, logPoolStatus, getAssignedIP, getIpLastOctet } from './helpers/ip-pool.js';
 
 const BASE_URL = __ENV.BASE_URL || 'https://reginsaapiqa.sunedu.gob.pe/api';
 const ENDPOINT_CREAR = __ENV.K6_CASO01_CREAR || '/Entidad/Crear';
@@ -9,6 +10,8 @@ const STRICT_UNIQUE = (__ENV.K6_STRICT_UNIQUE || '0') === '1';
 const BURST_MODE = (__ENV.K6_BURST_MODE || '0') === '1';
 const COMPAT_PAYLOAD_MODE = (__ENV.K6_CASO01_COMPAT_PAYLOAD || '1') !== '0';
 const EXPECT_RATE_LIMIT = (__ENV.K6_EXPECT_RATE_LIMIT || '1') === '1';
+const HTTP_DETAIL_MODE = (__ENV.K6_HTTP_DETAIL_MODE || 'all').toLowerCase();
+const HTTP_PUBLIC_NAME = (__ENV.K6_HTTP_PUBLIC_NAME || 'Entidad/Crear').trim() || 'Entidad/Crear';
 
 const HTTP_429_TOTAL = new Counter('http_429_total');
 const RATE_LIMITED_REQUESTS = new Rate('rate_limited_requests');
@@ -40,6 +43,9 @@ const DEBUG_ERRORS = (__ENV.K6_DEBUG_ERRORS || '0') === '1';
 const DEBUG_LIMIT = Math.max(1, Number.parseInt(__ENV.K6_DEBUG_ERRORS_MAX || '5', 10) || 5);
 let debugErrorCount = 0;
 
+// ── Registros por iteración (para informe) ────────────────────────────────
+const caso01Records = [];
+
 const HTTP_FAILED_RATE_MAX = parseFloatEnv(__ENV.K6_HTTP_FAILED_RATE_MAX, EXPECT_RATE_LIMIT ? 0.98 : 0.2);
 const CREATE_BUSINESS_OK_RATE_MIN = parseFloatEnv(__ENV.K6_CREATE_OK_RATE_MIN, EXPECT_RATE_LIMIT ? 0.01 : 0.7);
 const CREATE_BUSINESS_EXPECTED_RATE_MIN = parseFloatEnv(__ENV.K6_CREATE_EXPECTED_RATE_MIN, EXPECT_RATE_LIMIT ? 0.95 : 0.7);
@@ -61,7 +67,7 @@ function parseFloatEnv(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-const AUTO_LOGIN_ENABLED = (__ENV.K6_AUTO_LOGIN || '1') === '1';
+const AUTO_LOGIN_ENABLED = (__ENV.K6_AUTO_LOGIN || '0') === '1';
 const AUTH_ENDPOINT = String(__ENV.REGINSA_AUTH_ENDPOINT || __ENV.K6_AUTH_LOGIN_ENDPOINT || '/Auth/Login').trim();
 const AUTH_USER_FIELD = String(__ENV.REGINSA_AUTH_USER_FIELD || 'usuario').trim() || 'usuario';
 const AUTH_PASS_FIELD = String(__ENV.REGINSA_AUTH_PASS_FIELD || 'contrasena').trim() || 'contrasena';
@@ -200,7 +206,9 @@ function obtainRuntimeToken() {
           'Content-Type': 'application/json',
           Accept: 'application/json'
         },
-        timeout: `${AUTH_TIMEOUT_MS}ms`
+        timeout: `${AUTH_TIMEOUT_MS}ms`,
+        tags: { name: HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : 'Auth/Login' },
+        ...ipPoolParams()
       });
 
       if (response.status < 200 || response.status >= 300) continue;
@@ -252,8 +260,11 @@ if (STRICT_UNIQUE && burstTotalIterations > DATASET.length) {
   throw new Error(`STRICT_UNIQUE=1 requiere dataset >= iteraciones efectivas (${DATASET.length} < ${burstTotalIterations}).`);
 }
 
+logPoolStatus();
+
 export const options = {
   ...(CLOUD_PROJECT_ID > 0 ? { cloud: { projectID: CLOUD_PROJECT_ID, name: `caso01-${K6_MODE}` } } : {}),
+  systemTags: ['status', 'method', 'name', 'scenario', 'group', 'check', 'error'],
   tags: {
     caso: '01',
     modo: K6_MODE
@@ -519,7 +530,11 @@ export default function () {
   const response = http.post(
     `${BASE_URL}${ENDPOINT_CREAR}`,
     JSON.stringify(payload),
-    { headers: authHeaders() }
+    {
+      headers: authHeaders(),
+      tags: { name: (() => { const _s = getIpLastOctet(); return (_s ? `IP ${_s} ` : '') + (HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : 'Entidad/Crear'); })() },
+      ...ipPoolParams()
+    }
   );
 
   mark429(response);
@@ -529,6 +544,13 @@ export default function () {
 
   if (business.businessOk) {
     CREATE_BUSINESS_OK_TOTAL.add(1);
+    caso01Records.push({
+      ip: getAssignedIP() || 'local',
+      ruc: payload.ruc,
+      razonSocial: payload.razonSocial,
+      resultado: 'OK',
+      timestamp: new Date().toISOString()
+    });
   } else if (!business.controlled) {
     CREATE_BUSINESS_FAIL_TOTAL.add(1);
     logDebugFailure(payload, response.status, business.body, business.reason);
@@ -546,4 +568,15 @@ export default function () {
   );
 
   sleep(K6_SLEEP_SECONDS);
+}
+
+export function handleSummary(_data) {
+  const output = {
+    run_id: __ENV.K6_RUN_ID || 'caso01',
+    modo: __ENV.K6_OUTPUT || 'local',
+    fecha: new Date().toISOString().split('T')[0],
+    ip_pool: (__ENV.K6_LOCAL_IPS || '').trim(),
+    registros: caso01Records
+  };
+  return { 'reportes/k6-caso01-registros.json': JSON.stringify(output, null, 2) };
 }

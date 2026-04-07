@@ -104,7 +104,7 @@ aws ssm put-parameter \
 
 ## 3. Crear el CodePipeline
 
-### Paso a paso en la consola AWS:
+### Paso a paso en la consola AWS: — Crear el CodePipeline
 
 1. Ir a **AWS Console → CodePipeline → Create pipeline**
 
@@ -136,7 +136,7 @@ aws ssm put-parameter \
 ### ✅ Herramientas incluidas en este pipeline:
 
 | Herramienta | Categoría | Cómo se instala |
-|---|---|---|
+| --- | --- | --- |
 | **Gitleaks** | Secret Detection | Binario descargado desde GitHub Releases |
 | **Semgrep** | SAST | `pip3 install semgrep` |
 | **npm audit** | SCA | Incluido en Node.js |
@@ -145,7 +145,7 @@ aws ssm put-parameter \
 ### ❌ Herramientas NO incluidas (y por qué):
 
 | Herramienta | Razón |
-|---|---|
+| --- | --- |
 | **CodeQL** | Exclusivo de GitHub Actions. No puede ejecutarse fuera de GitHub. Para SAST semántico, este pipeline usa Semgrep como alternativa. |
 | **OWASP ZAP** | Requiere runtime Docker personalizado en CodeBuild, lo cual es complejo y costoso. Para DAST con ZAP, usar el workflow `reginsa-sec-dast-zap.yml` en GitHub Actions. |
 | **Nuclei** | Requiere Docker. Para DAST con Nuclei, usar el workflow `reginsa-sec-dast-nuclei.yml` en GitHub Actions. |
@@ -166,7 +166,7 @@ aws ssm put-parameter \
 
 Todos los reportes se guardan en el directorio `reportes/security/` del artifact de CodeBuild:
 
-```
+```text
 reportes/
 └── security/
     ├── gitleaks/

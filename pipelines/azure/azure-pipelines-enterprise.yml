@@ -59,6 +59,18 @@ parameters:
   - name: k6EnforceOkRate
     type: string
     default: '0'
+  - name: securityTool
+    type: string
+    default: all
+    values:
+      - all
+      - zap
+      - nuclei
+      - gitleaks
+      - semgrep
+      - trivy
+      - depcheck
+      - npm-audit
 
 pool:
   vmImage: ubuntu-latest
@@ -115,27 +127,95 @@ stages:
               if [ "${{ parameters.testType }}" = "regression" ]; then npm run test:regression; fi
               if [ "${{ parameters.testType }}" = "performance" ]; then npm run test:performance; fi
               if [ "${{ parameters.testType }}" = "k6" ]; then
+                # Fallback: si piden cloud pero no hay token, usar local
+                K6_OUT="${{ parameters.k6Output }}"
+                if [ "$K6_OUT" = "cloud" ]; then
+                  if [ -z "$(K6_CLOUD_TOKEN)" ] || [ -z "$(K6_CLOUD_PROJECT_ID)" ]; then
+                    echo "[WARN] Cloud token no configurado, fallback a output=local"
+                    K6_OUT="local"
+                  fi
+                fi
                 case "${{ parameters.caseTarget }}" in
                   00)
-                    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso00-login.ps1 -K6Output "${{ parameters.k6Output }}" -K6Cantidad "${{ parameters.registros }}" -K6Vus "${{ parameters.k6Vus }}" -PerfDuration "${{ parameters.k6PerfDuration }}" -K6SleepSeconds "${{ parameters.k6SleepSeconds }}" -GrafanaProjectId "$(K6_CLOUD_PROJECT_ID)" -GrafanaToken "$(K6_CLOUD_TOKEN)"
+                    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso00-login.ps1 -K6Output "$K6_OUT" -K6Cantidad "${{ parameters.registros }}" -K6Vus "${{ parameters.k6Vus }}" -PerfDuration "${{ parameters.k6PerfDuration }}" -K6SleepSeconds "${{ parameters.k6SleepSeconds }}" -GrafanaProjectId "$(K6_CLOUD_PROJECT_ID)" -GrafanaToken "$(K6_CLOUD_TOKEN)"
                     ;;
                   01)
-                    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso01-local.ps1 -Mode k6 -K6Output "${{ parameters.k6Output }}" -K6Cantidad "${{ parameters.registros }}" -K6Vus "${{ parameters.k6Vus }}" -PerfDuration "${{ parameters.k6PerfDuration }}" -K6SleepSeconds "${{ parameters.k6SleepSeconds }}" -GrafanaProjectId "$(K6_CLOUD_PROJECT_ID)" -GrafanaToken "$(K6_CLOUD_TOKEN)"
+                    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso01-local.ps1 -Mode k6 -K6Output "$K6_OUT" -K6Cantidad "${{ parameters.registros }}" -K6Vus "${{ parameters.k6Vus }}" -PerfDuration "${{ parameters.k6PerfDuration }}" -K6SleepSeconds "${{ parameters.k6SleepSeconds }}" -GrafanaProjectId "$(K6_CLOUD_PROJECT_ID)" -GrafanaToken "$(K6_CLOUD_TOKEN)"
                     ;;
                   02)
-                    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso02-local.ps1 -Mode k6 -K6Output "${{ parameters.k6Output }}" -K6Cantidad "${{ parameters.registros }}" -K6Vus "${{ parameters.k6Vus }}" -PerfDuration "${{ parameters.k6PerfDuration }}" -K6SleepSeconds "${{ parameters.k6SleepSeconds }}" -K6ExpectRateLimit "${{ parameters.k6ExpectRateLimit }}" -K6EnforceOkRate "${{ parameters.k6EnforceOkRate }}" -GrafanaProjectId "$(K6_CLOUD_PROJECT_ID)" -GrafanaToken "$(K6_CLOUD_TOKEN)"
+                    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso02-local.ps1 -Mode k6 -K6Output "$K6_OUT" -K6Cantidad "${{ parameters.registros }}" -K6Vus "${{ parameters.k6Vus }}" -PerfDuration "${{ parameters.k6PerfDuration }}" -K6SleepSeconds "${{ parameters.k6SleepSeconds }}" -K6ExpectRateLimit "${{ parameters.k6ExpectRateLimit }}" -K6EnforceOkRate "${{ parameters.k6EnforceOkRate }}" -GrafanaProjectId "$(K6_CLOUD_PROJECT_ID)" -GrafanaToken "$(K6_CLOUD_TOKEN)"
                     ;;
                   03)
-                    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso03-local.ps1 -Mode k6 -K6Output "${{ parameters.k6Output }}" -K6Cantidad "${{ parameters.registros }}" -K6Vus "${{ parameters.k6Vus }}" -PerfDuration "${{ parameters.k6PerfDuration }}" -K6SleepSeconds "${{ parameters.k6SleepSeconds }}" -K6ExpectRateLimit "${{ parameters.k6ExpectRateLimit }}" -K6EnforceOkRate "${{ parameters.k6EnforceOkRate }}" -GrafanaProjectId "$(K6_CLOUD_PROJECT_ID)" -GrafanaToken "$(K6_CLOUD_TOKEN)"
+                    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso03-local.ps1 -Mode k6 -K6Output "$K6_OUT" -K6Cantidad "${{ parameters.registros }}" -K6Vus "${{ parameters.k6Vus }}" -PerfDuration "${{ parameters.k6PerfDuration }}" -K6SleepSeconds "${{ parameters.k6SleepSeconds }}" -K6ExpectRateLimit "${{ parameters.k6ExpectRateLimit }}" -K6EnforceOkRate "${{ parameters.k6EnforceOkRate }}" -GrafanaProjectId "$(K6_CLOUD_PROJECT_ID)" -GrafanaToken "$(K6_CLOUD_TOKEN)"
                     ;;
                   04)
-                    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 -K6Output "${{ parameters.k6Output }}" -K6Cantidad "${{ parameters.registros }}" -K6Vus "${{ parameters.k6Vus }}" -PerfDuration "${{ parameters.k6PerfDuration }}" -K6SleepSeconds "${{ parameters.k6SleepSeconds }}" -K6ExpectRateLimit "${{ parameters.k6ExpectRateLimit }}" -K6EnforceOkRate "${{ parameters.k6EnforceOkRate }}" -GrafanaProjectId "$(K6_CLOUD_PROJECT_ID)" -GrafanaToken "$(K6_CLOUD_TOKEN)"
+                    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 -K6Output "$K6_OUT" -K6Cantidad "${{ parameters.registros }}" -K6Vus "${{ parameters.k6Vus }}" -PerfDuration "${{ parameters.k6PerfDuration }}" -K6SleepSeconds "${{ parameters.k6SleepSeconds }}" -K6ExpectRateLimit "${{ parameters.k6ExpectRateLimit }}" -K6EnforceOkRate "${{ parameters.k6EnforceOkRate }}" -GrafanaProjectId "$(K6_CLOUD_PROJECT_ID)" -GrafanaToken "$(K6_CLOUD_TOKEN)"
                     ;;
                   *) echo "caseTarget inválido para k6: ${{ parameters.caseTarget }}"; exit 1 ;;
                 esac
               fi
               if [ "${{ parameters.testType }}" = "security" ]; then
-                pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/generar-reportes-owasp-fechados.ps1 -Target "$(REGINSA_URL)" -BaseDir "reportes/security"
+                TOOL="${{ parameters.securityTool }}"
+                mkdir -p reportes/security
+
+                # --- Gitleaks ---
+                if [ "$TOOL" = "all" ] || [ "$TOOL" = "gitleaks" ]; then
+                  echo "=== [SEC] Gitleaks — Secret Detection ==="
+                  mkdir -p reportes/security/gitleaks
+                  curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz -o /tmp/gitleaks.tar.gz
+                  tar xzf /tmp/gitleaks.tar.gz -C /usr/local/bin/ gitleaks
+                  gitleaks detect --source . --report-format json --report-path reportes/security/gitleaks/gitleaks-report.json --config .gitleaks.toml || true
+                fi
+
+                # --- Semgrep ---
+                if [ "$TOOL" = "all" ] || [ "$TOOL" = "semgrep" ]; then
+                  echo "=== [SEC] Semgrep — SAST ==="
+                  mkdir -p reportes/security/semgrep
+                  pip3 install --quiet semgrep
+                  semgrep scan --config auto --config p/owasp-top-ten --config p/typescript --config p/javascript --config p/secrets --json -o reportes/security/semgrep/semgrep-report.json . || true
+                fi
+
+                # --- npm audit ---
+                if [ "$TOOL" = "all" ] || [ "$TOOL" = "npm-audit" ] || [ "$TOOL" = "depcheck" ]; then
+                  echo "=== [SEC] npm audit — SCA ==="
+                  mkdir -p reportes/security/sca
+                  npm audit --audit-level=high --json > reportes/security/sca/npm-audit.json || true
+                fi
+
+                # --- Dependency-Check ---
+                if [ "$TOOL" = "all" ] || [ "$TOOL" = "depcheck" ]; then
+                  echo "=== [SEC] OWASP Dependency-Check — SCA ==="
+                  mkdir -p reportes/security/dependency-check
+                  docker run --rm -v "$(pwd):/src" -v "$(pwd)/reportes/security/dependency-check:/report" \
+                    owasp/dependency-check:latest --project "REGINSA-QA" --scan /src \
+                    --format HTML --format JSON --out /report --failOnCVSS 9 || true
+                fi
+
+                # --- Trivy ---
+                if [ "$TOOL" = "all" ] || [ "$TOOL" = "trivy" ]; then
+                  echo "=== [SEC] Trivy — Container/Filesystem ==="
+                  mkdir -p reportes/security/trivy
+                  curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+                  trivy fs . --severity HIGH,CRITICAL --format json --output reportes/security/trivy/trivy-fs-report.json || true
+                fi
+
+                # --- OWASP ZAP ---
+                if [ "$TOOL" = "all" ] || [ "$TOOL" = "zap" ]; then
+                  echo "=== [SEC] OWASP ZAP — DAST ==="
+                  pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/generar-reportes-owasp-fechados.ps1 -Target "$(REGINSA_URL)" -BaseDir "reportes/security"
+                fi
+
+                # --- Nuclei ---
+                if [ "$TOOL" = "all" ] || [ "$TOOL" = "nuclei" ]; then
+                  echo "=== [SEC] Nuclei — DAST ==="
+                  mkdir -p reportes/security/nuclei
+                  docker run --rm -v "$(pwd)/reportes/security/nuclei:/output" \
+                    projectdiscovery/nuclei:latest \
+                    -u "$(REGINSA_URL)" \
+                    -severity critical,high,medium -exclude-tags dos \
+                    -jsonl -output /output/nuclei-report.jsonl \
+                    -sarif-export /output/nuclei-report.sarif || true
+                fi
               fi
               if [ "${{ parameters.testType }}" = "sonar" ]; then
                 # Requiere SonarQube accesible desde el agente (self-hosted o URL publica)

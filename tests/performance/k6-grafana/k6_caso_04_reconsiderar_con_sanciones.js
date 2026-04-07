@@ -2,19 +2,28 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import exec from 'k6/execution';
 import { Counter, Rate } from 'k6/metrics';
+import { ipPoolParams, logPoolStatus, getAssignedIP, getIpLastOctet } from './helpers/ip-pool.js';
 
 const pdfFile = open('../../../test-files/GENERAL N° 00001-2026-SUNEDU-SG-OTI.pdf', 'b');
 
 const BASE_API = __ENV.BASE_API || __ENV.BASE_URL || 'https://reginsaapiqa.sunedu.gob.pe/api';
 const DEBUG_ERRORS = (__ENV.K6_DEBUG_ERRORS || '1') === '1';
 const DEBUG_LIMIT = Math.max(1, Number.parseInt(__ENV.K6_DEBUG_ERRORS_MAX || '8', 10) || 8);
+let debugErrorCount = 0;
+
+// ── Registros por iteración (para informe) ────────────────────────────────
+const caso04Records = [];
+let _lastNumeroReconsideracion = '';
 const EXPECT_RATE_LIMIT = (__ENV.K6_EXPECT_RATE_LIMIT || '1') === '1';
 
 const ENDPOINT_LOGIN = '/Auth/Login';
-const ENDPOINT_LISTAR_CABECERA = '/CabeceraInfraccionSancion/ListarCabecerasSimple'; // Endpoint con campos de reconsideración
+const ENDPOINT_LISTAR_CABECERA = __ENV.K6_CASO04_LISTAR_CABECERA || '/CabeceraInfraccionSancion/ListarPaginado'; // Mismo endpoint que la UI y caso 03 (soporta sSortOrder)
 const ENDPOINT_LISTAR_DETALLE = '/DetalleInfraccionSancion/ListarPaginado';
 const ENDPOINT_ACTUALIZAR_CABECERA = '/CabeceraInfraccionSancion/Actualizar';
 const ENDPOINT_ACTUALIZAR_DETALLE = '/DetalleInfraccionSancion/Actualizar';
+
+const HTTP_DETAIL_MODE = (__ENV.K6_HTTP_DETAIL_MODE || 'all').toLowerCase();
+const HTTP_PUBLIC_NAME = (__ENV.K6_HTTP_PUBLIC_NAME || 'CabeceraInfraccionSancion/Actualizar').trim() || 'CabeceraInfraccionSancion/Actualizar';
 
 // Configuración de ejecución - soporta múltiples VUs para pruebas paralelas
 const vus = Math.max(1, parseIntEnv(__ENV.K6_VUS || __ENV.K6_PARALLEL_VUS || 1));
@@ -127,6 +136,14 @@ function extractTokenByPath(data, pathText) {
   return normalizeBearer(current);
 }
 
+function normalizeBearer(value) {
+  let token = String(value || '').trim();
+  if (!token) return '';
+  if (token.startsWith('<') && token.endsWith('>')) token = token.slice(1, -1);
+  if (!/^Bearer\s+/i.test(token)) token = `Bearer ${token}`;
+  return token;
+}
+
 function normalizeEndpointPath(value) {
   const endpoint = String(value || '').trim();
   if (!endpoint) return '/Auth/Login';
@@ -152,7 +169,8 @@ function obtainTokenByLogin() {
     for (const payload of payloads) {
       const response = http.post(url, JSON.stringify(payload), {
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        timeout: AUTH_TIMEOUT_MS
+        timeout: AUTH_TIMEOUT_MS,
+        tags: { name: HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : 'Auth/Login' }
       });
       
       if (response.status >= 200 && response.status < 300) {
@@ -262,8 +280,11 @@ function parseFloatEnv(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+logPoolStatus();
+
 export const options = {
   ...(CLOUD_PROJECT_ID > 0 ? { cloud: { projectID: CLOUD_PROJECT_ID, name: `caso04-${K6_MODE}` } } : {}),
+  systemTags: ['status', 'method', 'name', 'scenario', 'group', 'check', 'error'],
   tags: { caso: '04', modo: K6_MODE },
   scenarios: {
     caso04_reconsiderar_sanciones: {
@@ -303,6 +324,14 @@ function safeJson(response) {
 function isBusinessSuccess(response) {
   const json = safeJson(response);
   return response.status >= 200 && response.status < 300 && json?.bSuccess !== false;
+}
+
+function withRequestTags(baseOptions, endpointName) {
+  const _ipSuffix = getIpLastOctet();
+  const _ipPfx = _ipSuffix ? `IP ${_ipSuffix} ` : '';
+  const visibleName = `${_ipPfx}${HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : endpointName}`;
+  const opts = baseOptions || {};
+  return { ...opts, ...ipPoolParams(), tags: { ...(opts.tags || {}), name: visibleName } };
 }
 
 function reportStatus(response, operation) {
@@ -375,7 +404,9 @@ function loginReal() {
   });
   
   const response = http.post(`${BASE_API}/Auth/Login`, loginPayload, {
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    tags: { name: HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : 'Auth/Login' },
+    ...ipPoolParams()
   });
   
   if (response.status === 200) {
@@ -443,13 +474,13 @@ function listarCabecerasPaginadas(pageNumber, pageSize) {
     filtroEstado: null
   };
 
-  const response = http.post(`${BASE_API}${ENDPOINT_LISTAR_CABECERA}`, JSON.stringify(payload), {
+  const response = http.post(`${BASE_API}${ENDPOINT_LISTAR_CABECERA}`, JSON.stringify(payload), withRequestTags({
     headers: {
       'Authorization': tokenActual(),
       'Content-Type': 'application/json',
       'Accept': 'application/json'
     }
-  });
+  }, 'CabeceraInfraccionSancion/ListarPaginado'));
 
   reportStatus(response, `ListarCabecerasPaginadas[p=${pageNumber},size=${pageSize}]`);
   const success = isBusinessSuccess(response);
@@ -482,9 +513,9 @@ function listarDetalles(idCabecera) {
     sSortOrder: 'ASC',
     sFilterValue: ''
   };
-  const response = http.post(`${BASE_API}${ENDPOINT_LISTAR_DETALLE}`, JSON.stringify(payload), {
+  const response = http.post(`${BASE_API}${ENDPOINT_LISTAR_DETALLE}`, JSON.stringify(payload), withRequestTags({
     headers: headers()
-  });
+  }, 'DetalleInfraccionSancion/ListarPaginado'));
   reportStatus(response, `ListarDetalles[c=${idCabecera}]`);
   const success = isBusinessSuccess(response);
 
@@ -537,6 +568,7 @@ function actualizarCabecera(cabecera, ordinalConsecutivo) {
 
   const numeroSecuencial = 8800 + ordinalConsecutivo;
   const numeroReconsideracion = `${prefijoK6} ${numeroSecuencial}-${new Date().getFullYear()}`;
+  _lastNumeroReconsideracion = numeroReconsideracion;
 
   console.log(`[caso04] Generando numero de reconsideracion: ${numeroReconsideracion} (RUN_ID=${RUN_ID}, ordinal=${ordinalConsecutivo})`);
 
@@ -568,9 +600,9 @@ function actualizarCabecera(cabecera, ordinalConsecutivo) {
   }
   // LOG antes del PUT
   console.log(`[caso04] Ejecutando PUT para cabecera ID=${idCabecera}`);
-  const response = http.put(`${BASE_API}${ENDPOINT_ACTUALIZAR_CABECERA}/${idCabecera}`, cabMultipart, {
+  const response = http.put(`${BASE_API}${ENDPOINT_ACTUALIZAR_CABECERA}/${idCabecera}`, cabMultipart, withRequestTags({
     headers: { 'Authorization': tokenActual(), 'Accept': 'application/json' }
-  });
+  }, 'CabeceraInfraccionSancion/Actualizar'));
   reportStatus(response, `ActualizarCabecera[${cabecera?.IdCabeceraInfraccionSancion}]`);
   if (!isBusinessSuccess(response)) {
     console.error(`[caso04] PUT fallido para cabecera ID=${idCabecera}. Respuesta: ${response.body}`);
@@ -617,20 +649,20 @@ function toggleDetalle(detalle, cabeceraId) {
   if (originalBitReconsidera === 1) {
     console.log(`[caso04][toggle] Reconsidera ya marcado, aplicando ciclo: desmarcar -> marcar`);
     const payloadDesmarcar = buildDetallePayload(0, originalBitPago);
-    const respDesmarcar = http.put(`${BASE_API}${ENDPOINT_ACTUALIZAR_DETALLE}/${detalleId}`, JSON.stringify(payloadDesmarcar), { headers: headers() });
+    const respDesmarcar = http.put(`${BASE_API}${ENDPOINT_ACTUALIZAR_DETALLE}/${detalleId}`, JSON.stringify(payloadDesmarcar), withRequestTags({ headers: headers() }, 'DetalleInfraccionSancion/DesmarcarReconsidera'));
     reportStatus(respDesmarcar, `DesmarcarReconsidera[${detalleId}]`);
     sleep(0.5);
   }
 
   const payloadReconsidera = buildDetallePayload(1, originalBitPago);
-  const respMarcar = http.put(`${BASE_API}${ENDPOINT_ACTUALIZAR_DETALLE}/${detalleId}`, JSON.stringify(payloadReconsidera), { headers: headers() });
+  const respMarcar = http.put(`${BASE_API}${ENDPOINT_ACTUALIZAR_DETALLE}/${detalleId}`, JSON.stringify(payloadReconsidera), withRequestTags({ headers: headers() }, 'DetalleInfraccionSancion/MarcarReconsidera'));
   reportStatus(respMarcar, `MarcarReconsidera[${detalleId}]`);
 
   let nuevoBitPago = originalBitPago;
   if (originalBitPago === 0) {
     console.log(`[caso04][toggle] Pago no estaba marcado, marcando...`);
     const payloadPago = buildDetallePayload(1, 1);
-    const respPago = http.put(`${BASE_API}${ENDPOINT_ACTUALIZAR_DETALLE}/${detalleId}`, JSON.stringify(payloadPago), { headers: headers() });
+    const respPago = http.put(`${BASE_API}${ENDPOINT_ACTUALIZAR_DETALLE}/${detalleId}`, JSON.stringify(payloadPago), withRequestTags({ headers: headers() }, 'DetalleInfraccionSancion/MarcarPago'));
     reportStatus(respPago, `MarcarPago[${detalleId}]`);
     nuevoBitPago = 1;
     sleep(0.5);
@@ -712,7 +744,7 @@ export default function () {
       return;
     }
 
-    // ✅ NO re-ordenar: usar el orden del API (FECHA_REGISTRO DESC) para coincidir con la UI
+    // ✅ Orden viene del API (FECHA_REGISTRO DESC via ListarPaginado) — coincide con la UI
     const elegibles = FILTRAR_SOLO_ELEGIBLES
       ? totalCabeceras.filter(cabeceraElegibleSinReconsideracion)
       : totalCabeceras;
@@ -772,6 +804,19 @@ export default function () {
     exitoTotal = cabecerasProcesadas > 0 && medidasProcesadas > 0;
     console.log(`[caso04] Iteracion completada: ${cabecerasProcesadas} cabeceras, ${medidasProcesadas} medidas procesadas`);
 
+    if (cabecerasProcesadas > 0) {
+      caso04Records.push({
+        ip: getAssignedIP() || 'local',
+        idCabecera: idCabecera,
+        expediente: String(cabecera?.NumeroExpediente || cabecera?.numeroExpediente || ''),
+        fechaModificacion: String(cabecera?.FechaResolucion || cabecera?.fechaResolucion || '').split('T')[0],
+        numeroReconsideracion: _lastNumeroReconsideracion,
+        fechaReconsideracion: new Date().toISOString().split('T')[0],
+        resultado: exitoTotal ? 'OK' : 'PARCIAL',
+        timestamp: new Date().toISOString()
+      });
+    }
+
   } catch (error) {
     console.error(`[caso04] Error en iteracion: ${error.message}`);
     exitoTotal = false;
@@ -799,4 +844,15 @@ export default function () {
   if (K6_SLEEP_SECONDS > 0) {
     sleep(K6_SLEEP_SECONDS);
   }
+}
+
+export function handleSummary(_data) {
+  const output = {
+    run_id: RUN_ID,
+    modo: __ENV.K6_OUTPUT || 'local',
+    fecha: new Date().toISOString().split('T')[0],
+    ip_pool: (__ENV.K6_LOCAL_IPS || '').trim(),
+    registros: caso04Records
+  };
+  return { 'reportes/k6-caso04-registros.json': JSON.stringify(output, null, 2) };
 }

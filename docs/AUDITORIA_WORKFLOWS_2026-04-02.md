@@ -1,6 +1,7 @@
 # 📋 AUDITORÍA DE WORKFLOWS - REGINSA 2026-04-02
 
 ## 🎯 Resumen Ejecutivo
+
 - **Total de workflows**: 31 (antes) → 31 (después)
 - **CRIADOS**: 1 nuevo workflow
 - **ACTUALIZADOS**: 0 (no se han hecho cambios aún, esperando aprobación)
@@ -12,7 +13,8 @@
 ## 📦 INVENTARIO ACTUAL (POST-CREACIÓN K6-CASO00)
 
 ### ✅ FUNCIONALES (4 casos + 1 agregado) - SELFHOSTED
-```
+
+```text
 reginsa-funcional-pro-caso01-selfhosted.yml ✅ Existe
 reginsa-funcional-pro-caso02-selfhosted.yml ✅ Existe
 reginsa-funcional-pro-caso03-selfhosted.yml ✅ Existe
@@ -20,8 +22,9 @@ reginsa-funcional-pro-caso04-selfhosted.yml ✅ Existe
 reginsa-funcional-selfhosted.yml           ✅ Existe
 ```
 
-### ✅ K6 PERFORMANCE (5 casos: 00-04) - SELFHOSTED  
-```
+### ✅ K6 PERFORMANCE (5 casos: 00-04) - SELFHOSTED
+
+```text
 reginsa-k6-caso00-selfhosted.yml ✅ CREADO (nuevo)
 reginsa-k6-caso01-selfhosted.yml ✅ Existe
 reginsa-k6-caso02-selfhosted.yml ✅ Existe
@@ -30,7 +33,8 @@ reginsa-k6-caso04-selfhosted.yml ✅ Existe
 ```
 
 ### ✅ POSTMAN/NEWMAN (4 casos) - SELFHOSTED
-```
+
+```text
 reginsa-postman-caso01-selfhosted.yml ✅ Existe
 reginsa-postman-caso02-selfhosted.yml ✅ Existe
 reginsa-postman-caso03-selfhosted.yml ✅ Existe
@@ -39,7 +43,8 @@ reginsa-postman-selfhosted.yml          ✅ Existe
 ```
 
 ### ✅ VALIDACIONES/QUALITY (4 casos) - SELFHOSTED
-```
+
+```text
 reginsa-validaciones-caso01-selfhosted.yml ✅ Existe
 reginsa-validaciones-caso02-selfhosted.yml ✅ Existe
 reginsa-validaciones-caso03-selfhosted.yml ✅ Existe
@@ -47,7 +52,8 @@ reginsa-validaciones-caso04-selfhosted.yml ✅ Existe
 ```
 
 ### ✅ SMOKE TESTS (4 casos) - CLOUD SELFHOSTED
-```
+
+```text
 reginsa-smoke-caso01-cloud-selfhosted.yml ✅ Existe
 reginsa-smoke-caso02-cloud-selfhosted.yml ✅ Existe
 reginsa-smoke-caso03-cloud-selfhosted.yml ✅ Existe
@@ -55,7 +61,8 @@ reginsa-smoke-caso04-cloud-selfhosted.yml ✅ Existe
 ```
 
 ### ✅ SEGURIDAD & CALIDAD - MIXTO
-```
+
+```text
 reginsa-owasp-selfhosted.yml              ✅ Existe
 reginsa-sonarqube-selfhosted.yml          ✅ Existe
 reginsa-sonarqube.yml                     ✅ Existe (versión cloud)
@@ -64,10 +71,11 @@ reginsa-quality-gate-selfhosted.yml       ✅ Existe
 ```
 
 ### ✅ PERFORMANCE & ENTERPRISE (GENÉRICOS)
-```
+
+```text
 reginsa-performance-selfhosted.yml ✅ Existe
 reginsa-performance.yml            ✅ Existe (escala sin selfhosted)
-reginsa-funcional.yml              ✅ Existe (scale sin selfhosted) 
+reginsa-funcional.yml              ✅ Existe (scale sin selfhosted)
 reginsa-enterprise.yml             ✅ Existe
 ```
 
@@ -76,16 +84,19 @@ reginsa-enterprise.yml             ✅ Existe
 ## 🔍 ANÁLISIS DE DUPLICADOS POSIBLES
 
 ### Pareja 1: Performance
+
 - `reginsa-performance.yml` (escala, workers=6, repeat=30)
 - `reginsa-performance-selfhosted.yml`
 - **Status**: ⏳ REVISAR - ¿Son realmente diferentes? Posible consolidación
 
 ### Pareja 2: SonarQube Security
+
 - `reginsa-sonarqube.yml` (no-selfhosted, GitHub runners)
 - `reginsa-sonarqube-selfhosted.yml` (self-hosted runners)
 - **Status**: ✅ VÁLIDOS - Diferentes plataformas de ejecución
 
 ### Pareja 3: Funcional Scale
+
 - `reginsa-funcional.yml` (workers=6, repeat=30, pool_target=1200)
 - `reginsa-funcional-pro-casoXX-selfhosted.yml` (workers=3, repeat=3)
 - **Status**: ✅ VÁLIDOS - Diferentes propósitos (carga vs. humo)
@@ -95,6 +106,7 @@ reginsa-enterprise.yml             ✅ Existe
 ## 📝 CAMBIOS REALIZADOS
 
 ### ✅ COMPLETADO
+
 1. **Creado**: `reginsa-k6-caso00-selfhosted.yml`
    - Workflow para K6 smoke test (login/logout)
    - VUs por defecto: 2
@@ -107,6 +119,7 @@ reginsa-enterprise.yml             ✅ Existe
 ## 🛠️ PRÓXIMOS PASOS SUGERIDOS (SIN HACER COMMITS AÚN)
 
 ### OPCIÓN 1: Consolidación Agresiva (No duplicar)
+
 - ❌ Eliminar `reginsa-performance.yml` (mantener solo selfhosted)
 - ❌ Eliminar `reginsa-funcional.yml` (mantener solo pro-casoXX)
 - ✅ Mantener ambas versiones de SonarQube (diferentes runners)
@@ -114,6 +127,7 @@ reginsa-enterprise.yml             ✅ Existe
 **Resultado**: 28 workflows (reducción de 31)
 
 ### OPCIÓN 2: Mantener Flexibilidad (Usuario puede elegir)
+
 - ✅ Mantener todas las variantes (escala, pro, cloud, selfhosted)
 - ✅ Máxima flexibilidad para diferentes casos de uso
 - ⚠️ Más workflows pero sin duplicación real
@@ -121,6 +135,7 @@ reginsa-enterprise.yml             ✅ Existe
 **Resultado**: 31 workflows (actual)
 
 ### OPCIÓN 3: Híbrida (Recomendada)
+
 - ❌ Fusionar workflows con parámetros `workflow_call` reutilizables
 - ✅ Mantener workflows específicos por caso (funcional-pro, k6-casoXX, postman-casoXX)
 - ✅ Consolidar genéricos (enterprise, performance, security en uno)
@@ -132,7 +147,7 @@ reginsa-enterprise.yml             ✅ Existe
 ## 📊 ESTADO DE SINCRONIZACIÓN
 
 | Categoría | Count | Consistencia | Estado |
-|-----------|-------|--------------|--------|
+| ----------- | ------- | -------------- | -------- |
 | Funcionales | 5 | ✅ Consistent | Listos |
 | K6 Performance | 5 | ✅ Consistent | **Listos (incluido caso00)** |
 | Postman/Newman | 5 | ⏳ Review | Verificar endpoints paginado |
@@ -146,7 +161,8 @@ reginsa-enterprise.yml             ✅ Existe
 
 ## 🎬 RECOMENDACIÓN FINAL
 
-✅ **SIGUIENTE ACCIÓN**: 
+✅ **SIGUIENTE ACCIÓN**:
+
 1. Confirmar `OPCIÓN 1`, `OPCIÓN 2` u `OPCIÓN 3` arriba
 2. Una vez confirmado, procederé a:
    - Actualizar triggers y nombres consistentemente
@@ -156,4 +172,3 @@ reginsa-enterprise.yml             ✅ Existe
    - **NO COMITEAR** hasta que usuario apruebe
 
 **Nota**: El workflow `reginsa-k6-caso00-selfhosted.yml` está listo para usar sin commits adicionales.
-

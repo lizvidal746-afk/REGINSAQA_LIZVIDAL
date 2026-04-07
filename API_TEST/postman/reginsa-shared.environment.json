@@ -178,6 +178,12 @@
       "value": "a8211ba9-d0c1-4f7e-853c-52e1b1c686ce",
       "description": "GUID del sistema REGINSA en Punku QA - fijo para este ambiente",
       "enabled": true
+    },
+    {
+      "key": "id_entidad_encontrada",
+      "value": "",
+      "description": "ID de entidad encontrada en Caso 06.2 por búsqueda - se llena automáticamente",
+      "enabled": true
     }
   ]
 }

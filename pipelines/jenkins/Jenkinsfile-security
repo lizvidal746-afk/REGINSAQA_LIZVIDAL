@@ -249,9 +249,9 @@ pipeline {
                         projectdiscovery/nuclei:latest \
                         -u "${REGINSA_URL}" \
                         -severity critical,high,medium \
-                        -exclude-type dos \
+                        -exclude-tags dos \
                         -jsonl -output /output/nuclei-report.jsonl \
-                        -sarif-export /output/nuclei-report.sarif || true
+                        -sarif-export /output/nuclei-report.sarif
                 '''
                 archiveArtifacts artifacts: 'reportes/security/nuclei/**', allowEmptyArchive: true
             }

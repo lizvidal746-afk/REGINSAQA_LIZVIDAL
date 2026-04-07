@@ -5,7 +5,7 @@ param(
   [ValidateSet('local','cloud')]
   [string]$K6Output = 'local',
 
-  [int]$K6Cantidad = 2,
+  [int]$K6Cantidad = 1,
   [double]$K6SleepSeconds = 0,
   [int]$K6Vus = 1,
   [string]$PerfDuration = '10m',
@@ -45,6 +45,11 @@ function Resolve-NonEmpty([string]$primary, [string]$fallback) {
 $grafanaSecretsHelper = Join-Path $PSScriptRoot 'shared/grafana-secrets.ps1'
 if (Test-Path $grafanaSecretsHelper) {
   . $grafanaSecretsHelper
+}
+
+if ([string]::IsNullOrWhiteSpace($env:K6_LOCAL_IPS)) {
+  $ipDetector = Join-Path $PSScriptRoot 'shared/detect-k6-ips.ps1'
+  if (Test-Path $ipDetector) { & $ipDetector }
 }
 
 function Get-CliOption([string]$name) {
@@ -105,11 +110,19 @@ if (-not [string]::IsNullOrWhiteSpace($cantidadRaw)) {
   }
 }
 
+$vusRaw = Resolve-NonEmpty (Get-CliOption 'vus') $env:npm_config_vus
+if (-not [string]::IsNullOrWhiteSpace($vusRaw)) {
+  $vusParsed = 0
+  if ([int]::TryParse($vusRaw, [ref]$vusParsed) -and $vusParsed -gt 0) {
+    $K6Vus = $vusParsed
+  }
+}
+
 $GrafanaProjectId = Resolve-NonEmpty $GrafanaProjectId (Resolve-NonEmpty (Get-CliOption 'project') $env:npm_config_project)
 $GrafanaToken = Resolve-NonEmpty $GrafanaToken (Resolve-NonEmpty (Get-CliOption 'token') $env:npm_config_token)
 
 if (Get-Command Resolve-GrafanaCloudSecrets -ErrorAction SilentlyContinue) {
-  $resolvedGrafanaSecrets = Resolve-GrafanaCloudSecrets -GrafanaProjectId $GrafanaProjectId -GrafanaToken $GrafanaToken -PersistProvided
+  $resolvedGrafanaSecrets = Resolve-GrafanaCloudSecrets -GrafanaProjectId $GrafanaProjectId -GrafanaToken $GrafanaToken -PersistProvided -Interactive:($K6Output -eq 'cloud')
   $GrafanaProjectId = [string]$resolvedGrafanaSecrets.ProjectId
   $GrafanaToken = [string]$resolvedGrafanaSecrets.Token
 }
@@ -136,10 +149,7 @@ $k6Mode = if ($k6CantidadFinal -le 2) { 'smoke' } else { 'fast' }
 $k6VusFinal = [Math]::Max(1, $K6Vus)
 $k6SleepFinal = [string]$K6SleepSeconds
 
-if ($K6Output -eq 'local' -and -not [string]::IsNullOrWhiteSpace($cloudProjectId) -and -not [string]::IsNullOrWhiteSpace($cloudToken)) {
-  $K6Output = 'cloud'
-  Write-Host 'Detectado --project/--token: activando K6Output=cloud automaticamente.' -ForegroundColor Yellow
-}
+# Respetar K6Output tal como fue indicado: local=local, cloud=cloud.
 
 if (-not (Test-Path 'reportes')) {
   New-Item -ItemType Directory -Path 'reportes' | Out-Null
@@ -156,9 +166,12 @@ $env:K6_EXPECT_RATE_LIMIT = $K6ExpectRateLimit
 $env:K6_ENFORCE_OK_RATE = $K6EnforceOkRate
 $env:K6_RETRY_429_MAX = '0'
 $env:K6_CASO03_STRICT_ISOLATION = Resolve-NonEmpty $env:K6_CASO03_STRICT_ISOLATION '1'
-$env:K6_HTTP_DETAIL_MODE = Resolve-NonEmpty $env:K6_HTTP_DETAIL_MODE 'guardar_only'
+$env:K6_HTTP_DETAIL_MODE = Resolve-NonEmpty $env:K6_HTTP_DETAIL_MODE 'all'
 $defaultPublicApiName = Resolve-NonEmpty $env:K6_CASO03_GUARDAR_RECONSIDERACION '/Reconsideracion/GuardarCabecera'
 $env:K6_HTTP_PUBLIC_NAME = Resolve-NonEmpty $env:K6_HTTP_PUBLIC_NAME ($defaultPublicApiName.TrimStart('/'))
+# Limpiar env vars de corrida anterior para que el generador incremente correctamente
+Remove-Item Env:K6_PREFIX_SEQUENCE -ErrorAction SilentlyContinue
+Remove-Item Env:K6_RUN_ID -ErrorAction SilentlyContinue
 $k6PrefixInfo = $null
 try {
   $k6PrefixRaw = & node scripts/generar-k6-prefijo-global.js

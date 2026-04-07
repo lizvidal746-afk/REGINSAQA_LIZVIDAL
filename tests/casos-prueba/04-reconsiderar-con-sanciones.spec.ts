@@ -151,14 +151,18 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
           v === '' ||
           v === '-' ||
           v === '--' ||
+          v === '\u2013' ||
+          v === '\u2014' ||
           v === 'null' ||
           v === 'undefined' ||
           v === 'n/a' ||
           v === 'na' ||
           /^0+$/i.test(v) ||
-          /^0{4}-0{2}-0{2}(t0{2}:0{2}:0{2}(\.0+)?z?)?$/i.test(v) ||
-          /^0001-01-01(t00:00:00(\.0+)?z?)?$/i.test(v) ||
-          /^01\/01\/0001(\s+00:00(:00)?)?$/i.test(v)
+          /^0{4}-0{2}-0{2}(t0{2}:0{2}:0{2}(\.0+)?(z|[+-]\d{2}:\d{2})?)?$/i.test(v) ||
+          /^0001-01-01(t00:00:00(\.0+)?(z|[+-]\d{2}:\d{2})?)?$/i.test(v) ||
+          /^1900-01-01(t00:00:00(\.0+)?(z|[+-]\d{2}:\d{2})?)?$/i.test(v) ||
+          /^01\/01\/0001(\s+00:00(:00)?)?$/i.test(v) ||
+          /^01\/01\/1900(\s+00:00(:00)?)?$/i.test(v)
         ) {
           return true;
         }
@@ -246,7 +250,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
         }
       };
 
-      console.log('   ℹ️ Criterio de vacío: rutaResolucionReconsideracion/resolucionReconsideracion/fechaResolucionReconsideracion/fechaModificacion (null o vacío) por idCabeceraInfraccionSancion.');
+      console.log('   ℹ️ Criterio de vacío: rutaResolucionReconsideracion/resolucionReconsideracion/fechaResolucionReconsideracion (null o vacío) por idCabeceraInfraccionSancion.');
 
       
 
@@ -423,15 +427,16 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
 
           const fechaResolucion = fechasDetectadas[0] || null;
           const fechaResolucionValida = fechasDetectadas.length === 0 || fechasDetectadas.some((f) => f <= hoy);
-          const tresCamposVaciosUI = isEmptyValor(fModificacion) && isEmptyValor(nReconsid) && isEmptyValor(fReconsid);
+          const tresCamposVaciosUI = isEmptyValor(nReconsid) && isEmptyValor(fReconsid);
 
           const claveActual = claveFila(expedienteFila, resolucionFila);
           const clavePorExpediente = claveFila(expedienteFila, '');
           const clavePorResolucion = claveFila('', resolucionFila);
 
-          const exactMatch = cabecerasApiPagina.find(
+          const exactMatches = cabecerasApiPagina.filter(
             (item) => claveFila(item.numeroExpediente, item.numeroResolucion) === claveActual
-          ) || null;
+          );
+          const exactMatch = exactMatches.length === 1 ? exactMatches[0] : null;
 
           const candidatosPorExpediente = cabecerasApiPagina.filter(
             (item) => claveFila(item.numeroExpediente, '') === clavePorExpediente
@@ -446,24 +451,29 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
             ? cabecerasApiPagina[rowIndex]
             : null;
 
-          const apiMatch = exactMatch || matchPorExpedienteUnico || matchPorResolucionUnico || matchPorIndice;
+          // Para vacíos: solo confiar en matches por clave, no por índice (el orden API/UI puede diferir)
+          const apiMatchConfiable = exactMatch || matchPorExpedienteUnico || matchPorResolucionUnico;
+          const apiMatch = apiMatchConfiable || matchPorIndice;
 
-          const cuatroCamposVaciosApi = apiMatch
+          const tresCamposVaciosApi = apiMatchConfiable
             ? (
-              isEmptyValor(apiMatch.rutaResolucionReconsideracion)
-              && isEmptyValor(apiMatch.resolucionReconsideracion)
-              && isEmptyValor(apiMatch.fechaResolucionReconsideracion)
-              && isEmptyValor(apiMatch.fechaModificacion)
+              isEmptyValor(apiMatchConfiable.rutaResolucionReconsideracion)
+              && isEmptyValor(apiMatchConfiable.resolucionReconsideracion)
+              && isEmptyValor(apiMatchConfiable.fechaResolucionReconsideracion)
             )
             : null;
 
-          const cumpleCamposVacios = cuatroCamposVaciosApi ?? tresCamposVaciosUI;
+          // UI tiene precedencia visual: si se ven campos vacíos, el registro es candidato
+          const cumpleCamposVacios = tresCamposVaciosUI || (tresCamposVaciosApi === true);
+          if (tresCamposVaciosUI && tresCamposVaciosApi === false) {
+            console.log(`   ⚠️ Fila ${rowIndex + 1}: UI muestra vacíos pero API reporta datos (se confía en UI)`);
+          }
           const esApto = cumpleCamposVacios && fechaResolucionValida;
 
           return {
             esApto,
             cumpleCamposVacios,
-            fuenteCamposVacios: apiMatch ? 'API' : 'UI',
+            fuenteCamposVacios: apiMatchConfiable ? 'API' : 'UI',
             idCabeceraInfraccionSancion: apiMatch?.idCabeceraInfraccionSancion ?? null,
             sancionTexto,
             infraccionesTexto,
@@ -949,7 +959,8 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
           : false;
 
         const debeMarcarPago = tieneMulta;
-        const debeMarcarReconsidera = tieneMulta || tieneSuspension || tieneCancelacion;
+        // RECONSIDERA solo se habilita cuando PAGÓ está marcado; PAGÓ requiere Multa
+        const debeMarcarReconsidera = (tieneMulta || pagoActual) && (tieneMulta || tieneSuspension || tieneCancelacion);
         if (debeMarcarPago === pagoActual && debeMarcarReconsidera === reconsideraActual) {
           console.log(`   ✅ Registro ${filaIdx + 1} ya cumple Pagó/Reconsidera, se omite edición.`);
           registrosYaConformes++;
@@ -1035,8 +1046,9 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
           
           // REGLAS DE MARCADO (según sanción en la tabla)
           const debeMarcarPago = tieneMulta || multaMarcada;
-          const debeMarcarReconsidera =
-            tieneMulta || tieneSuspension || tieneCancelacion || multaMarcada || suspensionMarcada || cancelacionMarcada;
+          // RECONSIDERA solo se habilita cuando PAGÓ está marcado; sin Multa → PAGÓ no se marca → RECONSIDERA disabled
+          const debeMarcarReconsidera = debeMarcarPago &&
+            (tieneMulta || tieneSuspension || tieneCancelacion || multaMarcada || suspensionMarcada || cancelacionMarcada);
 
           const obtenerEstadoCheckInput = async (inputLocator: ReturnType<typeof dialog.locator>) => {
             const input = inputLocator.first();
@@ -1059,7 +1071,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
 
               if (estado.checked) return true;
               if (estado.disabled) {
-                // Espera fija eliminada para máxima velocidad
+                await page.waitForTimeout(300);
                 continue;
               }
 
@@ -1102,6 +1114,9 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
             console.log(`      → Multa encontrada, marcando PAGÓ`);
             const pagoMarcado = await forzarCheckInput(inputPago, 'PAGÓ');
             console.log(`         ✓ PAGÓ: ${pagoMarcado ? '✅ MARCADO' : '⭕ NO'}`);
+            if (pagoMarcado) {
+              await page.waitForTimeout(400);
+            }
           }
           
           // Marcar RECONSIDERA según reglas
@@ -1156,7 +1171,12 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
             throw new Error('No se pudo marcar PAGÓ en el modal.');
           }
           if (debeMarcarReconsidera && !reconsideraFinal) {
-            throw new Error('No se pudo marcar RECONSIDERA en el modal.');
+            const reconsideraState = await obtenerEstadoCheckInput(inputReconsidera);
+            if (reconsideraState.disabled && !pagoFinal) {
+              console.log(`      ℹ️ RECONSIDERA disabled sin PAGÓ (sin Multa): comportamiento esperado de la app.`);
+            } else {
+              throw new Error('No se pudo marcar RECONSIDERA en el modal.');
+            }
           }
           
           // Guardar

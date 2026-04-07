@@ -1,0 +1,174 @@
+{
+    "metrics": {
+        "create_business_ok_total": {
+            "count": 3,
+            "rate": 48.800881018571985
+        },
+        "create_business_expected_rate": {
+            "passes": 3,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.95": false
+            },
+            "value": 1
+        },
+        "http_req_tls_handshaking": {
+            "max": 30.243,
+            "p(90)": 24.1944,
+            "p(95)": 27.218699999999995,
+            "avg": 10.081,
+            "min": 0,
+            "med": 0
+        },
+        "create_business_ok_rate": {
+            "passes": 3,
+            "fails": 0,
+            "value": 1
+        },
+        "http_req_duration": {
+            "max": 11.4308,
+            "p(90)": 10.04608,
+            "p(95)": 10.738439999999999,
+            "avg": 6.482166666666667,
+            "min": 3.5085,
+            "med": 4.5072,
+            "thresholds": {
+                "p(95)<3000": false,
+                "avg<1500": false
+            }
+        },
+        "http_reqs": {
+            "count": 3,
+            "rate": 48.800881018571985
+        },
+        "http_req_blocked": {
+            "min": 0,
+            "med": 0,
+            "max": 41.0035,
+            "p(90)": 32.802800000000005,
+            "p(95)": 36.90315,
+            "avg": 13.667833333333334
+        },
+        "iteration_duration": {
+            "avg": 20.490866666666665,
+            "min": 3.5084,
+            "med": 4.5071,
+            "max": 53.4571,
+            "p(90)": 43.6671,
+            "p(95)": 48.562099999999994
+        },
+        "create_http_401_total": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count<=0": false
+            }
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 3,
+            "value": 0
+        },
+        "create_http_404_total": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count<=0": false
+            }
+        },
+        "http_req_receiving": {
+            "max": 0.46,
+            "p(90)": 0.44784,
+            "p(95)": 0.45392,
+            "avg": 0.2864,
+            "min": 0,
+            "med": 0.3992
+        },
+        "rate_limited_requests": {
+            "passes": 0,
+            "fails": 3,
+            "value": 0
+        },
+        "checks": {
+            "fails": 0,
+            "passes": 6,
+            "value": 1
+        },
+        "data_received": {
+            "count": 6763,
+            "rate": 110013.45277620078
+        },
+        "http_req_connecting": {
+            "avg": 0.2786666666666667,
+            "min": 0,
+            "med": 0,
+            "max": 0.836,
+            "p(90)": 0.6688000000000001,
+            "p(95)": 0.7523999999999998
+        },
+        "data_sent": {
+            "count": 4061,
+            "rate": 66060.12593880694
+        },
+        "create_http_200_total": {
+            "count": 3,
+            "rate": 48.800881018571985
+        },
+        "create_http_5xx_total": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count<=0": false
+            }
+        },
+        "create_http_403_total": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count<=0": false
+            }
+        },
+        "http_req_waiting": {
+            "avg": 6.021833333333333,
+            "min": 3.1093,
+            "med": 3.5254,
+            "max": 11.4308,
+            "p(90)": 9.84972,
+            "p(95)": 10.64026
+        },
+        "iterations": {
+            "count": 3,
+            "rate": 48.800881018571985
+        },
+        "http_req_sending": {
+            "med": 0,
+            "max": 0.5218,
+            "p(90)": 0.41744000000000003,
+            "p(95)": 0.46962,
+            "avg": 0.17393333333333336,
+            "min": 0
+        }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "caso01 crear status 200 esperado": {
+                    "name": "caso01 crear status 200 esperado",
+                    "path": "::caso01 crear status 200 esperado",
+                    "id": "fc7dbbbe851f4f00d87ba3dce402cd49",
+                    "passes": 3,
+                    "fails": 0
+                },
+                "caso01 crear status 429 esperado por limite de regla de negocio": {
+                    "name": "caso01 crear status 429 esperado por limite de regla de negocio",
+                    "path": "::caso01 crear status 429 esperado por limite de regla de negocio",
+                    "id": "868030476ea554b857713e026e7430e4",
+                    "passes": 3,
+                    "fails": 0
+                }
+            }
+    }
+}

@@ -22,8 +22,8 @@ Unificar hallazgos de escaneo automatizado (SonarQube y OWASP) con evidencia man
 ## Tabla de cruce
 
 | ID | Fuente automatizada | Regla/Alerta | Repositorio/Modulo | Archivo/Endpoint | Severidad auto | Evidencia manual asociada | Resultado del cruce | Impacto real | Decision | Responsable | Fecha compromiso | Estado |
-|----|---------------------|--------------|--------------------|------------------|----------------| -----------------------
-|--------|---------------------|--------------|----------|-------------|------------------|
+| ---- | --------------------- | -------------- | -------------------- | ------------------ | ---------------- | -----------------------
+| -------- | --------------------- | -------------- | ---------- | ------------- | ------------------ |
 | 1 | SonarQube | (ej. typescript:Sxxxx) | SI091_REGINSA_FRONTEND-1 | src/... | Major | Caso manual X + captura Y | Coincide parcial | Medio | Corregir en sprint | Dev Front | 2026-03-20 | Pendiente |
 | 2 | OWASP ZAP | CSP: script-src unsafe-eval | ENLINEA/REGINSA WEB | / + headers CSP | Medium | Prueba manual de cabeceras | Confirmado | Alto | Corregir prioritario | Dev Web/DevOps | 2026-03-18 | En progreso |
 | 3 | OWASP ZAP | Server header leak | Gateway/API | Header Server | Low | Verificacion manual curl/browser | Confirmado | Medio | Hardening | DevOps | 2026-03-22 | Pendiente |

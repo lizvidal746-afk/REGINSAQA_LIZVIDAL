@@ -8,6 +8,8 @@ const ENDPOINT_CREAR = __ENV.K6_CASO01_CREAR || '/Entidad/Crear';
 const STRICT_UNIQUE = (__ENV.K6_STRICT_UNIQUE || '0') === '1';
 const BURST_MODE = (__ENV.K6_BURST_MODE || '0') === '1';
 const COMPAT_PAYLOAD_MODE = (__ENV.K6_CASO01_COMPAT_PAYLOAD || '1') !== '0';
+const HTTP_DETAIL_MODE = (__ENV.K6_HTTP_DETAIL_MODE || 'all').toLowerCase();
+const HTTP_PUBLIC_NAME = (__ENV.K6_HTTP_PUBLIC_NAME || 'Entidad/Crear').trim() || 'Entidad/Crear';
 
 const HTTP_429_TOTAL = new Counter('http_429_total');
 const RATE_LIMITED_REQUESTS = new Rate('rate_limited_requests');
@@ -177,7 +179,8 @@ function obtainRuntimeToken() {
           'Content-Type': 'application/json',
           Accept: 'application/json'
         },
-        timeout: `${AUTH_TIMEOUT_MS}ms`
+        timeout: `${AUTH_TIMEOUT_MS}ms`,
+        tags: { name: HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : 'Auth/Login' }
       });
 
       if (response.status < 200 || response.status >= 300) continue;
@@ -225,6 +228,7 @@ if (STRICT_UNIQUE && burstTotalIterations > DATASET.length) {
 }
 
 export const options = {
+  systemTags: ['status', 'method', 'name', 'scenario', 'group', 'check', 'error'],
   scenarios: {
     caso01_agregar_administrado: {
       executor: BURST_MODE ? 'per-vu-iterations' : 'shared-iterations',
@@ -481,7 +485,10 @@ export default function () {
   const response = http.post(
     `${BASE_URL}${ENDPOINT_CREAR}`,
     JSON.stringify(payload),
-    { headers: authHeaders() }
+    {
+      headers: authHeaders(),
+      tags: { name: HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : 'Entidad/Crear' }
+    }
   );
 
   mark429(response);

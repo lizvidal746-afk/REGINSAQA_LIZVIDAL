@@ -66,7 +66,11 @@ param(
   [string]$TokenJwt   = $env:REGINSA_TOKEN_JWT,
 
   [string]$OutDir   = 'reportes/newman',
-  [switch]$SinHtml
+  [switch]$SinHtml,
+
+  # -- Pool compartido Caso 01 (k6-caso01-dataset.json / administrados-pool.json) --
+  # Si se pasa -SinPool, el pre-request de la colección genera datos aleatorios (fallback).
+  [switch]$SinPool
 )
 
 $ErrorActionPreference = 'Stop'
@@ -293,6 +297,47 @@ function Get-MasterCaseFolders {
   }
 
   return @($folders)
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Función: leer un registro del pool compartido Caso 01
+#   Prioridad: reportes/k6-caso01-dataset.json → reportes/administrados-pool.json
+#   Retorna PSCustomObject{Ruc, RazonSocial, NombreComercial, Source} o $null
+# ─────────────────────────────────────────────────────────────────────────────
+function Get-PoolRecord {
+  $candidates = @(
+    (Join-Path $Root 'reportes/k6-caso01-dataset.json'),
+    (Join-Path $Root 'reportes/administrados-pool.json')
+  )
+
+  foreach ($candidatePath in $candidates) {
+    if (-not (Test-Path $candidatePath)) { continue }
+    try {
+      $raw  = Get-Content -Path $candidatePath -Raw -Encoding UTF8
+      $data = $raw | ConvertFrom-Json
+      $arr  = if ($data -is [array]) { @($data) } else { @() }
+      if ($arr.Count -eq 0) { continue }
+
+      $idx     = Get-Random -Minimum 0 -Maximum $arr.Count
+      $record  = $arr[$idx]
+      $ruc     = [string]($record.ruc)
+      $razon   = [string]$(if ($record.razonSocial)     { $record.razonSocial }     else { $record.razon_social })
+      $comerc  = [string]$(if ($record.nombreComercial) { $record.nombreComercial } else { $record.nombre_comercial })
+      if (-not $comerc) { $comerc = $razon }
+
+      if ([System.Text.RegularExpressions.Regex]::IsMatch($ruc, '^\d{11}$') -and
+          -not [string]::IsNullOrWhiteSpace($razon)) {
+        return [PSCustomObject]@{
+          Ruc            = $ruc
+          RazonSocial    = $razon
+          NombreComercial = $comerc
+          Source         = (Split-Path $candidatePath -Leaf)
+        }
+      }
+    } catch {}
+  }
+
+  return $null
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -663,6 +708,32 @@ if (-not $TokenPreCargado) {
 if (-not $Results['00-Login-Punku']) {
   Write-Host '  [STOP] Login fallo. No se ejecutan casos dependientes.' -ForegroundColor Red
 } else {
+
+  # ─── Inyectar datos del pool compartido Caso 01 (k6 + funcional) ────────────
+  # Solo para casos que incluyan el flujo Registrar Administrado (01, all, master).
+  # El pre-request de la colección lee estas vars y sólo genera aleatoriamente si
+  # están vacías (modo fallback para Postman Desktop o ejecución sin runner).
+  if ($Caso -in @('01', 'all', 'master') -and -not $SinPool) {
+    $poolRecord = Get-PoolRecord
+    if ($poolRecord) {
+      $envObj      = Get-Content $RuntimeEnv -Raw -Encoding UTF8 | ConvertFrom-Json
+      $existingKeys = @($envObj.values | Select-Object -ExpandProperty key)
+      foreach ($v in @($envObj.values)) {
+        if ($v.key -eq 'ruc_nuevo')              { $v.value = $poolRecord.Ruc }
+        if ($v.key -eq 'razon_social_nueva')     { $v.value = $poolRecord.RazonSocial }
+        if ($v.key -eq 'nombre_comercial_nuevo') { $v.value = $poolRecord.NombreComercial }
+      }
+      if ($existingKeys -notcontains 'ruc_nuevo')              { $envObj.values += [PSCustomObject]@{key='ruc_nuevo';              value=$poolRecord.Ruc;             enabled=$true; type='default'} }
+      if ($existingKeys -notcontains 'razon_social_nueva')     { $envObj.values += [PSCustomObject]@{key='razon_social_nueva';     value=$poolRecord.RazonSocial;     enabled=$true; type='default'} }
+      if ($existingKeys -notcontains 'nombre_comercial_nuevo') { $envObj.values += [PSCustomObject]@{key='nombre_comercial_nuevo'; value=$poolRecord.NombreComercial; enabled=$true; type='default'} }
+      $envObj | ConvertTo-Json -Depth 20 | Set-Content -Path $RuntimeEnv -Encoding UTF8
+      $Script:PoolRecordUsed = $poolRecord   # guardado para marcar como usado tras run exitoso
+      Write-Host "  [POOL] Caso 01: $($poolRecord.Ruc) / $($poolRecord.RazonSocial) (from $($poolRecord.Source))" -ForegroundColor Cyan
+    } else {
+      Write-Host '  [POOL] Dataset no encontrado - Caso 01 usara generacion aleatoria (pre-request fallback)' -ForegroundColor DarkGray
+    }
+  }
+
   switch ($Caso) {
     'all' {
       $allCaseFolders = Get-MasterCaseFolders -MasterCollectionPath $NoAuthCollections['master']
@@ -705,6 +776,50 @@ if (-not $Results['00-Login-Punku']) {
           Write-Host "  [SKIP] Caso $Caso no encontrado en master y sin colección individual." -ForegroundColor Yellow
           $Results["Caso$Caso"] = $false
         }
+      }
+    }
+  }
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Post-run: marcar registro de pool como usado si Caso 01 insertó datos exitosamente.
+# Elimina el RUC de k6-caso01-dataset.json y agrega 'usadoEn' en administrados-pool.json
+# para que el generador de dataset (generar-k6-caso01-dataset.js) reponga el registro.
+# ─────────────────────────────────────────────────────────────────────────────
+if ($Script:PoolRecordUsed) {
+  $caso01Exitoso = $Results.Keys | Where-Object { $_ -match '^01' -or $_ -match 'Agregar.Administrado' } | ForEach-Object { $Results[$_] } | Where-Object { $_ -eq $true }
+  if ($caso01Exitoso) {
+    $usadoRuc = $Script:PoolRecordUsed.Ruc
+    $usadoEn  = (Get-Date).ToString('o')
+
+    # 1. Remover de k6-caso01-dataset.json
+    $datasetFile = Join-Path $Root 'reportes/k6-caso01-dataset.json'
+    if (Test-Path $datasetFile) {
+      try {
+        $ds  = Get-Content $datasetFile -Raw -Encoding UTF8 | ConvertFrom-Json
+        $ds2 = @($ds | Where-Object { [string]$_.ruc -ne $usadoRuc })
+        $ds2 | ConvertTo-Json -Depth 5 | Set-Content -Path $datasetFile -Encoding UTF8
+        Write-Host "  [POOL-USED] Removido de dataset: $usadoRuc ($($ds.Count) → $($ds2.Count) entradas)" -ForegroundColor DarkGray
+      } catch {
+        Write-Host "  [POOL-USED] No se pudo actualizar dataset: $_" -ForegroundColor Yellow
+      }
+    }
+
+    # 2. Marcar usadoEn en administrados-pool.json
+    $poolFile = Join-Path $Root 'reportes/administrados-pool.json'
+    if (Test-Path $poolFile) {
+      try {
+        $pool  = Get-Content $poolFile -Raw -Encoding UTF8 | ConvertFrom-Json
+        $pool2 = @($pool | ForEach-Object {
+          if ([string]$_.ruc -eq $usadoRuc) {
+            $_ | Add-Member -NotePropertyName 'usadoEn' -NotePropertyValue $usadoEn -Force
+          }
+          $_
+        })
+        $pool2 | ConvertTo-Json -Depth 5 | Set-Content -Path $poolFile -Encoding UTF8
+        Write-Host "  [POOL-USED] Marcado usadoEn=$usadoEn en pool: $usadoRuc" -ForegroundColor DarkGray
+      } catch {
+        Write-Host "  [POOL-USED] No se pudo marcar en pool: $_" -ForegroundColor Yellow
       }
     }
   }

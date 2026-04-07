@@ -9,42 +9,9 @@ on:
         default: "true"
 
 jobs:
-  postman-caso03:
-    runs-on: [self-hosted, windows]
-    timeout-minutes: 90
-    defaults:
-      run:
-        shell: cmd
-    env:
-      REGINSA_API_BASE: ${{ secrets.REGINSA_API_BASE }}
-      REGINSA_USER: ${{ secrets.REGINSA_USER }}
-      REGINSA_PASS: ${{ secrets.REGINSA_PASS }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          clean: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run Newman Caso 03
-        run: |
-          npm run api:test:caso03
-
-      - name: Upload artifacts
-        if: always() && github.event.inputs.upload_artifacts == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: postman-caso03-selfhosted
-          path: |
-            reportes/newman/caso03-api-test.xml
-            reportes/newman/caso03-api-test.json
-          if-no-files-found: warn
+  run:
+    uses: ./.github/workflows/reusable-postman-caso-selfhosted.yml
+    with:
+      caso: "03"
+      upload_artifacts: ${{ github.event.inputs.upload_artifacts || 'true' }}
+    secrets: inherit

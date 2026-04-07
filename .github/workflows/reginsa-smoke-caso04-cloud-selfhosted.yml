@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       k6_output:
-        description: "Salida k6: local|cloud"
+        description: "Salida k6: local|cloud (cloud requiere K6_CLOUD_TOKEN secret)"
         required: false
-        default: "cloud"
+        default: "local"
       cantidad:
         description: "Cantidad objetivo"
         required: false
@@ -17,44 +17,14 @@ on:
         default: "true"
 
 jobs:
-  smoke-caso04:
-    runs-on: [self-hosted, windows]
-    timeout-minutes: 45
-    defaults:
-      run:
-        shell: cmd
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          clean: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Setup k6
-        uses: grafana/setup-k6-action@v1
-
-      - name: Run smoke k6 caso04
-        env:
-          RUN_OUTPUT: ${{ github.event.inputs.k6_output || 'cloud' }}
-          RUN_CANTIDAD: ${{ github.event.inputs.cantidad || '3' }}
-        run: |
-          powershell -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 -K6Output %RUN_OUTPUT% -K6Cantidad %RUN_CANTIDAD% -K6Vus 1 -PerfDuration 45s -K6SleepSeconds 0.8 -K6ExpectRateLimit 1 -K6EnforceOkRate 0
-
-      - name: Upload artifacts
-        if: always() && github.event.inputs.upload_artifacts == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: smoke-caso04-selfhosted
-          path: |
-            reportes/*.json
-            reportes/**/*.json
-          if-no-files-found: warn
+  run:
+    uses: ./.github/workflows/reusable-k6-smoke-caso-selfhosted.yml
+    with:
+      case_id: "04"
+      script_path: scripts/run-caso04-local.ps1
+      mode: ""
+      k6_output: ${{ github.event.inputs.k6_output || 'local' }}
+      cantidad: ${{ github.event.inputs.cantidad || '3' }}
+      rate_limit_args: "true"
+      upload_artifacts: ${{ github.event.inputs.upload_artifacts || 'true' }}
+    secrets: inherit

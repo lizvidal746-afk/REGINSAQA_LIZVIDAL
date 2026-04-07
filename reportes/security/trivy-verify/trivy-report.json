@@ -1,0 +1,3857 @@
+{
+  "SchemaVersion": 2,
+  "Trivy": {
+    "Version": "0.69.3"
+  },
+  "ReportID": "019d5151-78cd-7d40-a20f-7a0c72a48a34",
+  "CreatedAt": "2026-04-03T03:09:47.085870893Z",
+  "ArtifactID": "sha256:b4b74d5338ca8663bce79a8804ece73d5b488fac2c5bc90ec116d477a9926b22",
+  "ArtifactName": "/workdir",
+  "ArtifactType": "repository",
+  "Metadata": {
+    "RepoURL": "https://github.com/lizvidal746-afk/REGINSAQA_LIZVIDAL.git",
+    "Branch": "main",
+    "Commit": "4d4c9ab2a2e890332505843d7add18daa277cca0",
+    "CommitMsg": "chore: sacar datos de ejecucion del repo (pools caso01+caso04 intactos en local)\n\n- dynamic-candidate-pool.json: pool caso04 se regenera al ejecutar\n- funcional-caso01-secuencia*.json: contadores caso01 se regeneran\n- reconsideracion-*.json: estados caso04 se regeneran\n- administrados-historico.json: historico acumulado local\n- Todos los archivos SIGUEN en tu PC (git rm --cached)\n- .gitignore actualizado para no volver a subirlos\n- .gitkeep mantiene la estructura de carpetas",
+    "Author": "Liz Geraldine Vidal Muñante \u003cusitd04@sunedu.gob.pe\u003e",
+    "Committer": "Liz Geraldine Vidal Muñante \u003cusitd04@sunedu.gob.pe\u003e"
+  },
+  "Results": [
+    {
+      "Target": "SI091_REGINSA_ENLINEA/package-lock.json",
+      "Class": "lang-pkgs",
+      "Type": "npm",
+      "Packages": [
+        {
+          "ID": "@angular/animations@20.3.14",
+          "Name": "@angular/animations",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/animations@20.3.14",
+            "UID": "38c2a87051cdbd21"
+          },
+          "Version": "20.3.14",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/core@20.3.14",
+            "tslib@2.8.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 563,
+              "EndLine": 577
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/common@20.3.14",
+          "Name": "@angular/common",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/common@20.3.14",
+            "UID": "c2017ad6d8dd5e23"
+          },
+          "Version": "20.3.14",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/core@20.3.14",
+            "rxjs@7.8.2",
+            "tslib@2.8.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 728,
+              "EndLine": 743
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/compiler@20.3.14",
+          "Name": "@angular/compiler",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/compiler@20.3.14",
+            "UID": "5cda4fffb4ba6804"
+          },
+          "Version": "20.3.14",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "tslib@2.8.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 744,
+              "EndLine": 755
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/core@20.3.14",
+          "Name": "@angular/core",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/core@20.3.14",
+            "UID": "d68c4bef52277cea"
+          },
+          "Version": "20.3.14",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/compiler@20.3.14",
+            "rxjs@7.8.2",
+            "tslib@2.8.1",
+            "zone.js@0.15.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 789,
+              "EndLine": 813
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/forms@20.3.14",
+          "Name": "@angular/forms",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/forms@20.3.14",
+            "UID": "d0eaaa393eaa8baa"
+          },
+          "Version": "20.3.14",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/common@20.3.14",
+            "@angular/core@20.3.14",
+            "@angular/platform-browser@20.3.14",
+            "rxjs@7.8.2",
+            "tslib@2.8.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 814,
+              "EndLine": 831
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/platform-browser@20.3.14",
+          "Name": "@angular/platform-browser",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/platform-browser@20.3.14",
+            "UID": "832d193f7eb1617a"
+          },
+          "Version": "20.3.14",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/animations@20.3.14",
+            "@angular/common@20.3.14",
+            "@angular/core@20.3.14",
+            "tslib@2.8.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 832,
+              "EndLine": 853
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/platform-browser-dynamic@20.3.14",
+          "Name": "@angular/platform-browser-dynamic",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/platform-browser-dynamic@20.3.14",
+            "UID": "86a5ab042383b7e2"
+          },
+          "Version": "20.3.14",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/common@20.3.14",
+            "@angular/compiler@20.3.14",
+            "@angular/core@20.3.14",
+            "@angular/platform-browser@20.3.14",
+            "tslib@2.8.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 854,
+              "EndLine": 871
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/router@20.3.14",
+          "Name": "@angular/router",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/router@20.3.14",
+            "UID": "c43350d26c989f6e"
+          },
+          "Version": "20.3.14",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/common@20.3.14",
+            "@angular/core@20.3.14",
+            "@angular/platform-browser@20.3.14",
+            "rxjs@7.8.2",
+            "tslib@2.8.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 872,
+              "EndLine": 889
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@auth0/angular-jwt@5.2.0",
+          "Name": "@auth0/angular-jwt",
+          "Identifier": {
+            "PURL": "pkg:npm/%40auth0/angular-jwt@5.2.0",
+            "UID": "a59e8fa98553ad7"
+          },
+          "Version": "5.2.0",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/common@20.3.14",
+            "tslib@2.8.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 890,
+              "EndLine": 901
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@primeng/themes@20.3.0",
+          "Name": "@primeng/themes",
+          "Identifier": {
+            "PURL": "pkg:npm/%40primeng/themes@20.3.0",
+            "UID": "5a70c2db11057756"
+          },
+          "Version": "20.3.0",
+          "Licenses": [
+            "SEE LICENSE IN LICENSE.md"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "@primeuix/styled@0.7.4",
+            "@primeuix/themes@1.2.5"
+          ],
+          "Locations": [
+            {
+              "StartLine": 5149,
+              "EndLine": 5158
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@primeuix/themes@1.2.5",
+          "Name": "@primeuix/themes",
+          "Identifier": {
+            "PURL": "pkg:npm/%40primeuix/themes@1.2.5",
+            "UID": "8633cc8ef334a59"
+          },
+          "Version": "1.2.5",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "@primeuix/styled@0.7.4"
+          ],
+          "Locations": [
+            {
+              "StartLine": 5180,
+              "EndLine": 5188
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@tailwindcss/postcss@4.1.17",
+          "Name": "@tailwindcss/postcss",
+          "Identifier": {
+            "PURL": "pkg:npm/%40tailwindcss/postcss@4.1.17",
+            "UID": "d0d4ac45e60be372"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "@alloc/quick-lru@5.2.0",
+            "@tailwindcss/node@4.1.17",
+            "@tailwindcss/oxide@4.1.17",
+            "postcss@8.5.6",
+            "tailwindcss@4.1.17"
+          ],
+          "Locations": [
+            {
+              "StartLine": 5869,
+              "EndLine": 5881
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "chart.js@4.4.2",
+          "Name": "chart.js",
+          "Identifier": {
+            "PURL": "pkg:npm/chart.js@4.4.2",
+            "UID": "d2e388cfb9643544"
+          },
+          "Version": "4.4.2",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "@kurkle/color@0.3.4"
+          ],
+          "Locations": [
+            {
+              "StartLine": 7358,
+              "EndLine": 7369
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "crypto-js@4.2.0",
+          "Name": "crypto-js",
+          "Identifier": {
+            "PURL": "pkg:npm/crypto-js@4.2.0",
+            "UID": "c43f6f96f2276f77"
+          },
+          "Version": "4.2.0",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 7896,
+              "EndLine": 7901
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "postcss@8.5.6",
+          "Name": "postcss",
+          "Identifier": {
+            "PURL": "pkg:npm/postcss@8.5.6",
+            "UID": "38abcc1d6d46339c"
+          },
+          "Version": "8.5.6",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "nanoid@3.3.11",
+            "picocolors@1.1.1",
+            "source-map-js@1.2.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 14066,
+              "EndLine": 14093
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "primeflex@3.3.1",
+          "Name": "primeflex",
+          "Identifier": {
+            "PURL": "pkg:npm/primeflex@3.3.1",
+            "UID": "2ae1dfdcf5f7cbae"
+          },
+          "Version": "3.3.1",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 14266,
+              "EndLine": 14271
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "primeicons@7.0.0",
+          "Name": "primeicons",
+          "Identifier": {
+            "PURL": "pkg:npm/primeicons@7.0.0",
+            "UID": "873d924ce9488e49"
+          },
+          "Version": "7.0.0",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 14272,
+              "EndLine": 14277
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "primeng@20.3.0",
+          "Name": "primeng",
+          "Identifier": {
+            "PURL": "pkg:npm/primeng@20.3.0",
+            "UID": "922316908aa9b60d"
+          },
+          "Version": "20.3.0",
+          "Licenses": [
+            "SEE LICENSE IN LICENSE.md"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/animations@20.3.14",
+            "@angular/cdk@20.2.14",
+            "@angular/common@20.3.14",
+            "@angular/core@20.3.14",
+            "@angular/forms@20.3.14",
+            "@angular/platform-browser@20.3.14",
+            "@angular/router@20.3.14",
+            "@primeuix/styled@0.7.4",
+            "@primeuix/styles@1.2.5",
+            "@primeuix/utils@0.6.3",
+            "rxjs@7.8.2",
+            "tslib@2.8.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 14278,
+              "EndLine": 14299
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "quill@2.0.3",
+          "Name": "quill",
+          "Identifier": {
+            "PURL": "pkg:npm/quill@2.0.3",
+            "UID": "c60e8f54fa687626"
+          },
+          "Version": "2.0.3",
+          "Licenses": [
+            "BSD-3-Clause"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "eventemitter3@5.0.1",
+            "lodash-es@4.17.21",
+            "parchment@3.0.0",
+            "quill-delta@5.1.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 14407,
+              "EndLine": 14421
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "rxjs@7.8.2",
+          "Name": "rxjs",
+          "Identifier": {
+            "PURL": "pkg:npm/rxjs@7.8.2",
+            "UID": "cc68c4f5a54355b2"
+          },
+          "Version": "7.8.2",
+          "Licenses": [
+            "Apache-2.0"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "tslib@2.8.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 14881,
+              "EndLine": 14889
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "sweetalert2@11.26.3",
+          "Name": "sweetalert2",
+          "Identifier": {
+            "PURL": "pkg:npm/sweetalert2@11.26.3",
+            "UID": "269fc6e6221a5067"
+          },
+          "Version": "11.26.3",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 16176,
+              "EndLine": 16185
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "tailwindcss@4.1.17",
+          "Name": "tailwindcss",
+          "Identifier": {
+            "PURL": "pkg:npm/tailwindcss@4.1.17",
+            "UID": "5ed75184d38cddbc"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 16186,
+              "EndLine": 16191
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "tailwindcss-primeui@0.6.1",
+          "Name": "tailwindcss-primeui",
+          "Identifier": {
+            "PURL": "pkg:npm/tailwindcss-primeui@0.6.1",
+            "UID": "95b62b4e12651cb6"
+          },
+          "Version": "0.6.1",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "tailwindcss@4.1.17"
+          ],
+          "Locations": [
+            {
+              "StartLine": 16192,
+              "EndLine": 16200
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "tslib@2.8.1",
+          "Name": "tslib",
+          "Identifier": {
+            "PURL": "pkg:npm/tslib@2.8.1",
+            "UID": "e6304fb1dfb28105"
+          },
+          "Version": "2.8.1",
+          "Licenses": [
+            "0BSD"
+          ],
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 16496,
+              "EndLine": 16501
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "zone.js@0.15.1",
+          "Name": "zone.js",
+          "Identifier": {
+            "PURL": "pkg:npm/zone.js@0.15.1",
+            "UID": "8141f1a3a693ddf1"
+          },
+          "Version": "0.15.1",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 18211,
+              "EndLine": 18216
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@alloc/quick-lru@5.2.0",
+          "Name": "@alloc/quick-lru",
+          "Identifier": {
+            "PURL": "pkg:npm/%40alloc/quick-lru@5.2.0",
+            "UID": "5eb4a0744db335d0"
+          },
+          "Version": "5.2.0",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 269,
+              "EndLine": 280
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/cdk@20.2.14",
+          "Name": "@angular/cdk",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/cdk@20.2.14",
+            "UID": "5f210347c0839b68"
+          },
+          "Version": "20.2.14",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "@angular/common@20.3.14",
+            "@angular/core@20.3.14",
+            "parse5@8.0.0",
+            "rxjs@7.8.2",
+            "tslib@2.8.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 677,
+              "EndLine": 692
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@jridgewell/gen-mapping@0.3.13",
+          "Name": "@jridgewell/gen-mapping",
+          "Identifier": {
+            "PURL": "pkg:npm/%40jridgewell/gen-mapping@0.3.13",
+            "UID": "dc45cb12105fcf06"
+          },
+          "Version": "0.3.13",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "@jridgewell/sourcemap-codec@1.5.5",
+            "@jridgewell/trace-mapping@0.3.31"
+          ],
+          "Locations": [
+            {
+              "StartLine": 3696,
+              "EndLine": 3705
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@jridgewell/remapping@2.3.5",
+          "Name": "@jridgewell/remapping",
+          "Identifier": {
+            "PURL": "pkg:npm/%40jridgewell/remapping@2.3.5",
+            "UID": "12abdbce1b886dc0"
+          },
+          "Version": "2.3.5",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "@jridgewell/gen-mapping@0.3.13",
+            "@jridgewell/trace-mapping@0.3.31"
+          ],
+          "Locations": [
+            {
+              "StartLine": 3706,
+              "EndLine": 3715
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@jridgewell/resolve-uri@3.1.2",
+          "Name": "@jridgewell/resolve-uri",
+          "Identifier": {
+            "PURL": "pkg:npm/%40jridgewell/resolve-uri@3.1.2",
+            "UID": "5388a21f48f9553c"
+          },
+          "Version": "3.1.2",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 3716,
+              "EndLine": 3724
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@jridgewell/sourcemap-codec@1.5.5",
+          "Name": "@jridgewell/sourcemap-codec",
+          "Identifier": {
+            "PURL": "pkg:npm/%40jridgewell/sourcemap-codec@1.5.5",
+            "UID": "9f9efef35752995e"
+          },
+          "Version": "1.5.5",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 3736,
+              "EndLine": 3741
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@jridgewell/trace-mapping@0.3.31",
+          "Name": "@jridgewell/trace-mapping",
+          "Identifier": {
+            "PURL": "pkg:npm/%40jridgewell/trace-mapping@0.3.31",
+            "UID": "12781473b82bf613"
+          },
+          "Version": "0.3.31",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "@jridgewell/resolve-uri@3.1.2",
+            "@jridgewell/sourcemap-codec@1.5.5"
+          ],
+          "Locations": [
+            {
+              "StartLine": 3742,
+              "EndLine": 3751
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@kurkle/color@0.3.4",
+          "Name": "@kurkle/color",
+          "Identifier": {
+            "PURL": "pkg:npm/%40kurkle/color@0.3.4",
+            "UID": "8eb83117e8046182"
+          },
+          "Version": "0.3.4",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 3872,
+              "EndLine": 3877
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@primeuix/styled@0.7.4",
+          "Name": "@primeuix/styled",
+          "Identifier": {
+            "PURL": "pkg:npm/%40primeuix/styled@0.7.4",
+            "UID": "b3324aa323fe9585"
+          },
+          "Version": "0.7.4",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "@primeuix/utils@0.6.3"
+          ],
+          "Locations": [
+            {
+              "StartLine": 5159,
+              "EndLine": 5170
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@primeuix/styles@1.2.5",
+          "Name": "@primeuix/styles",
+          "Identifier": {
+            "PURL": "pkg:npm/%40primeuix/styles@1.2.5",
+            "UID": "92ca779f0e216dd9"
+          },
+          "Version": "1.2.5",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "@primeuix/styled@0.7.4"
+          ],
+          "Locations": [
+            {
+              "StartLine": 5171,
+              "EndLine": 5179
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@primeuix/utils@0.6.3",
+          "Name": "@primeuix/utils",
+          "Identifier": {
+            "PURL": "pkg:npm/%40primeuix/utils@0.6.3",
+            "UID": "516b5e6c00edd86a"
+          },
+          "Version": "0.6.3",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 5189,
+              "EndLine": 5197
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@tailwindcss/node@4.1.17",
+          "Name": "@tailwindcss/node",
+          "Identifier": {
+            "PURL": "pkg:npm/%40tailwindcss/node@4.1.17",
+            "UID": "976f9ffefa2885e4"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "@jridgewell/remapping@2.3.5",
+            "enhanced-resolve@5.18.3",
+            "jiti@2.6.1",
+            "lightningcss@1.30.2",
+            "magic-string@0.30.21",
+            "source-map-js@1.2.1",
+            "tailwindcss@4.1.17"
+          ],
+          "Locations": [
+            {
+              "StartLine": 5617,
+              "EndLine": 5631
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@tailwindcss/oxide@4.1.17",
+          "Name": "@tailwindcss/oxide",
+          "Identifier": {
+            "PURL": "pkg:npm/%40tailwindcss/oxide@4.1.17",
+            "UID": "7927dba6893fe0c6"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "@tailwindcss/oxide-android-arm64@4.1.17",
+            "@tailwindcss/oxide-darwin-arm64@4.1.17",
+            "@tailwindcss/oxide-darwin-x64@4.1.17",
+            "@tailwindcss/oxide-freebsd-x64@4.1.17",
+            "@tailwindcss/oxide-linux-arm-gnueabihf@4.1.17",
+            "@tailwindcss/oxide-linux-arm64-gnu@4.1.17",
+            "@tailwindcss/oxide-linux-arm64-musl@4.1.17",
+            "@tailwindcss/oxide-linux-x64-gnu@4.1.17",
+            "@tailwindcss/oxide-linux-x64-musl@4.1.17",
+            "@tailwindcss/oxide-wasm32-wasi@4.1.17",
+            "@tailwindcss/oxide-win32-arm64-msvc@4.1.17",
+            "@tailwindcss/oxide-win32-x64-msvc@4.1.17"
+          ],
+          "Locations": [
+            {
+              "StartLine": 5641,
+              "EndLine": 5663
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@tailwindcss/oxide-android-arm64@4.1.17",
+          "Name": "@tailwindcss/oxide-android-arm64",
+          "Identifier": {
+            "PURL": "pkg:npm/%40tailwindcss/oxide-android-arm64@4.1.17",
+            "UID": "61406455ad2b660e"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 5664,
+              "EndLine": 5679
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@tailwindcss/oxide-darwin-arm64@4.1.17",
+          "Name": "@tailwindcss/oxide-darwin-arm64",
+          "Identifier": {
+            "PURL": "pkg:npm/%40tailwindcss/oxide-darwin-arm64@4.1.17",
+            "UID": "874880e21e60ab77"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 5680,
+              "EndLine": 5695
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@tailwindcss/oxide-darwin-x64@4.1.17",
+          "Name": "@tailwindcss/oxide-darwin-x64",
+          "Identifier": {
+            "PURL": "pkg:npm/%40tailwindcss/oxide-darwin-x64@4.1.17",
+            "UID": "1d6ac3956680b52e"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 5696,
+              "EndLine": 5711
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@tailwindcss/oxide-freebsd-x64@4.1.17",
+          "Name": "@tailwindcss/oxide-freebsd-x64",
+          "Identifier": {
+            "PURL": "pkg:npm/%40tailwindcss/oxide-freebsd-x64@4.1.17",
+            "UID": "1ba20fbaf24bc575"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 5712,
+              "EndLine": 5727
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@tailwindcss/oxide-linux-arm-gnueabihf@4.1.17",
+          "Name": "@tailwindcss/oxide-linux-arm-gnueabihf",
+          "Identifier": {
+            "PURL": "pkg:npm/%40tailwindcss/oxide-linux-arm-gnueabihf@4.1.17",
+            "UID": "d19bfa70af322008"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 5728,
+              "EndLine": 5743
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@tailwindcss/oxide-linux-arm64-gnu@4.1.17",
+          "Name": "@tailwindcss/oxide-linux-arm64-gnu",
+          "Identifier": {
+            "PURL": "pkg:npm/%40tailwindcss/oxide-linux-arm64-gnu@4.1.17",
+            "UID": "41c7d84918dea7e4"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 5744,
+              "EndLine": 5759
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@tailwindcss/oxide-linux-arm64-musl@4.1.17",
+          "Name": "@tailwindcss/oxide-linux-arm64-musl",
+          "Identifier": {
+            "PURL": "pkg:npm/%40tailwindcss/oxide-linux-arm64-musl@4.1.17",
+            "UID": "8682b5e5253ba67d"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 5760,
+              "EndLine": 5775
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@tailwindcss/oxide-linux-x64-gnu@4.1.17",
+          "Name": "@tailwindcss/oxide-linux-x64-gnu",
+          "Identifier": {
+            "PURL": "pkg:npm/%40tailwindcss/oxide-linux-x64-gnu@4.1.17",
+            "UID": "c0da2a3e4c8689b5"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 5776,
+              "EndLine": 5791
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@tailwindcss/oxide-linux-x64-musl@4.1.17",
+          "Name": "@tailwindcss/oxide-linux-x64-musl",
+          "Identifier": {
+            "PURL": "pkg:npm/%40tailwindcss/oxide-linux-x64-musl@4.1.17",
+            "UID": "6d8e2c3a5347c18b"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 5792,
+              "EndLine": 5807
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@tailwindcss/oxide-wasm32-wasi@4.1.17",
+          "Name": "@tailwindcss/oxide-wasm32-wasi",
+          "Identifier": {
+            "PURL": "pkg:npm/%40tailwindcss/oxide-wasm32-wasi@4.1.17",
+            "UID": "e57da05a76896fba"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "tslib@2.8.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 5808,
+              "EndLine": 5836
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@tailwindcss/oxide-win32-arm64-msvc@4.1.17",
+          "Name": "@tailwindcss/oxide-win32-arm64-msvc",
+          "Identifier": {
+            "PURL": "pkg:npm/%40tailwindcss/oxide-win32-arm64-msvc@4.1.17",
+            "UID": "63586a351afccfe"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 5837,
+              "EndLine": 5852
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@tailwindcss/oxide-win32-x64-msvc@4.1.17",
+          "Name": "@tailwindcss/oxide-win32-x64-msvc",
+          "Identifier": {
+            "PURL": "pkg:npm/%40tailwindcss/oxide-win32-x64-msvc@4.1.17",
+            "UID": "a715dcded567e0ce"
+          },
+          "Version": "4.1.17",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 5853,
+              "EndLine": 5868
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "detect-libc@2.1.2",
+          "Name": "detect-libc",
+          "Identifier": {
+            "PURL": "pkg:npm/detect-libc@2.1.2",
+            "UID": "93601684d43c93f8"
+          },
+          "Version": "2.1.2",
+          "Licenses": [
+            "Apache-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 8177,
+              "EndLine": 8185
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "enhanced-resolve@5.18.3",
+          "Name": "enhanced-resolve",
+          "Identifier": {
+            "PURL": "pkg:npm/enhanced-resolve@5.18.3",
+            "UID": "1ee3bde2c05a7645"
+          },
+          "Version": "5.18.3",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "graceful-fs@4.2.11",
+            "tapable@2.3.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 8482,
+              "EndLine": 8494
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "entities@6.0.1",
+          "Name": "entities",
+          "Identifier": {
+            "PURL": "pkg:npm/entities@6.0.1",
+            "UID": "791f0dc4157d5268"
+          },
+          "Version": "6.0.1",
+          "Licenses": [
+            "BSD-2-Clause"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 10067,
+              "EndLine": 10079
+            },
+            {
+              "StartLine": 13883,
+              "EndLine": 13895
+            },
+            {
+              "StartLine": 13909,
+              "EndLine": 13920
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "eventemitter3@5.0.1",
+          "Name": "eventemitter3",
+          "Identifier": {
+            "PURL": "pkg:npm/eventemitter3@5.0.1",
+            "UID": "5550e8eee1a619eb"
+          },
+          "Version": "5.0.1",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 12167,
+              "EndLine": 12173
+            },
+            {
+              "StartLine": 14436,
+              "EndLine": 14441
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "fast-diff@1.3.0",
+          "Name": "fast-diff",
+          "Identifier": {
+            "PURL": "pkg:npm/fast-diff@1.3.0",
+            "UID": "dcbdc7101f6eb328"
+          },
+          "Version": "1.3.0",
+          "Licenses": [
+            "Apache-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 9276,
+              "EndLine": 9281
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "graceful-fs@4.2.11",
+          "Name": "graceful-fs",
+          "Identifier": {
+            "PURL": "pkg:npm/graceful-fs@4.2.11",
+            "UID": "540ba6903fad7144"
+          },
+          "Version": "4.2.11",
+          "Licenses": [
+            "ISC"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 9857,
+              "EndLine": 9862
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "jiti@2.6.1",
+          "Name": "jiti",
+          "Identifier": {
+            "PURL": "pkg:npm/jiti@2.6.1",
+            "UID": "2167fd75d1248157"
+          },
+          "Version": "2.6.1",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 11098,
+              "EndLine": 11106
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "lightningcss@1.30.2",
+          "Name": "lightningcss",
+          "Identifier": {
+            "PURL": "pkg:npm/lightningcss@1.30.2",
+            "UID": "6a048b484d6878a7"
+          },
+          "Version": "1.30.2",
+          "Licenses": [
+            "MPL-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "detect-libc@2.1.2",
+            "lightningcss-android-arm64@1.30.2",
+            "lightningcss-darwin-arm64@1.30.2",
+            "lightningcss-darwin-x64@1.30.2",
+            "lightningcss-freebsd-x64@1.30.2",
+            "lightningcss-linux-arm-gnueabihf@1.30.2",
+            "lightningcss-linux-arm64-gnu@1.30.2",
+            "lightningcss-linux-arm64-musl@1.30.2",
+            "lightningcss-linux-x64-gnu@1.30.2",
+            "lightningcss-linux-x64-musl@1.30.2",
+            "lightningcss-win32-arm64-msvc@1.30.2",
+            "lightningcss-win32-x64-msvc@1.30.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 11880,
+              "EndLine": 11908
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "lightningcss-android-arm64@1.30.2",
+          "Name": "lightningcss-android-arm64",
+          "Identifier": {
+            "PURL": "pkg:npm/lightningcss-android-arm64@1.30.2",
+            "UID": "da368f1f68efc26e"
+          },
+          "Version": "1.30.2",
+          "Licenses": [
+            "MPL-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 11909,
+              "EndLine": 11928
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "lightningcss-darwin-arm64@1.30.2",
+          "Name": "lightningcss-darwin-arm64",
+          "Identifier": {
+            "PURL": "pkg:npm/lightningcss-darwin-arm64@1.30.2",
+            "UID": "f2b72c2f32b1d801"
+          },
+          "Version": "1.30.2",
+          "Licenses": [
+            "MPL-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 11929,
+              "EndLine": 11948
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "lightningcss-darwin-x64@1.30.2",
+          "Name": "lightningcss-darwin-x64",
+          "Identifier": {
+            "PURL": "pkg:npm/lightningcss-darwin-x64@1.30.2",
+            "UID": "da2b76be5d440675"
+          },
+          "Version": "1.30.2",
+          "Licenses": [
+            "MPL-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 11949,
+              "EndLine": 11968
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "lightningcss-freebsd-x64@1.30.2",
+          "Name": "lightningcss-freebsd-x64",
+          "Identifier": {
+            "PURL": "pkg:npm/lightningcss-freebsd-x64@1.30.2",
+            "UID": "a80b2c234a4c9833"
+          },
+          "Version": "1.30.2",
+          "Licenses": [
+            "MPL-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 11969,
+              "EndLine": 11988
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "lightningcss-linux-arm-gnueabihf@1.30.2",
+          "Name": "lightningcss-linux-arm-gnueabihf",
+          "Identifier": {
+            "PURL": "pkg:npm/lightningcss-linux-arm-gnueabihf@1.30.2",
+            "UID": "dfe336ebe5a091e4"
+          },
+          "Version": "1.30.2",
+          "Licenses": [
+            "MPL-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 11989,
+              "EndLine": 12008
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "lightningcss-linux-arm64-gnu@1.30.2",
+          "Name": "lightningcss-linux-arm64-gnu",
+          "Identifier": {
+            "PURL": "pkg:npm/lightningcss-linux-arm64-gnu@1.30.2",
+            "UID": "66748e63ddc00419"
+          },
+          "Version": "1.30.2",
+          "Licenses": [
+            "MPL-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 12009,
+              "EndLine": 12028
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "lightningcss-linux-arm64-musl@1.30.2",
+          "Name": "lightningcss-linux-arm64-musl",
+          "Identifier": {
+            "PURL": "pkg:npm/lightningcss-linux-arm64-musl@1.30.2",
+            "UID": "197aac8b90e934e0"
+          },
+          "Version": "1.30.2",
+          "Licenses": [
+            "MPL-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 12029,
+              "EndLine": 12048
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "lightningcss-linux-x64-gnu@1.30.2",
+          "Name": "lightningcss-linux-x64-gnu",
+          "Identifier": {
+            "PURL": "pkg:npm/lightningcss-linux-x64-gnu@1.30.2",
+            "UID": "b91920562e2e9575"
+          },
+          "Version": "1.30.2",
+          "Licenses": [
+            "MPL-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 12049,
+              "EndLine": 12068
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "lightningcss-linux-x64-musl@1.30.2",
+          "Name": "lightningcss-linux-x64-musl",
+          "Identifier": {
+            "PURL": "pkg:npm/lightningcss-linux-x64-musl@1.30.2",
+            "UID": "653cf0c98ddd834f"
+          },
+          "Version": "1.30.2",
+          "Licenses": [
+            "MPL-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 12069,
+              "EndLine": 12088
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "lightningcss-win32-arm64-msvc@1.30.2",
+          "Name": "lightningcss-win32-arm64-msvc",
+          "Identifier": {
+            "PURL": "pkg:npm/lightningcss-win32-arm64-msvc@1.30.2",
+            "UID": "1b562672a146e05a"
+          },
+          "Version": "1.30.2",
+          "Licenses": [
+            "MPL-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 12089,
+              "EndLine": 12108
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "lightningcss-win32-x64-msvc@1.30.2",
+          "Name": "lightningcss-win32-x64-msvc",
+          "Identifier": {
+            "PURL": "pkg:npm/lightningcss-win32-x64-msvc@1.30.2",
+            "UID": "28e0b1361e692411"
+          },
+          "Version": "1.30.2",
+          "Licenses": [
+            "MPL-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 12109,
+              "EndLine": 12128
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "lodash-es@4.17.21",
+          "Name": "lodash-es",
+          "Identifier": {
+            "PURL": "pkg:npm/lodash-es@4.17.21",
+            "UID": "717ccf0c4ff465f1"
+          },
+          "Version": "4.17.21",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 12267,
+              "EndLine": 12272
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "lodash.clonedeep@4.5.0",
+          "Name": "lodash.clonedeep",
+          "Identifier": {
+            "PURL": "pkg:npm/lodash.clonedeep@4.5.0",
+            "UID": "6f1ba3e7b0404812"
+          },
+          "Version": "4.5.0",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 12273,
+              "EndLine": 12278
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "lodash.isequal@4.5.0",
+          "Name": "lodash.isequal",
+          "Identifier": {
+            "PURL": "pkg:npm/lodash.isequal@4.5.0",
+            "UID": "c35102b667487570"
+          },
+          "Version": "4.5.0",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 12286,
+              "EndLine": 12292
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "magic-string@0.30.21",
+          "Name": "magic-string",
+          "Identifier": {
+            "PURL": "pkg:npm/magic-string@0.30.21",
+            "UID": "679a12408dbfd7c8"
+          },
+          "Version": "0.30.21",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "@jridgewell/sourcemap-codec@1.5.5"
+          ],
+          "Locations": [
+            {
+              "StartLine": 5632,
+              "EndLine": 5640
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "nanoid@3.3.11",
+          "Name": "nanoid",
+          "Identifier": {
+            "PURL": "pkg:npm/nanoid@3.3.11",
+            "UID": "db6621d5cd3f3dae"
+          },
+          "Version": "3.3.11",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 12954,
+              "EndLine": 12971
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "parchment@3.0.0",
+          "Name": "parchment",
+          "Identifier": {
+            "PURL": "pkg:npm/parchment@3.0.0",
+            "UID": "e80058e97a485b43"
+          },
+          "Version": "3.0.0",
+          "Licenses": [
+            "BSD-3-Clause"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 13801,
+              "EndLine": 13806
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "parse5@8.0.0",
+          "Name": "parse5",
+          "Identifier": {
+            "PURL": "pkg:npm/parse5@8.0.0",
+            "UID": "5a0fb919be0b78a0"
+          },
+          "Version": "8.0.0",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "entities@6.0.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 13856,
+              "EndLine": 13867
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "picocolors@1.1.1",
+          "Name": "picocolors",
+          "Identifier": {
+            "PURL": "pkg:npm/picocolors@1.1.1",
+            "UID": "43b088b56e0b9b92"
+          },
+          "Version": "1.1.1",
+          "Licenses": [
+            "ISC"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 14003,
+              "EndLine": 14008
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "quill-delta@5.1.0",
+          "Name": "quill-delta",
+          "Identifier": {
+            "PURL": "pkg:npm/quill-delta@5.1.0",
+            "UID": "4e0e0a87c6e398eb"
+          },
+          "Version": "5.1.0",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "fast-diff@1.3.0",
+            "lodash.clonedeep@4.5.0",
+            "lodash.isequal@4.5.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 14422,
+              "EndLine": 14435
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "source-map-js@1.2.1",
+          "Name": "source-map-js",
+          "Identifier": {
+            "PURL": "pkg:npm/source-map-js@1.2.1",
+            "UID": "b8e524d786136c03"
+          },
+          "Version": "1.2.1",
+          "Licenses": [
+            "BSD-3-Clause"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 15747,
+              "EndLine": 15755
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "tapable@2.3.0",
+          "Name": "tapable",
+          "Identifier": {
+            "PURL": "pkg:npm/tapable@2.3.0",
+            "UID": "2ab7a5674d1544bc"
+          },
+          "Version": "2.3.0",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 16201,
+              "EndLine": 16213
+            }
+          ],
+          "AnalyzedBy": "npm"
+        }
+      ],
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2025-66412",
+          "VendorIDs": [
+            "GHSA-v4hv-rgfq-gp49"
+          ],
+          "PkgID": "@angular/compiler@20.3.14",
+          "PkgName": "@angular/compiler",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/%40angular/compiler@20.3.14",
+            "UID": "5cda4fffb4ba6804"
+          },
+          "InstalledVersion": "20.3.14",
+          "FixedVersion": "21.0.2, 20.3.15, 19.2.17",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2025-66412",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Fingerprint": "sha256:5676b637f90128b2c69717a842d99fbd9d34746b9c8116801d73edf599855b66",
+          "Title": "angular: Angular Stored XSS Vulnerability via SVG Animation, SVG URL and MathML Attributes",
+          "Description": "Angular is a development platform for building mobile and desktop web applications using TypeScript/JavaScript and other languages. Prior to 21.0.2, 20.3.15, and 19.2.17, A Stored Cross-Site Scripting (XSS) vulnerability has been identified in the Angular Template Compiler. It occurs because the compiler's internal security schema is incomplete, allowing attackers to bypass Angular's built-in security sanitization. Specifically, the schema fails to classify certain URL-holding attributes (e.g., those that could contain javascript: URLs) as requiring strict URL security, enabling the injection of malicious scripts. This vulnerability is fixed in 21.0.2, 20.3.15, and 19.2.17.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-79"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "nvd": 2,
+            "redhat": 3
+          },
+          "CVSS": {
+            "ghsa": {
+              "V40Vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:A/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+              "V40Score": 8.5
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:L/I:L/A:N",
+              "V3Score": 5.4
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N",
+              "V3Score": 8.1
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2025-66412",
+            "https://github.com/angular/angular",
+            "https://github.com/angular/angular/commit/1c6b0704fb63d051fab8acff84d076abfbc4893a",
+            "https://github.com/angular/angular/security/advisories/GHSA-v4hv-rgfq-gp49",
+            "https://nvd.nist.gov/vuln/detail/CVE-2025-66412",
+            "https://www.cve.org/CVERecord?id=CVE-2025-66412"
+          ],
+          "PublishedDate": "2025-12-01T23:15:53.89Z",
+          "LastModifiedDate": "2026-02-20T16:37:23.807Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-22610",
+          "VendorIDs": [
+            "GHSA-jrmj-c5cx-3cw6"
+          ],
+          "PkgID": "@angular/compiler@20.3.14",
+          "PkgName": "@angular/compiler",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/%40angular/compiler@20.3.14",
+            "UID": "5cda4fffb4ba6804"
+          },
+          "InstalledVersion": "20.3.14",
+          "FixedVersion": "21.1.0-rc.0, 21.0.7, 20.3.16, 19.2.18",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-22610",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Fingerprint": "sha256:780c3972f1b2faf0d88f923791d2445011d75b6ab7e17bace78926c65e7be38d",
+          "Title": "angular: Angular: Cross-site scripting vulnerability in Template Compiler",
+          "Description": "Angular is a development platform for building mobile and desktop web applications using TypeScript/JavaScript and other languages. Prior to versions 19.2.18, 20.3.16, 21.0.7, and 21.1.0-rc.0, a cross-site scripting (XSS) vulnerability has been identified in the Angular Template Compiler. The vulnerability exists because Angular’s internal sanitization schema fails to recognize the href and xlink:href attributes of SVG \u003cscript\u003e elements as a Resource URL context. This issue has been patched in versions 19.2.18, 20.3.16, 21.0.7, and 21.1.0-rc.0.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-79"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "nvd": 2,
+            "redhat": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V40Vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:A/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+              "V40Score": 8.5
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+              "V3Score": 6.1
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:U/C:H/I:H/A:N",
+              "V3Score": 7.3
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-22610",
+            "https://github.com/angular/angular",
+            "https://github.com/angular/angular/commit/91dc91bae4a1bbefc58bef6ef739d0e02ab44d56",
+            "https://github.com/angular/angular/pull/66318",
+            "https://github.com/angular/angular/security/advisories/GHSA-jrmj-c5cx-3cw6",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-22610",
+            "https://www.cve.org/CVERecord?id=CVE-2026-22610"
+          ],
+          "PublishedDate": "2026-01-10T04:16:01.517Z",
+          "LastModifiedDate": "2026-02-23T18:23:55.623Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-32635",
+          "VendorIDs": [
+            "GHSA-g93w-mfhg-p222"
+          ],
+          "PkgID": "@angular/compiler@20.3.14",
+          "PkgName": "@angular/compiler",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/%40angular/compiler@20.3.14",
+            "UID": "5cda4fffb4ba6804"
+          },
+          "InstalledVersion": "20.3.14",
+          "FixedVersion": "22.0.0-next.3, 21.2.4, 20.3.18, 19.2.20",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-32635",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Fingerprint": "sha256:3405799f5cb97c3d34d4b3b9fae51dc7e3b5b908f2c3c0a76effa2b3250d7369",
+          "Title": "@angular/core: @angular/compiler: Angular has XSS in i18n attribute bindings",
+          "Description": "Angular is a development platform for building mobile and desktop web applications using TypeScript/JavaScript and other languages. Prior to 22.0.0-next.3, 21.2.4, 20.3.18, and 19.2.20, a Cross-Site Scripting (XSS) vulnerability has been identified in the Angular runtime and compiler. It occurs when the application uses a security-sensitive attribute (for example href on an anchor tag) together with Angular's ability to internationalize attributes. Enabling internationalization for the sensitive attribute by adding i18n-\u003cattribute\u003e name bypasses Angular's built-in sanitization mechanism, which when combined with a data binding to untrusted user-generated data can allow an attacker to inject a malicious script. This vulnerability is fixed in 22.0.0-next.3, 21.2.4, 20.3.18, and 19.2.20.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-79"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "redhat": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V40Vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+              "V40Score": 8.6
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:L",
+              "V3Score": 6.3
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-32635",
+            "https://github.com/angular/angular",
+            "https://github.com/angular/angular/commit/224e60ecb1b90115baa702f1c06edc1d64d86187",
+            "https://github.com/angular/angular/commit/78dea55351fb305b33a919c43a6b363137eca166",
+            "https://github.com/angular/angular/commit/8630319f74c9575a21693d875cc7d5252516146d",
+            "https://github.com/angular/angular/commit/ed2d324f9cc12aab6cfa0569ef10b73243a62c65",
+            "https://github.com/angular/angular/pull/67541",
+            "https://github.com/angular/angular/pull/67561",
+            "https://github.com/angular/angular/security/advisories/GHSA-g93w-mfhg-p222",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-32635",
+            "https://www.cve.org/CVERecord?id=CVE-2026-32635"
+          ],
+          "PublishedDate": "2026-03-16T14:19:40.753Z",
+          "LastModifiedDate": "2026-03-16T14:53:07.39Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-22610",
+          "VendorIDs": [
+            "GHSA-jrmj-c5cx-3cw6"
+          ],
+          "PkgID": "@angular/core@20.3.14",
+          "PkgName": "@angular/core",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/%40angular/core@20.3.14",
+            "UID": "d68c4bef52277cea"
+          },
+          "InstalledVersion": "20.3.14",
+          "FixedVersion": "21.1.0-rc.0, 21.0.7, 20.3.16, 19.2.18",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-22610",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Fingerprint": "sha256:28fef01fb3e3d120db755ebce79fca2e7ccee2d694a6b8dc6c53d8157c6f6998",
+          "Title": "angular: Angular: Cross-site scripting vulnerability in Template Compiler",
+          "Description": "Angular is a development platform for building mobile and desktop web applications using TypeScript/JavaScript and other languages. Prior to versions 19.2.18, 20.3.16, 21.0.7, and 21.1.0-rc.0, a cross-site scripting (XSS) vulnerability has been identified in the Angular Template Compiler. The vulnerability exists because Angular’s internal sanitization schema fails to recognize the href and xlink:href attributes of SVG \u003cscript\u003e elements as a Resource URL context. This issue has been patched in versions 19.2.18, 20.3.16, 21.0.7, and 21.1.0-rc.0.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-79"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "nvd": 2,
+            "redhat": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V40Vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:A/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+              "V40Score": 8.5
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+              "V3Score": 6.1
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:U/C:H/I:H/A:N",
+              "V3Score": 7.3
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-22610",
+            "https://github.com/angular/angular",
+            "https://github.com/angular/angular/commit/91dc91bae4a1bbefc58bef6ef739d0e02ab44d56",
+            "https://github.com/angular/angular/pull/66318",
+            "https://github.com/angular/angular/security/advisories/GHSA-jrmj-c5cx-3cw6",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-22610",
+            "https://www.cve.org/CVERecord?id=CVE-2026-22610"
+          ],
+          "PublishedDate": "2026-01-10T04:16:01.517Z",
+          "LastModifiedDate": "2026-02-23T18:23:55.623Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-27970",
+          "VendorIDs": [
+            "GHSA-prjf-86w9-mfqv"
+          ],
+          "PkgID": "@angular/core@20.3.14",
+          "PkgName": "@angular/core",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/%40angular/core@20.3.14",
+            "UID": "d68c4bef52277cea"
+          },
+          "InstalledVersion": "20.3.14",
+          "FixedVersion": "21.2.0, 21.1.6, 20.3.17, 19.2.19",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-27970",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Fingerprint": "sha256:fa89a328f634c7d018abfdbb48488e57d7aa01733a2c4021e9ea42aae36ebb1d",
+          "Title": "@angular/core: Angular: Cross-site scripting via compromised translation files",
+          "Description": "Angular is a development platform for building mobile and desktop web applications using TypeScript/JavaScript and other languages. Versions prior to 21.2.0, 21.1.16, 20.3.17, and 19.2.19 have a cross-Site scripting vulnerability in the Angular internationalization (i18n) pipeline. In ICU messages (International Components for Unicode), HTML from translated content was not properly sanitized and could execute arbitrary JavaScript. Angular i18n typically involves three steps, extracting all messages from an application in the source language, sending the messages to be translated, and then merging their translations back into the final source code. Translations are frequently handled by contracts with specific partner companies, and involve sending the source messages to a separate contractor before receiving final translations for display to the end user. If the returned translations have malicious content, it could be rendered into the application and execute arbitrary JavaScript. When successfully exploited, this vulnerability allows for execution of attacker controlled JavaScript in the application origin. Depending on the nature of the application being exploited this could lead to credential exfiltration and/or page vandalism. Several preconditions apply to the attack. The attacker must compromise the translation file (xliff, xtb, etc.). Unlike most XSS vulnerabilities, this issue is not exploitable by arbitrary users. An attacker must first compromise an application's translation file before they can escalate privileges into the Angular application client. The victim application must use Angular i18n, use one or more ICU messages, render an ICU message, and not defend against XSS via a safe content security policy. Versions 21.2.0, 21.1.6, 20.3.17, and 19.2.19 patch the issue. Until the patch is applied, developers should consider reviewing and verifying translated content received from untrusted third parties before incorporating it in an Angular application, enabling strict CSP controls to block unauthorized JavaScript from executing on the page, and enabling Trusted Types to enforce proper HTML sanitization.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-79"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "nvd": 2,
+            "redhat": 3
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+              "V40Vector": "CVSS:4.0/AV:L/AC:L/AT:N/PR:H/UI:A/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+              "V3Score": 6.1,
+              "V40Score": 7
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+              "V3Score": 6.1
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:L",
+              "V3Score": 7.1
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-27970",
+            "https://angular.dev/best-practices/security#enforcing-trusted-types",
+            "https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API",
+            "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP",
+            "https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/XSS",
+            "https://github.com/angular/angular",
+            "https://github.com/angular/angular/commit/306f367899dfc2e04238fecd3455547b5d54075d",
+            "https://github.com/angular/angular/commit/7d58b798c626bb0e4e5f89ca8affdce4f352b232",
+            "https://github.com/angular/angular/commit/b85830953281ff3a1a77bbfe69019d352d509c93",
+            "https://github.com/angular/angular/pull/67183",
+            "https://github.com/angular/angular/security/advisories/GHSA-prjf-86w9-mfqv",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-27970",
+            "https://www.cve.org/CVERecord?id=CVE-2026-27970"
+          ],
+          "PublishedDate": "2026-02-26T02:16:24.353Z",
+          "LastModifiedDate": "2026-02-27T17:11:53.417Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-32635",
+          "VendorIDs": [
+            "GHSA-g93w-mfhg-p222"
+          ],
+          "PkgID": "@angular/core@20.3.14",
+          "PkgName": "@angular/core",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/%40angular/core@20.3.14",
+            "UID": "d68c4bef52277cea"
+          },
+          "InstalledVersion": "20.3.14",
+          "FixedVersion": "22.0.0-next.3, 21.2.4, 20.3.18, 19.2.20",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-32635",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Fingerprint": "sha256:84ce3ad9acfed67832b9b25a4788fc3edf93f5f2b833a3dd039d0a3a2b57844a",
+          "Title": "@angular/core: @angular/compiler: Angular has XSS in i18n attribute bindings",
+          "Description": "Angular is a development platform for building mobile and desktop web applications using TypeScript/JavaScript and other languages. Prior to 22.0.0-next.3, 21.2.4, 20.3.18, and 19.2.20, a Cross-Site Scripting (XSS) vulnerability has been identified in the Angular runtime and compiler. It occurs when the application uses a security-sensitive attribute (for example href on an anchor tag) together with Angular's ability to internationalize attributes. Enabling internationalization for the sensitive attribute by adding i18n-\u003cattribute\u003e name bypasses Angular's built-in sanitization mechanism, which when combined with a data binding to untrusted user-generated data can allow an attacker to inject a malicious script. This vulnerability is fixed in 22.0.0-next.3, 21.2.4, 20.3.18, and 19.2.20.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-79"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "redhat": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V40Vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+              "V40Score": 8.6
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:L",
+              "V3Score": 6.3
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-32635",
+            "https://github.com/angular/angular",
+            "https://github.com/angular/angular/commit/224e60ecb1b90115baa702f1c06edc1d64d86187",
+            "https://github.com/angular/angular/commit/78dea55351fb305b33a919c43a6b363137eca166",
+            "https://github.com/angular/angular/commit/8630319f74c9575a21693d875cc7d5252516146d",
+            "https://github.com/angular/angular/commit/ed2d324f9cc12aab6cfa0569ef10b73243a62c65",
+            "https://github.com/angular/angular/pull/67541",
+            "https://github.com/angular/angular/pull/67561",
+            "https://github.com/angular/angular/security/advisories/GHSA-g93w-mfhg-p222",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-32635",
+            "https://www.cve.org/CVERecord?id=CVE-2026-32635"
+          ],
+          "PublishedDate": "2026-03-16T14:19:40.753Z",
+          "LastModifiedDate": "2026-03-16T14:53:07.39Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-4800",
+          "VendorIDs": [
+            "GHSA-r5fr-rjxr-66jc"
+          ],
+          "PkgID": "lodash-es@4.17.21",
+          "PkgName": "lodash-es",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/lodash-es@4.17.21",
+            "UID": "717ccf0c4ff465f1"
+          },
+          "InstalledVersion": "4.17.21",
+          "FixedVersion": "4.18.0",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-4800",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Fingerprint": "sha256:527f9024225f7646ed1c3a82af2ef1130516c0d7a7291f1a45fddc7afe63764b",
+          "Title": "lodash: lodash: Arbitrary code execution via untrusted input in template imports",
+          "Description": "Impact:\n\nThe fix for CVE-2021-23337 (https://github.com/advisories/GHSA-35jh-r3h4-6jhm) added validation for the variable option in _.template but did not apply the same validation to options.imports key names. Both paths flow into the same Function() constructor sink.\n\nWhen an application passes untrusted input as options.imports key names, an attacker can inject default-parameter expressions that execute arbitrary code at template compilation time.\n\nAdditionally, _.template uses assignInWith to merge imports, which enumerates inherited properties via for..in. If Object.prototype has been polluted by any other vector, the polluted keys are copied into the imports object and passed to Function().\n\nPatches:\n\nUsers should upgrade to version 4.18.0.\n\nWorkarounds:\n\nDo not pass untrusted input as key names in options.imports. Only use developer-controlled, static key names.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-94"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 8.1
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 8.1
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-4800",
+            "https://cna.openjsf.org/security-advisories.html",
+            "https://github.com/advisories/GHSA-35jh-r3h4-6jhm",
+            "https://github.com/lodash/lodash",
+            "https://github.com/lodash/lodash/commit/3469357cff396a26c363f8c1b5a91dde28ba4b1c",
+            "https://github.com/lodash/lodash/security/advisories/GHSA-r5fr-rjxr-66jc",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-4800",
+            "https://www.cve.org/CVERecord?id=CVE-2026-4800"
+          ],
+          "PublishedDate": "2026-03-31T20:16:29.66Z",
+          "LastModifiedDate": "2026-04-01T14:23:37.727Z"
+        }
+      ]
+    },
+    {
+      "Target": "SI091_REGINSA_FRONTEND-1/package-lock.json",
+      "Class": "lang-pkgs",
+      "Type": "npm",
+      "Packages": [
+        {
+          "ID": "@angular/animations@17.0.7",
+          "Name": "@angular/animations",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/animations@17.0.7",
+            "UID": "c1b0be601edda108"
+          },
+          "Version": "17.0.7",
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/core@17.0.7",
+            "tslib@2.6.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 267,
+              "EndLine": 280
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/cdk@17.0.4",
+          "Name": "@angular/cdk",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/cdk@17.0.4",
+            "UID": "1164244ca52e6e2c"
+          },
+          "Version": "17.0.4",
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/common@17.0.7",
+            "@angular/core@17.0.7",
+            "parse5@7.1.2",
+            "rxjs@7.8.1",
+            "tslib@2.6.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 281,
+              "EndLine": 296
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/common@17.0.7",
+          "Name": "@angular/common",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/common@17.0.7",
+            "UID": "a9d27ce1273e8f13"
+          },
+          "Version": "17.0.7",
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/core@17.0.7",
+            "rxjs@7.8.1",
+            "tslib@2.6.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 331,
+              "EndLine": 345
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/compiler@17.0.7",
+          "Name": "@angular/compiler",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/compiler@17.0.7",
+            "UID": "af590f9fa34ceae6"
+          },
+          "Version": "17.0.7",
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/core@17.0.7",
+            "tslib@2.6.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 346,
+              "EndLine": 364
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/core@17.0.7",
+          "Name": "@angular/core",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/core@17.0.7",
+            "UID": "d896640040046f3b"
+          },
+          "Version": "17.0.7",
+          "Relationship": "direct",
+          "DependsOn": [
+            "rxjs@7.8.1",
+            "tslib@2.6.2",
+            "zone.js@0.14.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 393,
+              "EndLine": 407
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/forms@17.0.7",
+          "Name": "@angular/forms",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/forms@17.0.7",
+            "UID": "bd00b3a4bcdee453"
+          },
+          "Version": "17.0.7",
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/common@17.0.7",
+            "@angular/core@17.0.7",
+            "@angular/platform-browser@17.0.7",
+            "rxjs@7.8.1",
+            "tslib@2.6.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 408,
+              "EndLine": 424
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/platform-browser@17.0.7",
+          "Name": "@angular/platform-browser",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/platform-browser@17.0.7",
+            "UID": "97017e8b06f33986"
+          },
+          "Version": "17.0.7",
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/animations@17.0.7",
+            "@angular/common@17.0.7",
+            "@angular/core@17.0.7",
+            "tslib@2.6.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 425,
+              "EndLine": 445
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/platform-browser-dynamic@17.0.7",
+          "Name": "@angular/platform-browser-dynamic",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/platform-browser-dynamic@17.0.7",
+            "UID": "fdc5ff61b1fe5232"
+          },
+          "Version": "17.0.7",
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/common@17.0.7",
+            "@angular/compiler@17.0.7",
+            "@angular/core@17.0.7",
+            "@angular/platform-browser@17.0.7",
+            "tslib@2.6.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 446,
+              "EndLine": 462
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@angular/router@17.0.7",
+          "Name": "@angular/router",
+          "Identifier": {
+            "PURL": "pkg:npm/%40angular/router@17.0.7",
+            "UID": "605fdd9bfcdccd9e"
+          },
+          "Version": "17.0.7",
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/common@17.0.7",
+            "@angular/core@17.0.7",
+            "@angular/platform-browser@17.0.7",
+            "rxjs@7.8.1",
+            "tslib@2.6.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 463,
+              "EndLine": 479
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@auth0/angular-jwt@5.2.0",
+          "Name": "@auth0/angular-jwt",
+          "Identifier": {
+            "PURL": "pkg:npm/%40auth0/angular-jwt@5.2.0",
+            "UID": "75fa2fecdd7655d4"
+          },
+          "Version": "5.2.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/common@17.0.7",
+            "tslib@2.6.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 486,
+              "EndLine": 496
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@fullcalendar/angular@6.1.10",
+          "Name": "@fullcalendar/angular",
+          "Identifier": {
+            "PURL": "pkg:npm/%40fullcalendar/angular@6.1.10",
+            "UID": "40ebbf1c7c002241"
+          },
+          "Version": "6.1.10",
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/common@17.0.7",
+            "@angular/core@17.0.7",
+            "@fullcalendar/core@6.1.10",
+            "tslib@2.6.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 2610,
+              "EndLine": 2622
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@fullcalendar/core@6.1.10",
+          "Name": "@fullcalendar/core",
+          "Identifier": {
+            "PURL": "pkg:npm/%40fullcalendar/core@6.1.10",
+            "UID": "4f6bb39a539fbc7c"
+          },
+          "Version": "6.1.10",
+          "Relationship": "direct",
+          "DependsOn": [
+            "preact@10.12.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 2623,
+              "EndLine": 2630
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@fullcalendar/daygrid@6.1.10",
+          "Name": "@fullcalendar/daygrid",
+          "Identifier": {
+            "PURL": "pkg:npm/%40fullcalendar/daygrid@6.1.10",
+            "UID": "956937d09d37f555"
+          },
+          "Version": "6.1.10",
+          "Relationship": "direct",
+          "DependsOn": [
+            "@fullcalendar/core@6.1.10"
+          ],
+          "Locations": [
+            {
+              "StartLine": 2631,
+              "EndLine": 2638
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@fullcalendar/interaction@6.1.10",
+          "Name": "@fullcalendar/interaction",
+          "Identifier": {
+            "PURL": "pkg:npm/%40fullcalendar/interaction@6.1.10",
+            "UID": "ca40512110611c29"
+          },
+          "Version": "6.1.10",
+          "Relationship": "direct",
+          "DependsOn": [
+            "@fullcalendar/core@6.1.10"
+          ],
+          "Locations": [
+            {
+              "StartLine": 2639,
+              "EndLine": 2646
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "@fullcalendar/timegrid@6.1.10",
+          "Name": "@fullcalendar/timegrid",
+          "Identifier": {
+            "PURL": "pkg:npm/%40fullcalendar/timegrid@6.1.10",
+            "UID": "7a650ec72455bcc0"
+          },
+          "Version": "6.1.10",
+          "Relationship": "direct",
+          "DependsOn": [
+            "@fullcalendar/core@6.1.10",
+            "@fullcalendar/daygrid@6.1.10"
+          ],
+          "Locations": [
+            {
+              "StartLine": 2647,
+              "EndLine": 2657
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "chart.js@3.9.1",
+          "Name": "chart.js",
+          "Identifier": {
+            "PURL": "pkg:npm/chart.js@3.9.1",
+            "UID": "5d243b3cc94d3f87"
+          },
+          "Version": "3.9.1",
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 4621,
+              "EndLine": 4625
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "crypto-js@4.2.0",
+          "Name": "crypto-js",
+          "Identifier": {
+            "PURL": "pkg:npm/crypto-js@4.2.0",
+            "UID": "bb81d0022910d32"
+          },
+          "Version": "4.2.0",
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 5217,
+              "EndLine": 5221
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "primeflex@3.3.1",
+          "Name": "primeflex",
+          "Identifier": {
+            "PURL": "pkg:npm/primeflex@3.3.1",
+            "UID": "5edbce6201f40d98"
+          },
+          "Version": "3.3.1",
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 10102,
+              "EndLine": 10106
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "primeicons@6.0.1",
+          "Name": "primeicons",
+          "Identifier": {
+            "PURL": "pkg:npm/primeicons@6.0.1",
+            "UID": "8d2ebed83d73079a"
+          },
+          "Version": "6.0.1",
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 10107,
+              "EndLine": 10111
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "primeng@17.2.0",
+          "Name": "primeng",
+          "Identifier": {
+            "PURL": "pkg:npm/primeng@17.2.0",
+            "UID": "78cbf431980f5369"
+          },
+          "Version": "17.2.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "@angular/common@17.0.7",
+            "@angular/core@17.0.7",
+            "@angular/forms@17.0.7",
+            "rxjs@7.8.1",
+            "tslib@2.6.2",
+            "zone.js@0.14.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 10112,
+              "EndLine": 10126
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "quill@1.3.7",
+          "Name": "quill",
+          "Identifier": {
+            "PURL": "pkg:npm/quill@1.3.7",
+            "UID": "5802a1d4ebb83611"
+          },
+          "Version": "1.3.7",
+          "Relationship": "direct",
+          "DependsOn": [
+            "clone@2.1.2",
+            "deep-equal@1.1.2",
+            "eventemitter3@2.0.3",
+            "extend@3.0.2",
+            "parchment@1.1.4",
+            "quill-delta@3.6.3"
+          ],
+          "Locations": [
+            {
+              "StartLine": 10243,
+              "EndLine": 10255
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "rxjs@7.8.1",
+          "Name": "rxjs",
+          "Identifier": {
+            "PURL": "pkg:npm/rxjs@7.8.1",
+            "UID": "33d6312768d35d70"
+          },
+          "Version": "7.8.1",
+          "Relationship": "direct",
+          "DependsOn": [
+            "tslib@2.6.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 10760,
+              "EndLine": 10767
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "sweetalert2@11.12.0",
+          "Name": "sweetalert2",
+          "Identifier": {
+            "PURL": "pkg:npm/sweetalert2@11.12.0",
+            "UID": "b2a2b8b5629bec6a"
+          },
+          "Version": "11.12.0",
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 11674,
+              "EndLine": 11682
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "tslib@2.6.2",
+          "Name": "tslib",
+          "Identifier": {
+            "PURL": "pkg:npm/tslib@2.6.2",
+            "UID": "61b930559333bd9d"
+          },
+          "Version": "2.6.2",
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 11947,
+              "EndLine": 11951
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "zone.js@0.14.2",
+          "Name": "zone.js",
+          "Identifier": {
+            "PURL": "pkg:npm/zone.js@0.14.2",
+            "UID": "ca5dfc0b363a7671"
+          },
+          "Version": "0.14.2",
+          "Relationship": "direct",
+          "DependsOn": [
+            "tslib@2.6.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 13199,
+              "EndLine": 13206
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "call-bind@1.0.5",
+          "Name": "call-bind",
+          "Identifier": {
+            "PURL": "pkg:npm/call-bind@1.0.5",
+            "UID": "5e373b0ebbdc0bbb"
+          },
+          "Version": "1.0.5",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "function-bind@1.1.2",
+            "get-intrinsic@1.2.2",
+            "set-function-length@1.1.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 4550,
+              "EndLine": 4562
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "clone@2.1.2",
+          "Name": "clone",
+          "Identifier": {
+            "PURL": "pkg:npm/clone@2.1.2",
+            "UID": "1ec6913c99263a0a"
+          },
+          "Version": "2.1.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 4777,
+              "EndLine": 4784
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "deep-equal@1.1.2",
+          "Name": "deep-equal",
+          "Identifier": {
+            "PURL": "pkg:npm/deep-equal@1.1.2",
+            "UID": "7c35fe09d3838058"
+          },
+          "Version": "1.1.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "is-arguments@1.1.1",
+            "is-date-object@1.0.5",
+            "is-regex@1.1.4",
+            "object-is@1.1.5",
+            "object-keys@1.1.1",
+            "regexp.prototype.flags@1.5.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 5320,
+              "EndLine": 5338
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "define-data-property@1.1.1",
+          "Name": "define-data-property",
+          "Identifier": {
+            "PURL": "pkg:npm/define-data-property@1.1.1",
+            "UID": "c52431e9c6ddc83e"
+          },
+          "Version": "1.1.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "get-intrinsic@1.2.2",
+            "gopd@1.0.1",
+            "has-property-descriptors@1.0.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 5372,
+              "EndLine": 5384
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "define-properties@1.2.1",
+          "Name": "define-properties",
+          "Identifier": {
+            "PURL": "pkg:npm/define-properties@1.2.1",
+            "UID": "97fe28c29de44057"
+          },
+          "Version": "1.2.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "define-data-property@1.1.1",
+            "has-property-descriptors@1.0.1",
+            "object-keys@1.1.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 5394,
+              "EndLine": 5409
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "entities@4.5.0",
+          "Name": "entities",
+          "Identifier": {
+            "PURL": "pkg:npm/entities@4.5.0",
+            "UID": "9e827b4365434ee7"
+          },
+          "Version": "4.5.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 5771,
+              "EndLine": 5782
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "eventemitter3@2.0.3",
+          "Name": "eventemitter3",
+          "Identifier": {
+            "PURL": "pkg:npm/eventemitter3@2.0.3",
+            "UID": "5227163d8a7becba"
+          },
+          "Version": "2.0.3",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 10269,
+              "EndLine": 10273
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "extend@3.0.2",
+          "Name": "extend",
+          "Identifier": {
+            "PURL": "pkg:npm/extend@3.0.2",
+            "UID": "1b32f398d00ea163"
+          },
+          "Version": "3.0.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 6192,
+              "EndLine": 6196
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "fast-diff@1.1.2",
+          "Name": "fast-diff",
+          "Identifier": {
+            "PURL": "pkg:npm/fast-diff@1.1.2",
+            "UID": "1deb3465ef5646bf"
+          },
+          "Version": "1.1.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 6217,
+              "EndLine": 6221
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "function-bind@1.1.2",
+          "Name": "function-bind",
+          "Identifier": {
+            "PURL": "pkg:npm/function-bind@1.1.2",
+            "UID": "e3961ccd53f8147b"
+          },
+          "Version": "1.1.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 6510,
+              "EndLine": 6517
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "functions-have-names@1.2.3",
+          "Name": "functions-have-names",
+          "Identifier": {
+            "PURL": "pkg:npm/functions-have-names@1.2.3",
+            "UID": "fe85c9121cf8805b"
+          },
+          "Version": "1.2.3",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 6518,
+              "EndLine": 6525
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "get-intrinsic@1.2.2",
+          "Name": "get-intrinsic",
+          "Identifier": {
+            "PURL": "pkg:npm/get-intrinsic@1.2.2",
+            "UID": "1459c105fe99a7d3"
+          },
+          "Version": "1.2.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "function-bind@1.1.2",
+            "has-proto@1.0.1",
+            "has-symbols@1.0.3",
+            "hasown@2.0.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 6544,
+              "EndLine": 6557
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "gopd@1.0.1",
+          "Name": "gopd",
+          "Identifier": {
+            "PURL": "pkg:npm/gopd@1.0.1",
+            "UID": "3c96c5e44c0e2090"
+          },
+          "Version": "1.0.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "get-intrinsic@1.2.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 6645,
+              "EndLine": 6655
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "has-property-descriptors@1.0.1",
+          "Name": "has-property-descriptors",
+          "Identifier": {
+            "PURL": "pkg:npm/has-property-descriptors@1.0.1",
+            "UID": "11b57fc2263ef21d"
+          },
+          "Version": "1.0.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "get-intrinsic@1.2.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 6677,
+              "EndLine": 6687
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "has-proto@1.0.1",
+          "Name": "has-proto",
+          "Identifier": {
+            "PURL": "pkg:npm/has-proto@1.0.1",
+            "UID": "cd5598a2fdf35095"
+          },
+          "Version": "1.0.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 6688,
+              "EndLine": 6698
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "has-symbols@1.0.3",
+          "Name": "has-symbols",
+          "Identifier": {
+            "PURL": "pkg:npm/has-symbols@1.0.3",
+            "UID": "655880813694aa3f"
+          },
+          "Version": "1.0.3",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 6699,
+              "EndLine": 6709
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "has-tostringtag@1.0.0",
+          "Name": "has-tostringtag",
+          "Identifier": {
+            "PURL": "pkg:npm/has-tostringtag@1.0.0",
+            "UID": "a1ade280d6b0b210"
+          },
+          "Version": "1.0.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "has-symbols@1.0.3"
+          ],
+          "Locations": [
+            {
+              "StartLine": 6710,
+              "EndLine": 6723
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "hasown@2.0.0",
+          "Name": "hasown",
+          "Identifier": {
+            "PURL": "pkg:npm/hasown@2.0.0",
+            "UID": "c287049c0ea6666a"
+          },
+          "Version": "2.0.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "function-bind@1.1.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 6724,
+              "EndLine": 6734
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "is-arguments@1.1.1",
+          "Name": "is-arguments",
+          "Identifier": {
+            "PURL": "pkg:npm/is-arguments@1.1.1",
+            "UID": "588b62e5320d166f"
+          },
+          "Version": "1.1.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "call-bind@1.0.5",
+            "has-tostringtag@1.0.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 7217,
+              "EndLine": 7231
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "is-date-object@1.0.5",
+          "Name": "is-date-object",
+          "Identifier": {
+            "PURL": "pkg:npm/is-date-object@1.0.5",
+            "UID": "70f05dac760da8aa"
+          },
+          "Version": "1.0.5",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "has-tostringtag@1.0.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 7262,
+              "EndLine": 7275
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "is-regex@1.1.4",
+          "Name": "is-regex",
+          "Identifier": {
+            "PURL": "pkg:npm/is-regex@1.1.4",
+            "UID": "b949cc73404ca54c"
+          },
+          "Version": "1.1.4",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "call-bind@1.0.5",
+            "has-tostringtag@1.0.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 7378,
+              "EndLine": 7392
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "object-is@1.1.5",
+          "Name": "object-is",
+          "Identifier": {
+            "PURL": "pkg:npm/object-is@1.1.5",
+            "UID": "ea172511d6cbe2a"
+          },
+          "Version": "1.1.5",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "call-bind@1.0.5",
+            "define-properties@1.2.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 9305,
+              "EndLine": 9319
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "object-keys@1.1.1",
+          "Name": "object-keys",
+          "Identifier": {
+            "PURL": "pkg:npm/object-keys@1.1.1",
+            "UID": "a552378e8a69ae2c"
+          },
+          "Version": "1.1.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 9320,
+              "EndLine": 9327
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "parchment@1.1.4",
+          "Name": "parchment",
+          "Identifier": {
+            "PURL": "pkg:npm/parchment@1.1.4",
+            "UID": "a9e2f961e09e83c1"
+          },
+          "Version": "1.1.4",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 9648,
+              "EndLine": 9652
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "parse5@7.1.2",
+          "Name": "parse5",
+          "Identifier": {
+            "PURL": "pkg:npm/parse5@7.1.2",
+            "UID": "f15dbac9fbcd7075"
+          },
+          "Version": "7.1.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "entities@4.5.0"
+          ],
+          "Locations": [
+            {
+              "StartLine": 9692,
+              "EndLine": 9703
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "preact@10.12.1",
+          "Name": "preact",
+          "Identifier": {
+            "PURL": "pkg:npm/preact@10.12.1",
+            "UID": "7c66eb2503de5fa7"
+          },
+          "Version": "10.12.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 10081,
+              "EndLine": 10089
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "quill-delta@3.6.3",
+          "Name": "quill-delta",
+          "Identifier": {
+            "PURL": "pkg:npm/quill-delta@3.6.3",
+            "UID": "f97464f822a3c938"
+          },
+          "Version": "3.6.3",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "deep-equal@1.1.2",
+            "extend@3.0.2",
+            "fast-diff@1.1.2"
+          ],
+          "Locations": [
+            {
+              "StartLine": 10256,
+              "EndLine": 10268
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "regexp.prototype.flags@1.5.1",
+          "Name": "regexp.prototype.flags",
+          "Identifier": {
+            "PURL": "pkg:npm/regexp.prototype.flags@1.5.1",
+            "UID": "91948bf2a661b957"
+          },
+          "Version": "1.5.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "call-bind@1.0.5",
+            "define-properties@1.2.1",
+            "set-function-name@2.0.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 10482,
+              "EndLine": 10497
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "set-function-length@1.1.1",
+          "Name": "set-function-length",
+          "Identifier": {
+            "PURL": "pkg:npm/set-function-length@1.1.1",
+            "UID": "7d4ca7dea9315893"
+          },
+          "Version": "1.1.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "define-data-property@1.1.1",
+            "get-intrinsic@1.2.2",
+            "gopd@1.0.1",
+            "has-property-descriptors@1.0.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 11139,
+              "EndLine": 11152
+            }
+          ],
+          "AnalyzedBy": "npm"
+        },
+        {
+          "ID": "set-function-name@2.0.1",
+          "Name": "set-function-name",
+          "Identifier": {
+            "PURL": "pkg:npm/set-function-name@2.0.1",
+            "UID": "9e1afa00bde0c3fa"
+          },
+          "Version": "2.0.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "define-data-property@1.1.1",
+            "functions-have-names@1.2.3",
+            "has-property-descriptors@1.0.1"
+          ],
+          "Locations": [
+            {
+              "StartLine": 11153,
+              "EndLine": 11165
+            }
+          ],
+          "AnalyzedBy": "npm"
+        }
+      ],
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2025-66035",
+          "VendorIDs": [
+            "GHSA-58c5-g7wp-6w37"
+          ],
+          "PkgID": "@angular/common@17.0.7",
+          "PkgName": "@angular/common",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/%40angular/common@17.0.7",
+            "UID": "a9d27ce1273e8f13"
+          },
+          "InstalledVersion": "17.0.7",
+          "FixedVersion": "21.0.1, 20.3.14, 19.2.16",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2025-66035",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Fingerprint": "sha256:10936c6e1229c687c21de548ee6f92df1be98db8e900159b2b35ca03f987c449",
+          "Title": "angular: Angular HTTP Client Has XSRF Token Leakage via Protocol-Relative URLs",
+          "Description": "Angular is a development platform for building mobile and desktop web applications using TypeScript/JavaScript and other languages. Prior to versions 19.2.16, 20.3.14, and 21.0.1, there is a XSRF token leakage via protocol-relative URLs in angular HTTP clients. The vulnerability is a Credential Leak by App Logic that leads to the unauthorized disclosure of the Cross-Site Request Forgery (XSRF) token to an attacker-controlled domain. Angular's HttpClient has a built-in XSRF protection mechanism that works by checking if a request URL starts with a protocol (http:// or https://) to determine if it is cross-origin. If the URL starts with protocol-relative URL (//), it is incorrectly treated as a same-origin request, and the XSRF token is automatically added to the X-XSRF-TOKEN header. This issue has been patched in versions 19.2.16, 20.3.14, and 21.0.1. A workaround for this issue involves avoiding using protocol-relative URLs (URLs starting with //) in HttpClient requests. All backend communication URLs should be hardcoded as relative paths (starting with a single /) or fully qualified, trusted absolute URLs.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-201",
+            "CWE-359"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "redhat": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V40Vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:H/SI:N/SA:N",
+              "V40Score": 7.7
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:L/A:N",
+              "V3Score": 7.1
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2025-66035",
+            "https://github.com/angular/angular",
+            "https://github.com/angular/angular/commit/0276479e7d0e280e0f8d26fa567d3b7aa97a516f",
+            "https://github.com/angular/angular/commit/05fe6686a97fa0bcd3cf157805b3612033f975bc",
+            "https://github.com/angular/angular/commit/3240d856d942727372a705252f7c8c115394a41e",
+            "https://github.com/angular/angular/releases/tag/19.2.16",
+            "https://github.com/angular/angular/releases/tag/20.3.14",
+            "https://github.com/angular/angular/releases/tag/21.0.1",
+            "https://github.com/angular/angular/security/advisories/GHSA-58c5-g7wp-6w37",
+            "https://nvd.nist.gov/vuln/detail/CVE-2025-66035",
+            "https://www.cve.org/CVERecord?id=CVE-2025-66035"
+          ],
+          "PublishedDate": "2025-11-26T23:15:49.55Z",
+          "LastModifiedDate": "2025-12-01T15:39:33.11Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2025-66412",
+          "VendorIDs": [
+            "GHSA-v4hv-rgfq-gp49"
+          ],
+          "PkgID": "@angular/compiler@17.0.7",
+          "PkgName": "@angular/compiler",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/%40angular/compiler@17.0.7",
+            "UID": "af590f9fa34ceae6"
+          },
+          "InstalledVersion": "17.0.7",
+          "FixedVersion": "21.0.2, 20.3.15, 19.2.17",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2025-66412",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Fingerprint": "sha256:01c1ddede0693ed886df3241e83b5195eb938ff9238a71cb6948549353b1a149",
+          "Title": "angular: Angular Stored XSS Vulnerability via SVG Animation, SVG URL and MathML Attributes",
+          "Description": "Angular is a development platform for building mobile and desktop web applications using TypeScript/JavaScript and other languages. Prior to 21.0.2, 20.3.15, and 19.2.17, A Stored Cross-Site Scripting (XSS) vulnerability has been identified in the Angular Template Compiler. It occurs because the compiler's internal security schema is incomplete, allowing attackers to bypass Angular's built-in security sanitization. Specifically, the schema fails to classify certain URL-holding attributes (e.g., those that could contain javascript: URLs) as requiring strict URL security, enabling the injection of malicious scripts. This vulnerability is fixed in 21.0.2, 20.3.15, and 19.2.17.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-79"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "nvd": 2,
+            "redhat": 3
+          },
+          "CVSS": {
+            "ghsa": {
+              "V40Vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:A/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+              "V40Score": 8.5
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:L/I:L/A:N",
+              "V3Score": 5.4
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N",
+              "V3Score": 8.1
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2025-66412",
+            "https://github.com/angular/angular",
+            "https://github.com/angular/angular/commit/1c6b0704fb63d051fab8acff84d076abfbc4893a",
+            "https://github.com/angular/angular/security/advisories/GHSA-v4hv-rgfq-gp49",
+            "https://nvd.nist.gov/vuln/detail/CVE-2025-66412",
+            "https://www.cve.org/CVERecord?id=CVE-2025-66412"
+          ],
+          "PublishedDate": "2025-12-01T23:15:53.89Z",
+          "LastModifiedDate": "2026-02-20T16:37:23.807Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-22610",
+          "VendorIDs": [
+            "GHSA-jrmj-c5cx-3cw6"
+          ],
+          "PkgID": "@angular/compiler@17.0.7",
+          "PkgName": "@angular/compiler",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/%40angular/compiler@17.0.7",
+            "UID": "af590f9fa34ceae6"
+          },
+          "InstalledVersion": "17.0.7",
+          "FixedVersion": "21.1.0-rc.0, 21.0.7, 20.3.16, 19.2.18",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-22610",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Fingerprint": "sha256:a0073259cb06fd2eb644f81a081d987fbc05a461616b0c679e957c50604f609e",
+          "Title": "angular: Angular: Cross-site scripting vulnerability in Template Compiler",
+          "Description": "Angular is a development platform for building mobile and desktop web applications using TypeScript/JavaScript and other languages. Prior to versions 19.2.18, 20.3.16, 21.0.7, and 21.1.0-rc.0, a cross-site scripting (XSS) vulnerability has been identified in the Angular Template Compiler. The vulnerability exists because Angular’s internal sanitization schema fails to recognize the href and xlink:href attributes of SVG \u003cscript\u003e elements as a Resource URL context. This issue has been patched in versions 19.2.18, 20.3.16, 21.0.7, and 21.1.0-rc.0.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-79"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "nvd": 2,
+            "redhat": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V40Vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:A/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+              "V40Score": 8.5
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+              "V3Score": 6.1
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:U/C:H/I:H/A:N",
+              "V3Score": 7.3
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-22610",
+            "https://github.com/angular/angular",
+            "https://github.com/angular/angular/commit/91dc91bae4a1bbefc58bef6ef739d0e02ab44d56",
+            "https://github.com/angular/angular/pull/66318",
+            "https://github.com/angular/angular/security/advisories/GHSA-jrmj-c5cx-3cw6",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-22610",
+            "https://www.cve.org/CVERecord?id=CVE-2026-22610"
+          ],
+          "PublishedDate": "2026-01-10T04:16:01.517Z",
+          "LastModifiedDate": "2026-02-23T18:23:55.623Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-32635",
+          "VendorIDs": [
+            "GHSA-g93w-mfhg-p222"
+          ],
+          "PkgID": "@angular/compiler@17.0.7",
+          "PkgName": "@angular/compiler",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/%40angular/compiler@17.0.7",
+            "UID": "af590f9fa34ceae6"
+          },
+          "InstalledVersion": "17.0.7",
+          "FixedVersion": "22.0.0-next.3, 21.2.4, 20.3.18, 19.2.20",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-32635",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Fingerprint": "sha256:0f046efa0b0d697c7e0e270c430de53c19a4d00d21827ef408dcea0486857bb6",
+          "Title": "@angular/core: @angular/compiler: Angular has XSS in i18n attribute bindings",
+          "Description": "Angular is a development platform for building mobile and desktop web applications using TypeScript/JavaScript and other languages. Prior to 22.0.0-next.3, 21.2.4, 20.3.18, and 19.2.20, a Cross-Site Scripting (XSS) vulnerability has been identified in the Angular runtime and compiler. It occurs when the application uses a security-sensitive attribute (for example href on an anchor tag) together with Angular's ability to internationalize attributes. Enabling internationalization for the sensitive attribute by adding i18n-\u003cattribute\u003e name bypasses Angular's built-in sanitization mechanism, which when combined with a data binding to untrusted user-generated data can allow an attacker to inject a malicious script. This vulnerability is fixed in 22.0.0-next.3, 21.2.4, 20.3.18, and 19.2.20.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-79"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "redhat": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V40Vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+              "V40Score": 8.6
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:L",
+              "V3Score": 6.3
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-32635",
+            "https://github.com/angular/angular",
+            "https://github.com/angular/angular/commit/224e60ecb1b90115baa702f1c06edc1d64d86187",
+            "https://github.com/angular/angular/commit/78dea55351fb305b33a919c43a6b363137eca166",
+            "https://github.com/angular/angular/commit/8630319f74c9575a21693d875cc7d5252516146d",
+            "https://github.com/angular/angular/commit/ed2d324f9cc12aab6cfa0569ef10b73243a62c65",
+            "https://github.com/angular/angular/pull/67541",
+            "https://github.com/angular/angular/pull/67561",
+            "https://github.com/angular/angular/security/advisories/GHSA-g93w-mfhg-p222",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-32635",
+            "https://www.cve.org/CVERecord?id=CVE-2026-32635"
+          ],
+          "PublishedDate": "2026-03-16T14:19:40.753Z",
+          "LastModifiedDate": "2026-03-16T14:53:07.39Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-22610",
+          "VendorIDs": [
+            "GHSA-jrmj-c5cx-3cw6"
+          ],
+          "PkgID": "@angular/core@17.0.7",
+          "PkgName": "@angular/core",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/%40angular/core@17.0.7",
+            "UID": "d896640040046f3b"
+          },
+          "InstalledVersion": "17.0.7",
+          "FixedVersion": "21.1.0-rc.0, 21.0.7, 20.3.16, 19.2.18",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-22610",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Fingerprint": "sha256:615e869cb7756b9936abab7c18ba6a5fd4be829fe655118bc03390e8a3a2c41b",
+          "Title": "angular: Angular: Cross-site scripting vulnerability in Template Compiler",
+          "Description": "Angular is a development platform for building mobile and desktop web applications using TypeScript/JavaScript and other languages. Prior to versions 19.2.18, 20.3.16, 21.0.7, and 21.1.0-rc.0, a cross-site scripting (XSS) vulnerability has been identified in the Angular Template Compiler. The vulnerability exists because Angular’s internal sanitization schema fails to recognize the href and xlink:href attributes of SVG \u003cscript\u003e elements as a Resource URL context. This issue has been patched in versions 19.2.18, 20.3.16, 21.0.7, and 21.1.0-rc.0.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-79"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "nvd": 2,
+            "redhat": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V40Vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:A/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+              "V40Score": 8.5
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+              "V3Score": 6.1
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:U/C:H/I:H/A:N",
+              "V3Score": 7.3
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-22610",
+            "https://github.com/angular/angular",
+            "https://github.com/angular/angular/commit/91dc91bae4a1bbefc58bef6ef739d0e02ab44d56",
+            "https://github.com/angular/angular/pull/66318",
+            "https://github.com/angular/angular/security/advisories/GHSA-jrmj-c5cx-3cw6",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-22610",
+            "https://www.cve.org/CVERecord?id=CVE-2026-22610"
+          ],
+          "PublishedDate": "2026-01-10T04:16:01.517Z",
+          "LastModifiedDate": "2026-02-23T18:23:55.623Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-27970",
+          "VendorIDs": [
+            "GHSA-prjf-86w9-mfqv"
+          ],
+          "PkgID": "@angular/core@17.0.7",
+          "PkgName": "@angular/core",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/%40angular/core@17.0.7",
+            "UID": "d896640040046f3b"
+          },
+          "InstalledVersion": "17.0.7",
+          "FixedVersion": "21.2.0, 21.1.6, 20.3.17, 19.2.19",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-27970",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Fingerprint": "sha256:dd0fc896d97e08abdc92fa207493c941bef34049eb1eef559355f0127948270f",
+          "Title": "@angular/core: Angular: Cross-site scripting via compromised translation files",
+          "Description": "Angular is a development platform for building mobile and desktop web applications using TypeScript/JavaScript and other languages. Versions prior to 21.2.0, 21.1.16, 20.3.17, and 19.2.19 have a cross-Site scripting vulnerability in the Angular internationalization (i18n) pipeline. In ICU messages (International Components for Unicode), HTML from translated content was not properly sanitized and could execute arbitrary JavaScript. Angular i18n typically involves three steps, extracting all messages from an application in the source language, sending the messages to be translated, and then merging their translations back into the final source code. Translations are frequently handled by contracts with specific partner companies, and involve sending the source messages to a separate contractor before receiving final translations for display to the end user. If the returned translations have malicious content, it could be rendered into the application and execute arbitrary JavaScript. When successfully exploited, this vulnerability allows for execution of attacker controlled JavaScript in the application origin. Depending on the nature of the application being exploited this could lead to credential exfiltration and/or page vandalism. Several preconditions apply to the attack. The attacker must compromise the translation file (xliff, xtb, etc.). Unlike most XSS vulnerabilities, this issue is not exploitable by arbitrary users. An attacker must first compromise an application's translation file before they can escalate privileges into the Angular application client. The victim application must use Angular i18n, use one or more ICU messages, render an ICU message, and not defend against XSS via a safe content security policy. Versions 21.2.0, 21.1.6, 20.3.17, and 19.2.19 patch the issue. Until the patch is applied, developers should consider reviewing and verifying translated content received from untrusted third parties before incorporating it in an Angular application, enabling strict CSP controls to block unauthorized JavaScript from executing on the page, and enabling Trusted Types to enforce proper HTML sanitization.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-79"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "nvd": 2,
+            "redhat": 3
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+              "V40Vector": "CVSS:4.0/AV:L/AC:L/AT:N/PR:H/UI:A/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+              "V3Score": 6.1,
+              "V40Score": 7
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+              "V3Score": 6.1
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:L",
+              "V3Score": 7.1
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-27970",
+            "https://angular.dev/best-practices/security#enforcing-trusted-types",
+            "https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API",
+            "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP",
+            "https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/XSS",
+            "https://github.com/angular/angular",
+            "https://github.com/angular/angular/commit/306f367899dfc2e04238fecd3455547b5d54075d",
+            "https://github.com/angular/angular/commit/7d58b798c626bb0e4e5f89ca8affdce4f352b232",
+            "https://github.com/angular/angular/commit/b85830953281ff3a1a77bbfe69019d352d509c93",
+            "https://github.com/angular/angular/pull/67183",
+            "https://github.com/angular/angular/security/advisories/GHSA-prjf-86w9-mfqv",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-27970",
+            "https://www.cve.org/CVERecord?id=CVE-2026-27970"
+          ],
+          "PublishedDate": "2026-02-26T02:16:24.353Z",
+          "LastModifiedDate": "2026-02-27T17:11:53.417Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-32635",
+          "VendorIDs": [
+            "GHSA-g93w-mfhg-p222"
+          ],
+          "PkgID": "@angular/core@17.0.7",
+          "PkgName": "@angular/core",
+          "PkgIdentifier": {
+            "PURL": "pkg:npm/%40angular/core@17.0.7",
+            "UID": "d896640040046f3b"
+          },
+          "InstalledVersion": "17.0.7",
+          "FixedVersion": "22.0.0-next.3, 21.2.4, 20.3.18, 19.2.20",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-32635",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory npm",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+          },
+          "Fingerprint": "sha256:90eeec649d8857d4d34ae6542d6d719c5e00cbf20f49001672e7f85f154455dd",
+          "Title": "@angular/core: @angular/compiler: Angular has XSS in i18n attribute bindings",
+          "Description": "Angular is a development platform for building mobile and desktop web applications using TypeScript/JavaScript and other languages. Prior to 22.0.0-next.3, 21.2.4, 20.3.18, and 19.2.20, a Cross-Site Scripting (XSS) vulnerability has been identified in the Angular runtime and compiler. It occurs when the application uses a security-sensitive attribute (for example href on an anchor tag) together with Angular's ability to internationalize attributes. Enabling internationalization for the sensitive attribute by adding i18n-\u003cattribute\u003e name bypasses Angular's built-in sanitization mechanism, which when combined with a data binding to untrusted user-generated data can allow an attacker to inject a malicious script. This vulnerability is fixed in 22.0.0-next.3, 21.2.4, 20.3.18, and 19.2.20.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-79"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "redhat": 2
+          },
+          "CVSS": {
+            "ghsa": {
+              "V40Vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+              "V40Score": 8.6
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:L",
+              "V3Score": 6.3
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-32635",
+            "https://github.com/angular/angular",
+            "https://github.com/angular/angular/commit/224e60ecb1b90115baa702f1c06edc1d64d86187",
+            "https://github.com/angular/angular/commit/78dea55351fb305b33a919c43a6b363137eca166",
+            "https://github.com/angular/angular/commit/8630319f74c9575a21693d875cc7d5252516146d",
+            "https://github.com/angular/angular/commit/ed2d324f9cc12aab6cfa0569ef10b73243a62c65",
+            "https://github.com/angular/angular/pull/67541",
+            "https://github.com/angular/angular/pull/67561",
+            "https://github.com/angular/angular/security/advisories/GHSA-g93w-mfhg-p222",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-32635",
+            "https://www.cve.org/CVERecord?id=CVE-2026-32635"
+          ],
+          "PublishedDate": "2026-03-16T14:19:40.753Z",
+          "LastModifiedDate": "2026-03-16T14:53:07.39Z"
+        }
+      ]
+    }
+  ]
+}

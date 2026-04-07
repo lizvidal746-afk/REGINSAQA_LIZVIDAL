@@ -2,7 +2,7 @@
 
 ## Continuidad de QA Automation Senior en REGINSA
 
-Fecha: 2026-03-06  
+Fecha: 2026-03-06
 Proyecto: REGINSA (sector publico)
 
 ## 1. Decision solicitada

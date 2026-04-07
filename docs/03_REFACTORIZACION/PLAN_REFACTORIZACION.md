@@ -8,7 +8,7 @@
 ## Backlog priorizado
 
 | Prioridad | Tarea | Impacto | Archivos afectados |
-|-----------|-------|---------|--------------------|
+| ----------- | ------- | --------- | -------------------- |
 
 | Alta | Centralizar configuración en `core/config` y `.env.example` | Consistencia runtime/CI | `core/config/env.ts`, `.env.example`, `playwright.config.ts` |
 | Alta | Hardening de guardado Caso 02 por señales de persistencia | Reduce falsos positivos/flakies | `tests/casos-prueba/02-registrar-sancion.spec.ts` |

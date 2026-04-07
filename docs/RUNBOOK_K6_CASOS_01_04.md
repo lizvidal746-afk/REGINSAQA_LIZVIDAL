@@ -238,7 +238,7 @@ Usa esta matriz para no pensar en parametros en cada corrida.
 ### 11.1 Caso 02 presets por pack
 
 | Pack | Paso | SIZE | VUS | SLEEP recomendado |
-|------|------|-----:|----:|------------------:|
+| ------ | ------ | -----: | ----: | ------------------: |
 
 | pack1 | 1 | 3 | 1 | 0.8 |
 | pack1 | 2 | 10 | 2 | 0.8 |
@@ -253,7 +253,7 @@ Usa esta matriz para no pensar en parametros en cada corrida.
 ### 11.2 Caso 01 presets por pack
 
 | Pack | Paso | SIZE | VUS | SLEEP recomendado |
-|------|------|-----:|----:|------------------:|
+| ------ | ------ | -----: | ----: | ------------------: |
 
 | pack1 | 1 | 3 | 1 | 0.8 |
 | pack1 | 2 | 10 | 2 | 0.8 |

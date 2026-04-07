@@ -5,45 +5,80 @@ param(
   [string]$OutputDir  = "reportes/security/dependency-check"
 )
 
-# Validar que ProjectDir existe
-if (-not (Test-Path $ProjectDir)) {
-  throw "El directorio de proyecto '$ProjectDir' no existe."
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+$commonFunctions = Join-Path (Split-Path -Parent $PSScriptRoot) 'common/functions.ps1'
+if (Test-Path $commonFunctions) {
+  . $commonFunctions
 }
 
-# Crear OutputDir si no existe
-New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
+function Resolve-WorkspaceChildPath {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$BasePath,
+    [Parameter(Mandatory = $true)]
+    [string]$CandidatePath
+  )
 
-# Verificar que Docker esté disponible
-try {
-  docker --version | Out-Null
-} catch {
-  throw "Docker no está disponible. Instala Docker antes de ejecutar este script."
+  if ([System.IO.Path]::IsPathRooted($CandidatePath)) {
+    return [System.IO.Path]::GetFullPath($CandidatePath)
+  }
+
+  return [System.IO.Path]::GetFullPath((Join-Path $BasePath $CandidatePath))
 }
 
-$cwd = $PWD.Path
+$workspacePath = [System.IO.Path]::GetFullPath((Get-CurrentWorkspacePath))
+$projectPath = Resolve-WorkspaceChildPath -BasePath $workspacePath -CandidatePath $ProjectDir
+$outputPath = Resolve-WorkspaceChildPath -BasePath $workspacePath -CandidatePath $OutputDir
 
-Write-Host "Ejecutando OWASP Dependency-Check sobre $ProjectDir"
-Write-Host "Directorio de salida: $OutputDir"
+Test-PathExistence -Path $projectPath -Message "El directorio de proyecto '$ProjectDir' no existe."
+New-DirectoryIfMissing -Path $outputPath
+Assert-DockerAvailable
 
-# Ejecutar OWASP Dependency-Check via Docker
+$scanTarget = if ($projectPath.StartsWith($workspacePath, [System.StringComparison]::OrdinalIgnoreCase)) {
+  $relativeProject = $projectPath.Substring($workspacePath.Length).TrimStart([char[]]@('\', '/'))
+  if ([string]::IsNullOrWhiteSpace($relativeProject)) {
+    '/src'
+  } else {
+    "/src/$($relativeProject -replace '\\', '/')"
+  }
+} else {
+  throw "ProjectDir debe estar dentro del workspace actual: $ProjectDir"
+}
+
+$reportHtml = Join-Path $outputPath 'dependency-check-report.html'
+$reportJson = Join-Path $outputPath 'dependency-check-report.json'
+
+Write-Host "Ejecutando OWASP Dependency-Check sobre $projectPath"
+Write-Host "Directorio de salida: $outputPath"
+
 docker run --rm `
-  -v "${cwd}:/src" `
-  -v "${cwd}/${OutputDir}:/report" `
+  --mount "type=bind,source=$workspacePath,target=/src" `
+  --mount "type=bind,source=$outputPath,target=/report" `
   owasp/dependency-check:latest `
   --project "REGINSA-QA" `
-  --scan /src `
+  --scan $scanTarget `
   --format HTML `
   --format JSON `
   --out /report `
   --failOnCVSS 7
 
-# Mostrar resumen
-if (Test-Path "$OutputDir") {
-  $reportes = Get-ChildItem -Path $OutputDir -File
-  Write-Host "Reportes generados en $OutputDir :"
-  foreach ($r in $reportes) {
-    Write-Host "  - $($r.Name)"
-  }
-} else {
-  Write-Host "No se generaron reportes. Verifica la ejecución de Dependency-Check."
+if ($LASTEXITCODE -ne 0) {
+  throw "Fallo la ejecucion de OWASP Dependency-Check. Codigo de salida: $LASTEXITCODE"
 }
+
+if (-not (Test-Path $reportHtml) -or -not (Test-Path $reportJson)) {
+  throw "Dependency-Check finalizó sin generar todos los artefactos esperados en $outputPath"
+}
+
+$reportes = Get-ChildItem -Path $outputPath -File
+if ($reportes.Count -eq 0) {
+  throw "Dependency-Check no dejó archivos en $outputPath"
+}
+
+Write-Host "Reportes generados en $outputPath :"
+foreach ($reporte in $reportes) {
+  Write-Host "  - $($reporte.Name)"
+}
+

@@ -1,0 +1,130 @@
+name: Reusable K6 Smoke Caso (Self-hosted)
+
+on:
+  workflow_call:
+    inputs:
+      case_id:
+        description: "Caso para nombre de artefacto (01..04)"
+        required: true
+        type: string
+      script_path:
+        description: "Script PowerShell runner del caso"
+        required: true
+        type: string
+      mode:
+        description: "Modo opcional para runners que lo requieren"
+        required: false
+        default: ""
+        type: string
+      cantidad:
+        description: "Cantidad objetivo"
+        required: false
+        default: "3"
+        type: string
+      k6_output:
+        description: "Salida k6: local|cloud (cloud requiere K6_CLOUD_TOKEN secret)"
+        required: false
+        default: "local"
+        type: string
+      rate_limit_args:
+        description: "Agregar K6ExpectRateLimit y K6EnforceOkRate"
+        required: false
+        default: "false"
+        type: string
+      upload_artifacts:
+        description: "Upload artifacts (true/false)"
+        required: false
+        default: "true"
+        type: string
+
+jobs:
+  smoke:
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify environment
+        shell: cmd
+        run: |
+          echo === Node.js ===
+          node --version
+          echo === npm ===
+          npm --version
+          echo === Working directory ===
+          cd
+          echo === Workspace contents ===
+          dir /b
+
+      - name: Install dependencies
+        shell: cmd
+        run: |
+          if not exist node_modules (
+            echo [CI] node_modules no encontrado, ejecutando npm ci...
+            npm ci
+          ) else (
+            echo [CI] node_modules ya existe, skip npm ci
+          )
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run smoke k6
+        env:
+          K6_CLOUD_TOKEN: ${{ secrets.K6_CLOUD_TOKEN }}
+          K6_CLOUD_PROJECT_ID: ${{ secrets.K6_CLOUD_PROJECT_ID }}
+        run: |
+          $outputRequested = '${{ inputs.k6_output }}'
+          if ($outputRequested -eq 'cloud' -and (-not $env:K6_CLOUD_TOKEN -or -not $env:K6_CLOUD_PROJECT_ID)) {
+            Write-Host "[WARN] Cloud token no configurado, fallback a output=local"
+            $outputRequested = 'local'
+          }
+
+          $psArgs = @(
+            '-ExecutionPolicy', 'Bypass',
+            '-File', '${{ inputs.script_path }}'
+          )
+
+          if (-not [string]::IsNullOrWhiteSpace('${{ inputs.mode }}')) {
+            $psArgs += @('-Mode', '${{ inputs.mode }}')
+          }
+
+          $psArgs += @(
+            '-K6Output', $outputRequested,
+            '-K6Cantidad', '${{ inputs.cantidad }}',
+            '-K6Vus', '1',
+            '-PerfDuration', '45s',
+            '-K6SleepSeconds', '0.8'
+          )
+
+          if ('${{ inputs.rate_limit_args }}' -eq 'true') {
+            $psArgs += @('-K6ExpectRateLimit', '1', '-K6EnforceOkRate', '0')
+          }
+
+          & powershell.exe @psArgs
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+      - name: Upload artifacts
+        if: always() && inputs.upload_artifacts == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-caso${{ inputs.case_id }}-selfhosted
+          path: |
+            reportes/*.json
+            reportes/**/*.json
+          if-no-files-found: warn

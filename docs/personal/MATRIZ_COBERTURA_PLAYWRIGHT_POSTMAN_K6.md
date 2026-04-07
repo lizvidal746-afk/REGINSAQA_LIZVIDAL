@@ -13,7 +13,7 @@ Evitar duplicidad de esfuerzo, ordenar responsabilidades por herramienta y asegu
 ## Matriz por tipo de prueba
 
 | Tipo de validacion | Playwright | Postman/Newman | k6 | Fuente de verdad |
-|--------------------|------------|----------------|----|------------------|
+| -------------------- | ------------ | ---------------- | ---- | ------------------ |
 
 | Flujo E2E UI (login, navegacion, formulario) | Si (principal) | No | No | Frontend + Backend |
 | Reglas de negocio visibles en UI | Si | Si (obligatorio en API) | No | Backend |
@@ -29,7 +29,7 @@ Evitar duplicidad de esfuerzo, ordenar responsabilidades por herramienta y asegu
 ## Asignacion recomendada por caso REGINSA
 
 | Caso | Playwright | Postman/Newman | k6 |
-|------|------------|----------------|----|
+| ------ | ------------ | ---------------- | ---- |
 
 | Caso 01 Agregar administrado | Flujo UI completo + validaciones visuales | Contrato de alta + negativas | Carga de altas y unicidad |
 | Caso 02 Registrar sancion | Flujo UI + validacion de campos y detalle | Reglas obligatorias (sancion/infraccion) + negativas + idempotencia | Carga y concurrencia de registro |
@@ -41,13 +41,14 @@ Evitar duplicidad de esfuerzo, ordenar responsabilidades por herramienta y asegu
 - No repetir en Playwright lo que ya esta cubierto por contrato API en Newman, salvo validaciones visuales o de UX.
 - No usar k6 para validar reglas de negocio complejas; usar k6 para resistencia y estabilidad.
 - Toda regla de negocio critica debe tener:
+
   1) evidencia UI (Playwright) y
   2) evidencia API negativa (Postman/Newman).
 
 ## Ejecucion por periodicidad
 
 | Etapa | Playwright | Postman/Newman | k6 |
-|-------|------------|----------------|----|
+| ------- | ------------ | ---------------- | ---- |
 
 | PR | Smoke UI critico | Contratos criticos + negativas esenciales | No |
 | Nightly | Regresion funcional priorizada | Regresion API completa | Smoke/perf corto |

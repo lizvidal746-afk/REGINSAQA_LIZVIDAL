@@ -50,21 +50,29 @@ phases:
     commands:
       - echo "[build] Ejecutando k6 por caso"
       - |
+        # Fallback: si piden cloud pero no hay token, usar local
+        K6_OUT="$K6_OUTPUT"
+        if [ "$K6_OUT" = "cloud" ]; then
+          if [ -z "$K6_CLOUD_TOKEN" ] || [ -z "$K6_CLOUD_PROJECT_ID" ]; then
+            echo "[WARN] Cloud token no configurado, fallback a output=local"
+            K6_OUT="local"
+          fi
+        fi
         case "$K6_CASE_TARGET" in
           00)
-            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso00-login.ps1 -K6Output "$K6_OUTPUT" -K6Cantidad "$K6_CANTIDAD" -K6Vus "$K6_VUS" -PerfDuration "$K6_PERF_DURATION" -K6SleepSeconds "$K6_SLEEP_SECONDS" -GrafanaProjectId "$K6_CLOUD_PROJECT_ID" -GrafanaToken "$K6_CLOUD_TOKEN"
+            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso00-login.ps1 -K6Output "$K6_OUT" -K6Cantidad "$K6_CANTIDAD" -K6Vus "$K6_VUS" -PerfDuration "$K6_PERF_DURATION" -K6SleepSeconds "$K6_SLEEP_SECONDS" -GrafanaProjectId "$K6_CLOUD_PROJECT_ID" -GrafanaToken "$K6_CLOUD_TOKEN"
             ;;
           01)
-            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso01-local.ps1 -Mode k6 -K6Output "$K6_OUTPUT" -K6Cantidad "$K6_CANTIDAD" -K6Vus "$K6_VUS" -PerfDuration "$K6_PERF_DURATION" -K6SleepSeconds "$K6_SLEEP_SECONDS" -GrafanaProjectId "$K6_CLOUD_PROJECT_ID" -GrafanaToken "$K6_CLOUD_TOKEN"
+            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso01-local.ps1 -Mode k6 -K6Output "$K6_OUT" -K6Cantidad "$K6_CANTIDAD" -K6Vus "$K6_VUS" -PerfDuration "$K6_PERF_DURATION" -K6SleepSeconds "$K6_SLEEP_SECONDS" -GrafanaProjectId "$K6_CLOUD_PROJECT_ID" -GrafanaToken "$K6_CLOUD_TOKEN"
             ;;
           02)
-            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso02-local.ps1 -Mode k6 -K6Output "$K6_OUTPUT" -K6Cantidad "$K6_CANTIDAD" -K6Vus "$K6_VUS" -PerfDuration "$K6_PERF_DURATION" -K6SleepSeconds "$K6_SLEEP_SECONDS" -K6ExpectRateLimit "$K6_EXPECT_RATE_LIMIT" -K6EnforceOkRate "$K6_ENFORCE_OK_RATE" -GrafanaProjectId "$K6_CLOUD_PROJECT_ID" -GrafanaToken "$K6_CLOUD_TOKEN"
+            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso02-local.ps1 -Mode k6 -K6Output "$K6_OUT" -K6Cantidad "$K6_CANTIDAD" -K6Vus "$K6_VUS" -PerfDuration "$K6_PERF_DURATION" -K6SleepSeconds "$K6_SLEEP_SECONDS" -K6ExpectRateLimit "$K6_EXPECT_RATE_LIMIT" -K6EnforceOkRate "$K6_ENFORCE_OK_RATE" -GrafanaProjectId "$K6_CLOUD_PROJECT_ID" -GrafanaToken "$K6_CLOUD_TOKEN"
             ;;
           03)
-            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso03-local.ps1 -Mode k6 -K6Output "$K6_OUTPUT" -K6Cantidad "$K6_CANTIDAD" -K6Vus "$K6_VUS" -PerfDuration "$K6_PERF_DURATION" -K6SleepSeconds "$K6_SLEEP_SECONDS" -K6ExpectRateLimit "$K6_EXPECT_RATE_LIMIT" -K6EnforceOkRate "$K6_ENFORCE_OK_RATE" -GrafanaProjectId "$K6_CLOUD_PROJECT_ID" -GrafanaToken "$K6_CLOUD_TOKEN"
+            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso03-local.ps1 -Mode k6 -K6Output "$K6_OUT" -K6Cantidad "$K6_CANTIDAD" -K6Vus "$K6_VUS" -PerfDuration "$K6_PERF_DURATION" -K6SleepSeconds "$K6_SLEEP_SECONDS" -K6ExpectRateLimit "$K6_EXPECT_RATE_LIMIT" -K6EnforceOkRate "$K6_ENFORCE_OK_RATE" -GrafanaProjectId "$K6_CLOUD_PROJECT_ID" -GrafanaToken "$K6_CLOUD_TOKEN"
             ;;
           04)
-            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 -K6Output "$K6_OUTPUT" -K6Cantidad "$K6_CANTIDAD" -K6Vus "$K6_VUS" -PerfDuration "$K6_PERF_DURATION" -K6SleepSeconds "$K6_SLEEP_SECONDS" -K6ExpectRateLimit "$K6_EXPECT_RATE_LIMIT" -K6EnforceOkRate "$K6_ENFORCE_OK_RATE" -GrafanaProjectId "$K6_CLOUD_PROJECT_ID" -GrafanaToken "$K6_CLOUD_TOKEN"
+            pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 -K6Output "$K6_OUT" -K6Cantidad "$K6_CANTIDAD" -K6Vus "$K6_VUS" -PerfDuration "$K6_PERF_DURATION" -K6SleepSeconds "$K6_SLEEP_SECONDS" -K6ExpectRateLimit "$K6_EXPECT_RATE_LIMIT" -K6EnforceOkRate "$K6_ENFORCE_OK_RATE" -GrafanaProjectId "$K6_CLOUD_PROJECT_ID" -GrafanaToken "$K6_CLOUD_TOKEN"
             ;;
           *)
             echo "ERROR: K6_CASE_TARGET invalido: $K6_CASE_TARGET"

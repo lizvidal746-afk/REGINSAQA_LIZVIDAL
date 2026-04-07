@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 120
     defaults:
       run:
-        shell: powershell
+        shell: cmd
     env:
       REGINSA_URL: ${{ secrets.REGINSA_URL }}
 
@@ -29,7 +29,16 @@ jobs:
           fetch-depth: 1
           clean: false
 
+      - name: Verify environment
+        shell: cmd
+        run: |
+          echo === Working directory ===
+          cd
+          echo === Workspace contents ===
+          dir /b
+
       - name: Run OWASP dated flow (baseline + formal reports)
+        shell: pwsh
         run: |
           $target = "${{ github.event.inputs.target_url }}"
           if ([string]::IsNullOrWhiteSpace($target)) { $target = $env:REGINSA_URL }

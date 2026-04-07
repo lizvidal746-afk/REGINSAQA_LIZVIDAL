@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="REGINSA - Colección Maestra (Todos los Casos)" tests="6" time="0.926">
+  <testsuite name="01 - Agregar Administrado / 01.2) Entidad/Crear - Éxito" id="0e222e92-ea5e-48e2-96fe-529c4538696e" timestamp="2026-04-07T08:26:55.159Z" tests="5" failures="0" errors="0" time="0.878">
+    <testcase name="[C01] Status esperado (200/201/409)" time="0.878" classname="01AgregarAdministrado012EntidadCrearExito"/>
+    <testcase name="[C01] Tiempo respuesta &lt; 5s" time="0.878" classname="01AgregarAdministrado012EntidadCrearExito"/>
+    <testcase name="[C01][TRAZA] ruc_nuevo presente" time="0.878" classname="01AgregarAdministrado012EntidadCrearExito"/>
+    <testcase name="[C01][TRAZA] razon_social_nueva presente" time="0.878" classname="01AgregarAdministrado012EntidadCrearExito"/>
+    <testcase name="[C01] 409 controlado (dataset preexistente)" time="0.878" classname="01AgregarAdministrado012EntidadCrearExito"/>
+  </testsuite>
+  <testsuite name="01 - Agregar Administrado / 01.3) Entidad/Crear - RUC duplicado" id="186657dc-30db-40b3-9316-1230d287d908" timestamp="2026-04-07T08:26:55.159Z" tests="2" failures="0" errors="0" time="0.013">
+    <testcase name="[C01] Status controlado (200/201/400/409)" time="0.013" classname="01AgregarAdministrado013EntidadCrearRucDuplicado"/>
+    <testcase name="[C01] Regla unicidad RUC aplicada (no se guardó duplicado)" time="0.013" classname="01AgregarAdministrado013EntidadCrearRucDuplicado"/>
+  </testsuite>
+  <testsuite name="01 - Agregar Administrado / 01.4) Entidad/Crear - Razón social duplicada" id="a6034864-52f4-49c7-867b-55ecdaec9137" timestamp="2026-04-07T08:26:55.159Z" tests="2" failures="0" errors="0" time="0.009">
+    <testcase name="[C01] Status controlado (200/201/400/409)" time="0.009" classname="01AgregarAdministrado014EntidadCrearRazonSocialDuplicada"/>
+    <testcase name="[C01] Regla unicidad razon social aplicada (no se guardó duplicado)" time="0.009" classname="01AgregarAdministrado014EntidadCrearRazonSocialDuplicada"/>
+  </testsuite>
+  <testsuite name="01 - Agregar Administrado / 01.5) Entidad/Crear - RUC vacío (validación backend)" id="ea94ee47-d3d4-4fdb-ace3-f057ca163013" timestamp="2026-04-07T08:26:55.159Z" tests="1" failures="0" errors="0" time="0.006">
+    <testcase name="[C01] Backend rechaza RUC vacío (no guarda dato inválido)" time="0.006" classname="01AgregarAdministrado015EntidadCrearRucVacioValidacionBackend"/>
+  </testsuite>
+  <testsuite name="01 - Agregar Administrado / 01.6) Entidad/Crear - Razón Social vacía (validación backend)" id="97b0a5bf-f20e-4f7f-a697-39dfe8b1fbdb" timestamp="2026-04-07T08:26:55.159Z" tests="1" failures="0" errors="0" time="0.006">
+    <testcase name="[C01] Backend rechaza Razón Social vacía (no guarda dato inválido)" time="0.006" classname="01AgregarAdministrado016EntidadCrearRazonSocialVaciaValidacionBackend"/>
+  </testsuite>
+  <testsuite name="01 - Agregar Administrado / 01.7) Entidad/Crear - Cuerpo vacío (validación backend)" id="80a0fce7-47a6-4763-8e04-0da95b5f052f" timestamp="2026-04-07T08:26:55.159Z" tests="1" failures="0" errors="0" time="0.014">
+    <testcase name="[C01] Backend rechaza body vacío (no guarda sin datos)" time="0.014" classname="01AgregarAdministrado017EntidadCrearCuerpoVacioValidacionBackend"/>
+  </testsuite>
+</testsuites>

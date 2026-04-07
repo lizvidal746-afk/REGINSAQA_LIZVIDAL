@@ -12,7 +12,7 @@ Se identifican hallazgos en cuatro frentes:
 ## 2. Hallazgos tecnicos priorizados
 
 | ID | Hallazgo | Tipo | Evidencia | Impacto | Severidad | Responsable |
-|----|----------|------|-----------|---------|-----------|-------------|
+| ---- | ---------- | ------ | ----------- | --------- | ----------- | ------------- |
 
 | H-001 | Regla de negocio validada en UI pero no exigida en backend | API/Negocio | Creacion por API en escenarios que UI bloquea | Integridad de datos y cumplimiento | Critica | Backend + QA API |
 | H-002 | Errores 500/deadlock en concurrencia alta | Performance/Confiabilidad | Pruebas masivas con respuestas de error y registros incompletos | Disponibilidad y consistencia | Alta | Backend + DBA + DevOps |
@@ -44,7 +44,7 @@ Se identifican hallazgos en cuatro frentes:
 ## 4. Matriz de remediacion semanal
 
 | Semana | ID | Accion | Responsable | Estado | Fecha objetivo | Evidencia de cierre |
-|--------|----|--------|-------------|--------|----------------|---------------------|
+| -------- | ---- | -------- | ------------- | -------- | ---------------- | --------------------- |
 
 | S1 | H-001 | Inventario de reglas de negocio criticas API | Backend Lead + QA API | Pendiente | AAAA-MM-DD | Catalogo versionado |
 | S1 | H-001 | Casos negativos en Newman para reglas criticas | QA API | Pendiente | AAAA-MM-DD | Reporte Newman JSON/JUnit |

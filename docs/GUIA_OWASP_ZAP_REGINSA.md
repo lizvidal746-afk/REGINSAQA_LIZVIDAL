@@ -1,5 +1,18 @@
 # GUIA OWASP ZAP REGINSA
 
+## Estado del documento
+
+Este documento queda en estado **deprecado** para evitar duplicidad.
+
+Guia canonica vigente:
+
+- `docs/manuales/GUIA_SEGURIDAD_SAST_SCA_DAST.md`
+
+Uso recomendado:
+
+1. Seguir la guia canonica para ejecucion operativa.
+2. Mantener este archivo solo como referencia historica de OWASP.
+
 Documento exclusivo para DAST con OWASP ZAP.
 
 Documento relacionado (SAST):

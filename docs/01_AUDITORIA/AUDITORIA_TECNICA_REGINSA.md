@@ -35,7 +35,7 @@ flowchart LR
 ## 4) Hallazgos técnicos
 
 | ID | Tipo | Riesgo | Impacto | Recomendación técnica | Archivo | Ruta | Línea | Técnica |
-|----|------|--------|---------|-----------------------|---------|------|---: --|---------|
+| ---- | ------ | -------- | --------- | ----------------------- | --------- | ------ |---: --| --------- |
 | H-01 | Arquitectura | Alto | Divergencia funcional entre código activo y referencia | Congelar `playwrigth/` como solo documentación o eliminarlo en fase final; mantener una única fuente de verdad en `tests/` | `02-registrar-sancion.spec.ts` (duplicado) | `tests/casos-prueba` y `playwrigth/tests/casos-prueba` | 1+ | Pattern Analysis |
 | H-02 | Performance | Medio | Latencia acumulada en suites masivas | Reducir waits fijos y migrar a esperas por estado/evento (`waitForResponse`, `locator.waitFor`) | `02-registrar-sancion.spec.ts` | `tests/casos-prueba/02-registrar-sancion.spec.ts` | 76, 89, 141, 144 | Static Code Review |
 | H-03 | Calidad/Flaky | Alto | Falsos positivos de guardado por señal débil UI | Verificar guardado con señal compuesta UI+API+incremento de filas (ya aplicado) | `02-registrar-sancion.spec.ts` | `tests/casos-prueba/02-registrar-sancion.spec.ts` | 241, 261, 525, 600 | Pattern Analysis |

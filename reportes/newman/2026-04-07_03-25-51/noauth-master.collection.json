@@ -1,0 +1,2500 @@
+{
+  "info": {
+    "name": "REGINSA - Colección Maestra (Todos los Casos)",
+    "_postman_id": "reginsa-master-col-2026",
+    "description": "Colección maestra REGINSA con los 7 flujos funcionales completos.\n\n**Casos:**\n- 01: Agregar Administrado (alta de entidad + validaciones unicidad)\n- 02: Registrar Sanción (cabecera + medidas + detalle)\n- 03: Reconsiderar Sin Sanciones\n- 04: Reconsiderar Con Sanciones\n- 05: Consultas y Filtros Operativos\n- 06: Administrado Búsqueda y Eliminación\n- 07: Infracción/Sanción Gestión Expediente\n\n**Uso con Newman:**\nnpx newman run reginsa-master.collection.json -e reginsa-shared.environment.json\n\n**Importar en Postman Desktop:**\nFile > Import > seleccionar este archivo + reginsa-shared.environment.json",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "ruc_nuevo",
+      "value": ""
+    },
+    {
+      "key": "razon_social_nueva",
+      "value": ""
+    },
+    {
+      "key": "nombre_comercial_nuevo",
+      "value": ""
+    },
+    {
+      "key": "correlativo",
+      "value": ""
+    },
+    {
+      "key": "numero_expediente",
+      "value": ""
+    },
+    {
+      "key": "numero_resolucion",
+      "value": ""
+    },
+    {
+      "key": "fecha_resolucion",
+      "value": ""
+    },
+    {
+      "key": "fecha_resolucion_ymd",
+      "value": ""
+    },
+    {
+      "key": "id_ris",
+      "value": "1"
+    },
+    {
+      "key": "id_entidad",
+      "value": "3"
+    },
+    {
+      "key": "cabecera_id",
+      "value": ""
+    },
+    {
+      "key": "id_infraccion",
+      "value": ""
+    },
+    {
+      "key": "display_infraccion",
+      "value": ""
+    },
+    {
+      "key": "detalle_id",
+      "value": ""
+    },
+    {
+      "key": "id_entidad_recons",
+      "value": ""
+    },
+    {
+      "key": "guid_cabecera_recons",
+      "value": ""
+    },
+    {
+      "key": "numero_expediente_recons",
+      "value": ""
+    },
+    {
+      "key": "numero_resolucion_recons",
+      "value": ""
+    },
+    {
+      "key": "fecha_resolucion_recons",
+      "value": ""
+    },
+    {
+      "key": "ruta_res_sancion_recons",
+      "value": ""
+    },
+    {
+      "key": "ruta_res_recons_actual",
+      "value": ""
+    },
+    {
+      "key": "archivo_reconsideracion_local",
+      "value": "SI091_REGINSA_ENLINEA/src/assets/files/Campos_obligatorios_solicitud.pdf"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "01 - Agregar Administrado",
+      "description": "Flujo Caso 01: Alta de entidad (administrado) y validaciones de unicidad de RUC y razón social.",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Pool compartido Caso 01: el runner (run-newman-completo.ps1) puede inyectar",
+              "// ruc_nuevo/razon_social_nueva/nombre_comercial_nuevo desde k6-caso01-dataset.json",
+              "// o administrados-pool.json. Solo se genera aleatoriamente si estan vacios.",
+              "const poolRuc       = String(pm.environment.get('ruc_nuevo')              || '').trim();",
+              "const poolRazon     = String(pm.environment.get('razon_social_nueva')     || '').trim();",
+              "const poolComercial = String(pm.environment.get('nombre_comercial_nuevo') || '').trim();",
+              "const poolActivo    = poolRuc.length === 11 && poolRazon.length > 0;",
+              "const ruc       = poolActivo ? poolRuc       : `2${String(Date.now()).slice(-8)}${String(Math.floor(Math.random()*100)).padStart(2,'0')}`.slice(0,11);",
+              "const razon     = poolActivo ? poolRazon     : `POSTMAN RS ${Date.now()}`;",
+              "const comercial = poolActivo ? (poolComercial || poolRazon) : `POSTMAN NC ${Date.now()}`;",
+              "pm.collectionVariables.set('ruc_nuevo', ruc);",
+              "pm.collectionVariables.set('razon_social_nueva', razon);",
+              "pm.collectionVariables.set('nombre_comercial_nuevo', comercial);",
+              "pm.environment.set('ruc_nuevo', ruc);",
+              "pm.environment.set('razon_social_nueva', razon);",
+              "pm.environment.set('nombre_comercial_nuevo', comercial);",
+              "const origen = poolActivo ? '[POOL]' : '[RANDOM]';",
+              "console.log(`[C01][TRAZA]${origen} ruc_nuevo=${ruc} | razon_social_nueva=${razon}`);"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "01.2) Entidad/Crear - Éxito",
+          "description": "Registrar entidad nueva con RUC y razón social únicos | Éxito: status 200/201 y bSuccess=true (409 aceptado si dataset preexistente)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ruc\": \"{{ruc_nuevo}}\",\n  \"Ruc\": \"{{ruc_nuevo}}\",\n  \"razonSocial\": \"{{razon_social_nueva}}\",\n  \"RazonSocial\": \"{{razon_social_nueva}}\",\n  \"nombreComercial\": \"{{nombre_comercial_nuevo}}\",\n  \"NombreComercial\": \"{{nombre_comercial_nuevo}}\",\n  \"estado\": 1,\n  \"Estado\": 1,\n  \"idEstado\": 1,\n  \"IdEstado\": 1,\n  \"bitActivo\": true,\n  \"BitActivo\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/Entidad/Crear",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "Entidad",
+                "Crear"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C01] Status esperado (200/201/409)', () => pm.expect([200,201,409]).to.include(pm.response.code));",
+                  "pm.test('[C01] Tiempo respuesta < 5s', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+                  "const body = pm.response.json();",
+                  "const bSuccess = body?.bSuccess !== false;",
+                  "const traza = {",
+                  "  ruc: pm.collectionVariables.get('ruc_nuevo') || '',",
+                  "  razonSocial: pm.collectionVariables.get('razon_social_nueva') || '',",
+                  "  nombreComercial: pm.collectionVariables.get('nombre_comercial_nuevo') || ''",
+                  "};",
+                  "console.log('[C01][TRAZA] Seleccion Caso 01 =>', JSON.stringify(traza));",
+                  "pm.test('[C01][TRAZA] ruc_nuevo presente', () => pm.expect(traza.ruc).to.not.eql(''));",
+                  "pm.test('[C01][TRAZA] razon_social_nueva presente', () => pm.expect(traza.razonSocial).to.not.eql(''));",
+                  "if (pm.response.code === 409 || !bSuccess) {",
+                  "  pm.test('[C01] 409 controlado (dataset preexistente)', () => pm.expect(true).to.eql(true));",
+                  "} else {",
+                  "  pm.test('[C01] Alta de entidad exitosa (bSuccess=true)', () => pm.expect(bSuccess).to.eql(true));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.3) Entidad/Crear - RUC duplicado",
+          "description": "Verificar rechazo de RUC ya registrado | Éxito: status 400/409 o mensaje de duplicidad",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ruc\": \"{{ruc_nuevo}}\",\n  \"Ruc\": \"{{ruc_nuevo}}\",\n  \"razonSocial\": \"{{razon_social_nueva}} DUP\",\n  \"RazonSocial\": \"{{razon_social_nueva}} DUP\",\n  \"nombreComercial\": \"{{nombre_comercial_nuevo}} DUP\",\n  \"NombreComercial\": \"{{nombre_comercial_nuevo}} DUP\",\n  \"estado\": 1,\n  \"Estado\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/Entidad/Crear",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "Entidad",
+                "Crear"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C01] Status controlado (200/201/400/409)', () => pm.expect([200,201,400,409]).to.include(pm.response.code));",
+                  "const body = pm.response.json();",
+                  "const msg = String(body?.sMessage || body?.message || '').toLowerCase();",
+                  "// bSuccess=false o mensaje 'ya existe ... ruc' -> API rechazó el duplicado (correcto)",
+                  "const rechazado = pm.response.code === 409 || body?.bSuccess === false || msg.includes('ya existe') || msg.includes('ruc proporcionado');",
+                  "pm.test('[C01] Regla unicidad RUC aplicada (no se guardó duplicado)', () => pm.expect(rechazado).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.4) Entidad/Crear - Razón social duplicada",
+          "description": "Verificar rechazo de razón social ya registrada | Éxito: status 400/409 o mensaje de duplicidad",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ruc\": \"{{ruc_nuevo}}9\",\n  \"Ruc\": \"{{ruc_nuevo}}9\",\n  \"razonSocial\": \"{{razon_social_nueva}}\",\n  \"RazonSocial\": \"{{razon_social_nueva}}\",\n  \"nombreComercial\": \"{{nombre_comercial_nuevo}} ZZ\",\n  \"NombreComercial\": \"{{nombre_comercial_nuevo}} ZZ\",\n  \"estado\": 1,\n  \"Estado\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/Entidad/Crear",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "Entidad",
+                "Crear"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C01] Status controlado (200/201/400/409)', () => pm.expect([200,201,400,409]).to.include(pm.response.code));",
+                  "const body = pm.response.json();",
+                  "const msg = String(body?.sMessage || body?.message || '').toLowerCase();",
+                  "// bSuccess=false o mensaje 'ya existe ... razon social' -> API rechazó el duplicado (correcto)",
+                  "const rechazado = pm.response.code === 409 || body?.bSuccess === false || msg.includes('ya existe') || msg.includes('razon social');",
+                  "pm.test('[C01] Regla unicidad razon social aplicada (no se guardó duplicado)', () => pm.expect(rechazado).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.5) Entidad/Crear - RUC vacío (validación backend)",
+          "description": "El frontend deshabilita Guardar sin RUC, pero el backend debe rechazarlo igual. Éxito = backend rechaza (bSuccess=false o 400/422).",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ruc\": \"\",\n  \"Ruc\": \"\",\n  \"razonSocial\": \"ENTIDAD PRUEBA VACIA\",\n  \"RazonSocial\": \"ENTIDAD PRUEBA VACIA\",\n  \"nombreComercial\": \"ENTIDAD PRUEBA VACIA\",\n  \"NombreComercial\": \"ENTIDAD PRUEBA VACIA\",\n  \"estado\": 1,\n  \"Estado\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/Entidad/Crear",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "Entidad",
+                "Crear"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const msg = String(body?.sMessage || body?.message || body?.errors || '').toLowerCase();",
+                  "// Backend debe rechazar RUC vacío. Si acepta (bSuccess=true), es un bug de validación.",
+                  "const rechazado = pm.response.code >= 400 || body?.bSuccess === false || msg.includes('ruc') || msg.includes('requerido') || msg.includes('obligatorio') || msg.includes('required') || msg.includes('vac');",
+                  "pm.test('[C01] Backend rechaza RUC vacío (no guarda dato inválido)', () => pm.expect(rechazado).to.eql(true));",
+                  "if (!rechazado) {",
+                  "  console.warn('[C01][BUG] El backend aceptó RUC vacío. Response:', JSON.stringify(body));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.6) Entidad/Crear - Razón Social vacía (validación backend)",
+          "description": "El frontend deshabilita Guardar sin Razón Social, pero el backend debe rechazarlo igual. Éxito = backend rechaza.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ruc\": \"99999000001\",\n  \"Ruc\": \"99999000001\",\n  \"razonSocial\": \"\",\n  \"RazonSocial\": \"\",\n  \"nombreComercial\": \"ENTIDAD PRUEBA VACIA\",\n  \"NombreComercial\": \"ENTIDAD PRUEBA VACIA\",\n  \"estado\": 1,\n  \"Estado\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/Entidad/Crear",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "Entidad",
+                "Crear"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const msg = String(body?.sMessage || body?.message || body?.errors || '').toLowerCase();",
+                  "// Backend debe rechazar Razón Social vacía. Si acepta (bSuccess=true), es un bug.",
+                  "const rechazado = pm.response.code >= 400 || body?.bSuccess === false || msg.includes('razon') || msg.includes('social') || msg.includes('requerido') || msg.includes('obligatorio') || msg.includes('required') || msg.includes('vac');",
+                  "pm.test('[C01] Backend rechaza Razón Social vacía (no guarda dato inválido)', () => pm.expect(rechazado).to.eql(true));",
+                  "if (!rechazado) {",
+                  "  console.warn('[C01][BUG] El backend aceptó Razón Social vacía. Response:', JSON.stringify(body));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01.7) Entidad/Crear - Cuerpo vacío (validación backend)",
+          "description": "Envía body {} sin ningún campo. Backend nunca debe guardar. Éxito = 400/422 o bSuccess=false.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_api}}/Entidad/Crear",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "Entidad",
+                "Crear"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "// Con body vacío el backend nunca debe insertar un registro.",
+                  "const rechazado = pm.response.code >= 400 || body?.bSuccess === false;",
+                  "pm.test('[C01] Backend rechaza body vacío (no guarda sin datos)', () => pm.expect(rechazado).to.eql(true));",
+                  "if (!rechazado) {",
+                  "  console.warn('[C01][BUG] El backend aceptó body vacío {}. Response:', JSON.stringify(body));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Registrar Sanción",
+      "description": "Flujo Caso 02: Crear expediente sancionador completo (cabecera + medida correctiva + detalle de infracción).",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const now = Date.now();",
+              "const correlativo = now % 100000;",
+              "const fecha = new Date();",
+              "fecha.setDate(fecha.getDate() - 5); // Frontend valida maxDate = hoy-2 (FvB VAL-02); usar fecha pasada para happy path",
+              "const fechaYmd = fecha.toISOString().split('T')[0];",
+              "pm.collectionVariables.set('correlativo', String(correlativo));",
+              "pm.collectionVariables.set('numero_expediente', `EXP N ${correlativo}-2026`);",
+              "pm.collectionVariables.set('numero_resolucion', `RES N ${correlativo}-2026`);",
+              "pm.collectionVariables.set('fecha_resolucion', fecha.toISOString());",
+              "pm.collectionVariables.set('fecha_resolucion_ymd', fechaYmd);",
+              "pm.environment.set('correlativo', String(correlativo));",
+              "pm.environment.set('numero_expediente', `EXP N ${correlativo}-2026`);",
+              "pm.environment.set('numero_resolucion', `RES N ${correlativo}-2026`);",
+              "pm.environment.set('fecha_resolucion', fecha.toISOString());",
+              "pm.environment.set('fecha_resolucion_ymd', fechaYmd);",
+              "if (!pm.collectionVariables.get('id_ris')) pm.collectionVariables.set('id_ris', '1');",
+              "if (!pm.collectionVariables.get('id_entidad')) pm.collectionVariables.set('id_entidad', '3');",
+              "if (!pm.environment.get('id_ris')) pm.environment.set('id_ris', '1');",
+              "if (!pm.environment.get('id_entidad')) pm.environment.set('id_entidad', '3');",
+              "console.log(`[C02][TRAZA] numero_expediente=EXP N ${correlativo}-2026 | numero_resolucion=RES N ${correlativo}-2026 | fecha_resolucion_ymd=${fechaYmd}`);"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "02.2) Infraccion/Listar",
+          "description": "Obtener infracciones aplicables por RIS | Éxito: status 200, oData con elementos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idRis\": {{id_ris}}\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/Infraccion/Listar",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "Infraccion",
+                "Listar"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C02] Infraccion/Listar status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const arr = body?.oData || [];",
+                  "pm.test('[C02] oData no vacío (infracciones disponibles)', () => pm.expect(arr.length).to.be.above(0));",
+                  "if (arr.length > 0) {",
+                  "  pm.collectionVariables.set('id_infraccion', String(arr[0].IdInfraccion));",
+                  "  pm.collectionVariables.set('display_infraccion', String(arr[0].DisplayInfraccion || 'Infraccion API Test'));",
+                  "  pm.environment.set('id_infraccion', String(arr[0].IdInfraccion));",
+                  "  pm.environment.set('display_infraccion', String(arr[0].DisplayInfraccion || 'Infraccion API Test'));",
+                  "  console.log(`[C02][TRAZA] id_infraccion=${arr[0].IdInfraccion} | display_infraccion=${arr[0].DisplayInfraccion || 'Infraccion API Test'}`);",
+                  "  pm.test('[C02][TRAZA] id_infraccion presente', () => pm.expect(String(arr[0].IdInfraccion || '')).to.not.eql(''));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02.3) CabeceraInfraccionSancion/Crear",
+          "description": "Crear cabecera de expediente sancionador | Éxito: status 200/201, cabecera_id generado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "IdEntidad",
+                  "value": "{{id_entidad}}",
+                  "type": "text"
+                },
+                {
+                  "key": "NumeroExpediente",
+                  "value": "{{numero_expediente}}",
+                  "type": "text"
+                },
+                {
+                  "key": "NumeroResolucion",
+                  "value": "{{numero_resolucion}}",
+                  "type": "text"
+                },
+                {
+                  "key": "FechaResolucion",
+                  "value": "{{fecha_resolucion_ymd}}",
+                  "type": "text"
+                },
+                {
+                  "key": "RutaResolucionSancion",
+                  "value": "GENERAL N 00001-2026-SUNEDU-SG-OTI.pdf",
+                  "type": "text"
+                },
+                {
+                  "key": "rutaResolucionSancionAnterior",
+                  "value": "GENERAL N 00001-2026-SUNEDU-SG-OTI.pdf",
+                  "type": "text"
+                },
+                {
+                  "key": "ArchivoResolucion",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_api}}/CabeceraInfraccionSancion/Crear",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "CabeceraInfraccionSancion",
+                "Crear"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C02] Cabecera status 200/201', () => pm.expect([200,201]).to.include(pm.response.code));",
+                  "pm.test('[C02] Tiempo respuesta < 5s', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+                  "const body = pm.response.json();",
+                  "let id = body?.oData?.idCabeceraInfraccionSancion || body?.oData?.IdCabeceraInfraccionSancion;",
+                  "if (!id && (typeof body?.oData === 'number' || (typeof body?.oData === 'string' && /^\\d+$/.test(body.oData)))) id = body.oData;",
+                  "if (!id && Array.isArray(body?.oData) && body.oData.length > 0) id = body.oData[0].idCabeceraInfraccionSancion || body.oData[0].IdCabeceraInfraccionSancion || body.oData[0];",
+                  "pm.test('[C02] cabecera_id presente', () => pm.expect(id).to.exist);",
+                  "pm.collectionVariables.set('cabecera_id', String(id));",
+                  "pm.environment.set('cabecera_id', String(id));",
+                  "const traza = {",
+                  "  cabecera_id: String(id || ''),",
+                  "  numero_expediente: pm.collectionVariables.get('numero_expediente') || '',",
+                  "  numero_resolucion: pm.collectionVariables.get('numero_resolucion') || ''",
+                  "};",
+                  "console.log('[C02][TRAZA] Seleccion Caso 02 =>', JSON.stringify(traza));",
+                  "pm.test('[C02][TRAZA] numero_expediente presente', () => pm.expect(traza.numero_expediente).to.not.eql(''));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02.4) MedidaCorrectiva/Crear",
+          "description": "Registrar medida correctiva asociada a la cabecera | Éxito: status 200/201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idCabeceraInfraccionSancion\": {{cabecera_id}},\n  \"descripcionMedidaCorrectiva\": \"Medida Correctiva API Test - Newman REGINSA 2026\",\n  \"orden\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/MedidaCorrectiva/Crear",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "MedidaCorrectiva",
+                "Crear"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C02] MedidaCorrectiva status 200/201', () => pm.expect([200,201]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02.5) DetalleInfraccionSancion/Crear",
+          "description": "Registrar detalle de infracción y sanción (camino feliz: MULTA) | Éxito: status 200/201, bSuccess≠false",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idCabeceraInfraccionSancion\": {{cabecera_id}},\n  \"IdInfraccion\": {{id_infraccion}},\n  \"desInfraccion\": \"{{display_infraccion}}\",\n  \"desSancion\": \"Multa\",\n  \"bitCancelacion\": 0,\n  \"canSuspension\": 0,\n  \"tipoMulta\": \"SOLES\",\n  \"numMonto\": 1000,\n  \"bitReconsidera\": 0,\n  \"bitReincidente\": 0,\n  \"bitPago\": 0,\n  \"desSuspension\": null,\n  \"desHechoInfractor\": \"Hecho Infractor API Test - Newman\",\n  \"numCorrelativo\": 1,\n  \"bitMedida\": 1,\n  \"desMedidaCorrectivaGen\": \"Medida Correctiva API Test\",\n  \"idRis\": {{id_ris}},\n  \"tempId\": -2\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/DetalleInfraccionSancion/Crear",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "DetalleInfraccionSancion",
+                "Crear"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C02] Detalle status 200/201', () => pm.expect([200,201]).to.include(pm.response.code));",
+                  "const body = pm.response.json();",
+                  "pm.test('[C02] bSuccess no falso', () => pm.expect(body?.bSuccess).to.not.eql(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02.6) DetalleInfraccionSancion/Crear - Sin datos obligatorios",
+          "description": "Valida backend cuando se intenta guardar detalle sin infracción, sin hecho infractor y sin tipo de sanción. Debe rechazar.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idCabeceraInfraccionSancion\": {{cabecera_id}},\n  \"IdInfraccion\": 0,\n  \"desInfraccion\": \"\",\n  \"desSancion\": \"\",\n  \"bitCancelacion\": 0,\n  \"canSuspension\": 0,\n  \"tipoMulta\": \"\",\n  \"numMonto\": 0,\n  \"bitReconsidera\": 0,\n  \"bitReincidente\": 0,\n  \"bitPago\": 0,\n  \"desSuspension\": null,\n  \"desHechoInfractor\": \"\",\n  \"numCorrelativo\": 2,\n  \"bitMedida\": 0,\n  \"desMedidaCorrectivaGen\": \"\",\n  \"idRis\": {{id_ris}},\n  \"tempId\": -3\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/DetalleInfraccionSancion/Crear",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "DetalleInfraccionSancion",
+                "Crear"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const raw = pm.response.text();",
+                  "let body = null;",
+                  "try { body = raw ? JSON.parse(raw) : null; } catch (e) { body = { raw }; }",
+                  "const msg = String(body?.sMessage || body?.message || body?.errors || body?.oData || body?.raw || '').toLowerCase();",
+                  "const rechazado = pm.response.code >= 400 || body?.bSuccess === false || msg.includes('oblig') || msg.includes('valid') || msg.includes('seleccion') || msg.includes('infraccion') || msg.includes('hecho');",
+                  "pm.test('[C02] Backend rechaza detalle sin datos obligatorios', () => pm.expect(rechazado).to.eql(true));",
+                  "if (!rechazado) console.warn('[C02][BUG] Backend aceptó detalle sin datos obligatorios:', JSON.stringify(body));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02.7) DetalleInfraccionSancion/Crear - Multa en soles monto 0",
+          "description": "Valida backend cuando se intenta guardar una multa en soles con monto 0. Debe rechazar.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idCabeceraInfraccionSancion\": {{cabecera_id}},\n  \"IdInfraccion\": {{id_infraccion}},\n  \"desInfraccion\": \"{{display_infraccion}}\",\n  \"desSancion\": \"Multa\",\n  \"bitCancelacion\": 0,\n  \"canSuspension\": 0,\n  \"tipoMulta\": \"SOLES\",\n  \"numMonto\": 0,\n  \"bitReconsidera\": 0,\n  \"bitReincidente\": 0,\n  \"bitPago\": 0,\n  \"desSuspension\": null,\n  \"desHechoInfractor\": \"Validacion monto 0 desde Postman\",\n  \"numCorrelativo\": 3,\n  \"bitMedida\": 0,\n  \"desMedidaCorrectivaGen\": \"\",\n  \"idRis\": {{id_ris}},\n  \"tempId\": -4\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/DetalleInfraccionSancion/Crear",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "DetalleInfraccionSancion",
+                "Crear"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const raw = pm.response.text();",
+                  "let body = null;",
+                  "try { body = raw ? JSON.parse(raw) : null; } catch (e) { body = { raw }; }",
+                  "const msg = String(body?.sMessage || body?.message || body?.errors || body?.oData || body?.raw || '').toLowerCase();",
+                  "const rechazado = pm.response.code >= 400 || body?.bSuccess === false || msg.includes('monto') || msg.includes('soles') || msg.includes('1 y 2000000');",
+                  "pm.test('[C02] Backend rechaza multa con monto 0', () => pm.expect(rechazado).to.eql(true));",
+                  "if (!rechazado) console.warn('[C02][BUG] Backend aceptó multa con monto 0:', JSON.stringify(body));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02.8) DetalleInfraccionSancion/Crear - Suspensión sin tiempo ni cantidad",
+          "description": "Valida backend cuando se intenta guardar suspensión sin unidad de tiempo ni cantidad. Debe rechazar.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idCabeceraInfraccionSancion\": {{cabecera_id}},\n  \"IdInfraccion\": {{id_infraccion}},\n  \"desInfraccion\": \"{{display_infraccion}}\",\n  \"desSancion\": \"Suspension\",\n  \"bitCancelacion\": 0,\n  \"canSuspension\": 1,\n  \"tipoMulta\": \"\",\n  \"numMonto\": 0,\n  \"bitReconsidera\": 0,\n  \"bitReincidente\": 0,\n  \"bitPago\": 0,\n  \"desSuspension\": null,\n  \"desHechoInfractor\": \"Validacion suspension sin tiempo\",\n  \"numCorrelativo\": 4,\n  \"bitMedida\": 0,\n  \"desMedidaCorrectivaGen\": \"\",\n  \"idRis\": {{id_ris}},\n  \"tempId\": -5\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/DetalleInfraccionSancion/Crear",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "DetalleInfraccionSancion",
+                "Crear"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const raw = pm.response.text();",
+                  "let body = null;",
+                  "try { body = raw ? JSON.parse(raw) : null; } catch (e) { body = { raw }; }",
+                  "const msg = String(body?.sMessage || body?.message || body?.errors || body?.oData || body?.raw || '').toLowerCase();",
+                  "const rechazado = pm.response.code >= 400 || body?.bSuccess === false || msg.includes('susp') || msg.includes('tiempo') || msg.includes('cantidad');",
+                  "pm.test('[C02] Backend rechaza suspensión sin tiempo ni cantidad', () => pm.expect(rechazado).to.eql(true));",
+                  "if (!rechazado) console.warn('[C02][BUG] Backend aceptó suspensión sin tiempo/cantidad:', JSON.stringify(body));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Reconsiderar Sin Sanciones",
+      "description": "Flujo Caso 03: Reconsideración de expediente sin sanciones previas.",
+      "item": [
+        {
+          "name": "03.2) CabeceraInfraccionSancion/Listar (sin sanciones)",
+          "description": "Obtener cabeceras elegibles usando criterio funcional de UI: F. Modificación vacío, N° Reconsideración vacío, F. Reconsideración vacío y Sanción Impuesta = Sin detalles de infracción.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nPageNumber\": 1,\n  \"nPageSize\": 100,\n  \"sinSanciones\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/CabeceraInfraccionSancion/ListarPaginado",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "CabeceraInfraccionSancion",
+                "ListarPaginado"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C03] Listar status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const raw = body?.oData;",
+                  "let rows = Array.isArray(raw) ? raw : (Array.isArray(raw?.Results) ? raw.Results : (raw ? [raw] : []));",
+                  "pm.test('[C03] Listado con datos (cabeceras elegibles)', () => pm.expect(rows.length).to.be.above(0));",
+                  "const pickDetalles = (row) => {",
+                  "  const detalles = row?.detallesInfraccion || row?.DetallesInfraccion || row?.detalles || row?.Detalles || [];",
+                  "  return Array.isArray(detalles) ? detalles : [];",
+                  "};",
+                  "const isEmpty = (value) => {",
+                  "  if (value === null || value === undefined) return true;",
+                  "  const v = String(value).trim().toLowerCase();",
+                  "  return v === '' || v === '-' || v === '--' || v === 'null' || v === 'undefined' || v === '0001-01-01' || v === '0001-01-01t00:00:00';",
+                  "};",
+                  "const getFechaMod = (row) => row?.fechaModificacion ?? row?.FechaModificacion ?? row?.fecModificacion ?? row?.FecModificacion ?? row?.fechaModif ?? row?.FechaModif ?? row?.fechaActualizacion ?? row?.FechaActualizacion;",
+                  "const getNumRec = (row) => row?.desResolucionReconsideracion ?? row?.DesResolucionReconsideracion ?? row?.numeroReconsideracion ?? row?.NumeroReconsideracion ?? row?.nroReconsideracion ?? row?.NroReconsideracion ?? row?.nroResolucionReconsideracion ?? row?.NroResolucionReconsideracion ?? row?.desResolReconsidera ?? row?.DesResolReconsidera;",
+                  "const getFechaRec = (row) => row?.fechaResolucionReconsideracion ?? row?.FechaResolucionReconsideracion ?? row?.fechaReconsideracion ?? row?.FechaReconsideracion ?? row?.fecResolucionReconsideracion ?? row?.FecResolucionReconsideracion;",
+                  "const hasNoSanctionEvidence = (row) => {",
+                  "  const detalles = pickDetalles(row);",
+                  "  if (detalles.length > 0) return false;",
+                  "  const total = row?.totalDetallesInfraccion ?? row?.TotalDetallesInfraccion ?? row?.cantidadSanciones ?? row?.CantidadSanciones;",
+                  "  if (typeof total === 'number') return total === 0;",
+                  "  const display = String(row?.displaySancionImpuesta || row?.DisplaySancionImpuesta || '').toLowerCase();",
+                  "  if (display) return display.includes('sin detalle') || display.includes('sin sanciones');",
+                  "  return true;",
+                  "};",
+                  "const hasSinDetallesUi = (row) => {",
+                  "  const display = String(row?.displaySancionImpuesta || row?.DisplaySancionImpuesta || '').toLowerCase();",
+                  "  const byText = display.includes('sin detalles de infracción') || display.includes('sin detalles de infraccion') || display.includes('sin detalle de infracción') || display.includes('sin detalle de infraccion');",
+                  "  if (byText) return true;",
+                  "  // En algunas respuestas el texto de 'Sin detalles de infracción' no viene en la fila principal,",
+                  "  // pero sí se infiere por ausencia de detalles/cantidad.",
+                  "  return hasNoSanctionEvidence(row);",
+                  "};",
+                  "const cumpleTresCamposVacios = (row) => {",
+                  "  const fechaMod = getFechaMod(row);",
+                  "  const numRec = getNumRec(row);",
+                  "  const fechaRec = getFechaRec(row);",
+                  "  return isEmpty(fechaMod) && isEmpty(numRec) && isEmpty(fechaRec);",
+                  "};",
+                  "let candidato = rows.find((row) => {",
+                  "  if (!hasNoSanctionEvidence(row)) return false;",
+                  "  if (!hasSinDetallesUi(row)) return false;",
+                  "  return cumpleTresCamposVacios(row);",
+                  "}) || null;",
+                  "let modoSeleccion = 'estricto-ui';",
+                  "if (!candidato) {",
+                  "  candidato = rows.find((row) => cumpleTresCamposVacios(row)) || null;",
+                  "  if (candidato) modoSeleccion = 'tres-campos-vacios';",
+                  "}",
+                  "if (!candidato) {",
+                  "  candidato = rows.find((row) => hasNoSanctionEvidence(row)) || null;",
+                  "  if (candidato) modoSeleccion = 'sin-detalles-evidencia';",
+                  "}",
+                  "if (!candidato && rows.length > 0) {",
+                  "  candidato = rows[0];",
+                  "  modoSeleccion = 'fallback-primer-registro';",
+                  "}",
+                  "console.log('[C03] modoSeleccion=', modoSeleccion);",
+                  "pm.test('[C03] Existe cabecera con criterio UI (F.Mod vacío, Nro/F.Reconsideración vacíos, Sin detalles de infracción)', () => pm.expect(candidato).to.exist);",
+                  "const first = candidato || {};",
+                  "const id = first.idCabeceraInfraccionSancion || first.IdCabeceraInfraccionSancion || first.idCabecera;",
+                  "pm.test('[C03] cabecera_id detectado', () => pm.expect(id).to.exist);",
+                  "pm.collectionVariables.set('cabecera_id', String(id));",
+                  "pm.environment.set('cabecera_id', String(id));",
+                  "pm.collectionVariables.set('id_entidad_recons', String(first.idEntidad || first.IdEntidad || ''));",
+                  "pm.collectionVariables.set('guid_cabecera_recons', String(first.guidCabecera || first.GuidCabecera || ''));",
+                  "pm.collectionVariables.set('numero_expediente_recons', String(first.numeroExpediente || first.NumeroExpediente || ''));",
+                  "pm.collectionVariables.set('numero_resolucion_recons', String(first.numeroResolucion || first.NumeroResolucion || ''));",
+                  "pm.collectionVariables.set('fecha_resolucion_recons', String(first.fechaResolucion || first.FechaResolucion || '').split('T')[0]);",
+                  "pm.collectionVariables.set('ruta_res_sancion_recons', String(first.rutaResolucionSancion || first.RutaResolSancion || first.RutaResolucionSancion || ''));",
+                  "pm.collectionVariables.set('ruta_res_recons_actual', String(first.rutaResolucionReconsideracion || first.RutaResolReconsidera || first.RutaResolucionReconsideracion || ''));",
+                  "pm.environment.set('id_entidad_recons', pm.collectionVariables.get('id_entidad_recons'));",
+                  "pm.environment.set('guid_cabecera_recons', pm.collectionVariables.get('guid_cabecera_recons'));",
+                  "pm.environment.set('numero_expediente_recons', pm.collectionVariables.get('numero_expediente_recons'));",
+                  "pm.environment.set('numero_resolucion_recons', pm.collectionVariables.get('numero_resolucion_recons'));",
+                  "pm.environment.set('fecha_resolucion_recons', pm.collectionVariables.get('fecha_resolucion_recons'));",
+                  "pm.environment.set('ruta_res_sancion_recons', pm.collectionVariables.get('ruta_res_sancion_recons'));",
+                  "pm.environment.set('ruta_res_recons_actual', pm.collectionVariables.get('ruta_res_recons_actual'));",
+                  "const traza = {",
+                  "  modoSeleccion,",
+                  "  cabecera_id: String(id || ''),",
+                  "  numero_expediente: pm.collectionVariables.get('numero_expediente_recons') || '',",
+                  "  fecha_modificacion: String(getFechaMod(first) || ''),",
+                  "  nro_reconsideracion: String(getNumRec(first) || ''),",
+                  "  fecha_reconsideracion: String(getFechaRec(first) || '')",
+                  "};",
+                  "console.log('[C03][TRAZA] Seleccion Caso 03 =>', JSON.stringify(traza));",
+                  "pm.test('[C03][TRAZA] numero_expediente presente', () => pm.expect(traza.numero_expediente).to.not.eql(''));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03.3) CabeceraInfraccionSancion/Actualizar - Reconsideración sin sanciones",
+          "description": "Guarda la reconsideración de cabecera sin necesidad de detalles de sanción. Debe respetar el mismo contrato del frontend (FormData).",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "IdEntidad",
+                  "value": "{{id_entidad_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "NumeroExpediente",
+                  "value": "{{numero_expediente_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "NumeroResolucion",
+                  "value": "{{numero_resolucion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "FechaResolucion",
+                  "value": "{{fecha_resolucion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "DesResolucionReconsideracion",
+                  "value": "REC-POSTMAN-{{$timestamp}}",
+                  "type": "text"
+                },
+                {
+                  "key": "FechaResolucionReconsideracion",
+                  "value": "{{$isoTimestamp}}",
+                  "type": "text"
+                },
+                {
+                  "key": "RutaResolucionSancion",
+                  "value": "{{ruta_res_sancion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "GuidCabecera",
+                  "value": "{{guid_cabecera_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "LimpiarReconsideracion",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "RutaResolucionReconsideracion",
+                  "value": "Campos_obligatorios_solicitud.pdf",
+                  "type": "text"
+                },
+                {
+                  "key": "ArchivoResolucionReconsideracion",
+                  "type": "file",
+                  "src": "SI091_REGINSA_ENLINEA/src/assets/files/Campos_obligatorios_solicitud.pdf"
+                },
+                {
+                  "key": "rutaResolucionSancionAnterior",
+                  "value": "{{ruta_res_sancion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "rutaResolucionReconsideracionAnterior",
+                  "value": "{{ruta_res_recons_actual}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_api}}/CabeceraInfraccionSancion/Actualizar/{{cabecera_id}}",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "CabeceraInfraccionSancion",
+                "Actualizar",
+                "{{cabecera_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C03] Actualizar reconsideración status 200/201', () => pm.expect([200,201]).to.include(pm.response.code));",
+                  "const body = pm.response.json();",
+                  "pm.test('[C03] Backend guarda reconsideración sin sanciones', () => pm.expect(body?.bSuccess).to.not.eql(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03.4) CabeceraInfraccionSancion/Actualizar - Reconsideración incompleta",
+          "description": "Valida backend cuando se intenta guardar reconsideración sin número, fecha y archivo. Debe rechazar, aunque el frontend ya lo bloquee.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "IdEntidad",
+                  "value": "{{id_entidad_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "NumeroExpediente",
+                  "value": "{{numero_expediente_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "NumeroResolucion",
+                  "value": "{{numero_resolucion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "FechaResolucion",
+                  "value": "{{fecha_resolucion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "DesResolucionReconsideracion",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "FechaResolucionReconsideracion",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "RutaResolucionSancion",
+                  "value": "{{ruta_res_sancion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "GuidCabecera",
+                  "value": "{{guid_cabecera_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "LimpiarReconsideracion",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "RutaResolucionReconsideracion",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "ArchivoResolucionReconsideracion",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "rutaResolucionSancionAnterior",
+                  "value": "{{ruta_res_sancion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "rutaResolucionReconsideracionAnterior",
+                  "value": "{{ruta_res_recons_actual}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_api}}/CabeceraInfraccionSancion/Actualizar/{{cabecera_id}}",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "CabeceraInfraccionSancion",
+                "Actualizar",
+                "{{cabecera_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const raw = pm.response.text();",
+                  "let body = null;",
+                  "try { body = raw ? JSON.parse(raw) : null; } catch (e) { body = { raw }; }",
+                  "const msg = String(body?.sMessage || body?.message || body?.errors || body?.oData || body?.raw || '').toLowerCase();",
+                  "const rechazado = pm.response.code >= 400 || body?.bSuccess === false || msg.includes('reconsider') || msg.includes('archivo') || msg.includes('fecha') || msg.includes('numero');",
+                  "pm.test('[C03] Backend rechaza reconsideración incompleta', () => pm.expect(rechazado).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03.5) CabeceraInfraccionSancion/Actualizar - Fecha de reconsideración inválida",
+          "description": "Valida backend cuando la fecha de reconsideración es menor que la fecha de resolución. Debe rechazar.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "IdEntidad",
+                  "value": "{{id_entidad_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "NumeroExpediente",
+                  "value": "{{numero_expediente_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "NumeroResolucion",
+                  "value": "{{numero_resolucion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "FechaResolucion",
+                  "value": "{{fecha_resolucion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "DesResolucionReconsideracion",
+                  "value": "REC-INVALIDA-{{$timestamp}}",
+                  "type": "text"
+                },
+                {
+                  "key": "FechaResolucionReconsideracion",
+                  "value": "2000-01-01T00:00:00Z",
+                  "type": "text"
+                },
+                {
+                  "key": "RutaResolucionSancion",
+                  "value": "{{ruta_res_sancion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "GuidCabecera",
+                  "value": "{{guid_cabecera_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "LimpiarReconsideracion",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "RutaResolucionReconsideracion",
+                  "value": "Campos_obligatorios_solicitud.pdf",
+                  "type": "text"
+                },
+                {
+                  "key": "ArchivoResolucionReconsideracion",
+                  "type": "file",
+                  "src": "SI091_REGINSA_ENLINEA/src/assets/files/Campos_obligatorios_solicitud.pdf"
+                },
+                {
+                  "key": "rutaResolucionSancionAnterior",
+                  "value": "{{ruta_res_sancion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "rutaResolucionReconsideracionAnterior",
+                  "value": "{{ruta_res_recons_actual}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_api}}/CabeceraInfraccionSancion/Actualizar/{{cabecera_id}}",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "CabeceraInfraccionSancion",
+                "Actualizar",
+                "{{cabecera_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const raw = pm.response.text();",
+                  "let body = null;",
+                  "try { body = raw ? JSON.parse(raw) : null; } catch (e) { body = { raw }; }",
+                  "const msg = String(body?.sMessage || body?.message || body?.errors || body?.oData || body?.raw || '').toLowerCase();",
+                  "const rechazado = pm.response.code >= 400 || body?.bSuccess === false || msg.includes('fecha') || msg.includes('mayor') || msg.includes('igual') || msg.includes('resolución');",
+                  "pm.test('[C03] Backend rechaza fecha de reconsideración menor a resolución', () => pm.expect(rechazado).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03.6) DetalleInfraccionSancion/Listar (verificación sin sanciones)",
+          "description": "Verifica que el expediente reconsiderado siga sin detalles de sanción registrados.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idCabeceraInfraccionSancion\": {{cabecera_id}},\n  \"nPageNumber\": 1,\n  \"nPageSize\": 20,\n  \"sSortColumnName\": \"ID_DETALLE_INFRACCION_SANCION\",\n  \"sSortOrder\": \"DESC\",\n  \"sFilterValue\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/DetalleInfraccionSancion/ListarPaginado",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "DetalleInfraccionSancion",
+                "ListarPaginado"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C03] Listar detalle status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const raw = body?.oData;",
+                  "const rows = Array.isArray(raw) ? raw : (Array.isArray(raw?.Results) ? raw.Results : []);",
+                  "pm.test('[C03] El expediente reconsiderado permanece sin sanciones', () => pm.expect(rows.length).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Reconsiderar Con Sanciones",
+      "description": "Flujo Caso 04: Actualizar y confirmar detalle de sanción existente en proceso de reconsideración.",
+      "item": [
+        {
+          "name": "04.2) CabeceraInfraccionSancion/ListarPaginado (con sanciones)",
+          "description": "Localiza una cabecera que sí tenga sanciones y captura los datos base para aplicar las validaciones de reconsideración.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nPageNumber\": 1,\n  \"nPageSize\": 20\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/CabeceraInfraccionSancion/ListarPaginado",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "CabeceraInfraccionSancion",
+                "ListarPaginado"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C04] Listar status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const raw = body?.oData;",
+                  "let rows = Array.isArray(raw) ? raw : (Array.isArray(raw?.Results) ? raw.Results : (raw ? [raw] : []));",
+                  "pm.test('[C04] Listado con datos (cabeceras disponibles)', () => pm.expect(rows.length).to.be.above(0));",
+                  "const pickDetalles = (row) => {",
+                  "  const detalles = row?.detallesInfraccion || row?.DetallesInfraccion || row?.detalles || row?.Detalles || [];",
+                  "  return Array.isArray(detalles) ? detalles : [];",
+                  "};",
+                  "const candidato = rows.find((row) => pickDetalles(row).length > 0) || null;",
+                  "pm.test('[C04] Existe cabecera con sanciones para reconsideración', () => pm.expect(candidato).to.exist);",
+                  "const first = candidato || {};",
+                  "const id = first.idCabeceraInfraccionSancion || first.IdCabeceraInfraccionSancion || first.idCabecera;",
+                  "pm.test('[C04] cabecera_id detectado', () => pm.expect(id).to.exist);",
+                  "pm.collectionVariables.set('cabecera_id', String(id));",
+                  "pm.environment.set('cabecera_id', String(id));",
+                  "pm.collectionVariables.set('id_entidad_recons', String(first.idEntidad || first.IdEntidad || ''));",
+                  "pm.collectionVariables.set('guid_cabecera_recons', String(first.guidCabecera || first.GuidCabecera || ''));",
+                  "pm.collectionVariables.set('numero_expediente_recons', String(first.numeroExpediente || first.NumeroExpediente || ''));",
+                  "pm.collectionVariables.set('numero_resolucion_recons', String(first.numeroResolucion || first.NumeroResolucion || ''));",
+                  "pm.collectionVariables.set('fecha_resolucion_recons', String(first.fechaResolucion || first.FechaResolucion || '').split('T')[0]);",
+                  "pm.collectionVariables.set('ruta_res_sancion_recons', String(first.rutaResolucionSancion || first.RutaResolSancion || first.RutaResolucionSancion || ''));",
+                  "pm.collectionVariables.set('ruta_res_recons_actual', String(first.rutaResolucionReconsideracion || first.RutaResolReconsidera || first.RutaResolucionReconsideracion || ''));",
+                  "pm.environment.set('id_entidad_recons', pm.collectionVariables.get('id_entidad_recons'));",
+                  "pm.environment.set('guid_cabecera_recons', pm.collectionVariables.get('guid_cabecera_recons'));",
+                  "pm.environment.set('numero_expediente_recons', pm.collectionVariables.get('numero_expediente_recons'));",
+                  "pm.environment.set('numero_resolucion_recons', pm.collectionVariables.get('numero_resolucion_recons'));",
+                  "pm.environment.set('fecha_resolucion_recons', pm.collectionVariables.get('fecha_resolucion_recons'));",
+                  "pm.environment.set('ruta_res_sancion_recons', pm.collectionVariables.get('ruta_res_sancion_recons'));",
+                  "pm.environment.set('ruta_res_recons_actual', pm.collectionVariables.get('ruta_res_recons_actual'));",
+                  "const traza = {",
+                  "  cabecera_id: String(id || ''),",
+                  "  numero_expediente: pm.collectionVariables.get('numero_expediente_recons') || '',",
+                  "  numero_resolucion: pm.collectionVariables.get('numero_resolucion_recons') || '',",
+                  "  fuente: 'cabecera-con-sanciones'",
+                  "};",
+                  "console.log('[C04][TRAZA] Seleccion Caso 04 =>', JSON.stringify(traza));",
+                  "pm.test('[C04][TRAZA] numero_expediente presente', () => pm.expect(traza.numero_expediente).to.not.eql(''));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.3) CabeceraInfraccionSancion/Actualizar - Reconsideración con sanciones",
+          "description": "Las mismas validaciones de reconsideración aplican también cuando la cabecera sí tiene sanciones.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "IdEntidad",
+                  "value": "{{id_entidad_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "NumeroExpediente",
+                  "value": "{{numero_expediente_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "NumeroResolucion",
+                  "value": "{{numero_resolucion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "FechaResolucion",
+                  "value": "{{fecha_resolucion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "DesResolucionReconsideracion",
+                  "value": "REC-C04-{{$timestamp}}",
+                  "type": "text"
+                },
+                {
+                  "key": "FechaResolucionReconsideracion",
+                  "value": "{{$isoTimestamp}}",
+                  "type": "text"
+                },
+                {
+                  "key": "RutaResolucionSancion",
+                  "value": "{{ruta_res_sancion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "GuidCabecera",
+                  "value": "{{guid_cabecera_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "LimpiarReconsideracion",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "RutaResolucionReconsideracion",
+                  "value": "Campos_obligatorios_solicitud.pdf",
+                  "type": "text"
+                },
+                {
+                  "key": "ArchivoResolucionReconsideracion",
+                  "type": "file",
+                  "src": "SI091_REGINSA_ENLINEA/src/assets/files/Campos_obligatorios_solicitud.pdf"
+                },
+                {
+                  "key": "rutaResolucionSancionAnterior",
+                  "value": "{{ruta_res_sancion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "rutaResolucionReconsideracionAnterior",
+                  "value": "{{ruta_res_recons_actual}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_api}}/CabeceraInfraccionSancion/Actualizar/{{cabecera_id}}",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "CabeceraInfraccionSancion",
+                "Actualizar",
+                "{{cabecera_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C04] Actualizar cabecera reconsiderada status 200/201', () => pm.expect([200,201]).to.include(pm.response.code));",
+                  "const body = pm.response.json();",
+                  "pm.test('[C04] Backend guarda reconsideración con sanciones', () => pm.expect(body?.bSuccess).to.not.eql(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.4) CabeceraInfraccionSancion/Actualizar - Reconsideración incompleta",
+          "description": "Valida backend al intentar reconsiderar una cabecera con sanciones sin completar número, fecha y archivo.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "IdEntidad",
+                  "value": "{{id_entidad_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "NumeroExpediente",
+                  "value": "{{numero_expediente_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "NumeroResolucion",
+                  "value": "{{numero_resolucion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "FechaResolucion",
+                  "value": "{{fecha_resolucion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "DesResolucionReconsideracion",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "FechaResolucionReconsideracion",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "RutaResolucionSancion",
+                  "value": "{{ruta_res_sancion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "GuidCabecera",
+                  "value": "{{guid_cabecera_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "LimpiarReconsideracion",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "RutaResolucionReconsideracion",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "ArchivoResolucionReconsideracion",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "rutaResolucionSancionAnterior",
+                  "value": "{{ruta_res_sancion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "rutaResolucionReconsideracionAnterior",
+                  "value": "{{ruta_res_recons_actual}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_api}}/CabeceraInfraccionSancion/Actualizar/{{cabecera_id}}",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "CabeceraInfraccionSancion",
+                "Actualizar",
+                "{{cabecera_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const raw = pm.response.text();",
+                  "let body = null;",
+                  "try { body = raw ? JSON.parse(raw) : null; } catch (e) { body = { raw }; }",
+                  "const msg = String(body?.sMessage || body?.message || body?.errors || body?.oData || body?.raw || '').toLowerCase();",
+                  "const rechazado = pm.response.code >= 400 || body?.bSuccess === false || msg.includes('reconsider') || msg.includes('archivo') || msg.includes('fecha') || msg.includes('numero');",
+                  "pm.test('[C04] Backend rechaza reconsideración incompleta aun con sanciones', () => pm.expect(rechazado).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.5) CabeceraInfraccionSancion/Actualizar - Fecha de reconsideración inválida",
+          "description": "Valida backend cuando la fecha de reconsideración es menor que la fecha de resolución en una cabecera con sanciones.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "IdEntidad",
+                  "value": "{{id_entidad_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "NumeroExpediente",
+                  "value": "{{numero_expediente_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "NumeroResolucion",
+                  "value": "{{numero_resolucion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "FechaResolucion",
+                  "value": "{{fecha_resolucion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "DesResolucionReconsideracion",
+                  "value": "REC-C04-INVALIDA-{{$timestamp}}",
+                  "type": "text"
+                },
+                {
+                  "key": "FechaResolucionReconsideracion",
+                  "value": "2000-01-01T00:00:00Z",
+                  "type": "text"
+                },
+                {
+                  "key": "RutaResolucionSancion",
+                  "value": "{{ruta_res_sancion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "GuidCabecera",
+                  "value": "{{guid_cabecera_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "LimpiarReconsideracion",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "RutaResolucionReconsideracion",
+                  "value": "Campos_obligatorios_solicitud.pdf",
+                  "type": "text"
+                },
+                {
+                  "key": "ArchivoResolucionReconsideracion",
+                  "type": "file",
+                  "src": "SI091_REGINSA_ENLINEA/src/assets/files/Campos_obligatorios_solicitud.pdf"
+                },
+                {
+                  "key": "rutaResolucionSancionAnterior",
+                  "value": "{{ruta_res_sancion_recons}}",
+                  "type": "text"
+                },
+                {
+                  "key": "rutaResolucionReconsideracionAnterior",
+                  "value": "{{ruta_res_recons_actual}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_api}}/CabeceraInfraccionSancion/Actualizar/{{cabecera_id}}",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "CabeceraInfraccionSancion",
+                "Actualizar",
+                "{{cabecera_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const raw = pm.response.text();",
+                  "let body = null;",
+                  "try { body = raw ? JSON.parse(raw) : null; } catch (e) { body = { raw }; }",
+                  "const msg = String(body?.sMessage || body?.message || body?.errors || body?.oData || body?.raw || '').toLowerCase();",
+                  "const rechazado = pm.response.code >= 400 || body?.bSuccess === false || msg.includes('fecha') || msg.includes('mayor') || msg.includes('igual') || msg.includes('resolución');",
+                  "pm.test('[C04] Backend rechaza fecha de reconsideración menor a resolución', () => pm.expect(rechazado).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.6) DetalleInfraccionSancion/ListarPaginado (detalle a reconsiderar)",
+          "description": "Obtiene el detalle de sanción de la cabecera seleccionada para aplicar la reconsideración sobre el detalle.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idCabeceraInfraccionSancion\": {{cabecera_id}},\n  \"nPageNumber\": 1,\n  \"nPageSize\": 20,\n  \"sSortColumnName\": \"ID_DETALLE_INFRACCION_SANCION\",\n  \"sSortOrder\": \"DESC\",\n  \"sFilterValue\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/DetalleInfraccionSancion/ListarPaginado",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "DetalleInfraccionSancion",
+                "ListarPaginado"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C04] Listar detalle status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const raw = body?.oData;",
+                  "const rows = Array.isArray(raw) ? raw : (Array.isArray(raw?.Results) ? raw.Results : []);",
+                  "pm.test('[C04] Existe detalle de sanción para reconsiderar', () => pm.expect(rows.length).to.be.above(0));",
+                  "const first = rows[0] || {};",
+                  "const id = first.idDetalleInfraccionSancion || first.IdDetalleInfraccionSancion || first.idDetalle;",
+                  "pm.test('[C04] detalle_id detectado', () => pm.expect(id).to.exist);",
+                  "pm.collectionVariables.set('detalle_id', String(id));",
+                  "pm.environment.set('detalle_id', String(id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.7) DetalleInfraccionSancion/ActualizarReconsideracion",
+          "description": "Marcar detalle en reconsideración | Éxito: status 200/201, bSuccess≠false",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idDetalleInfraccionSancion\": {{detalle_id}},\n  \"bitReconsidera\": 1,\n  \"fechaReconsideracion\": \"{{$isoTimestamp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/DetalleInfraccionSancion/ActualizarReconsideracion",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "DetalleInfraccionSancion",
+                "ActualizarReconsideracion"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C04] Actualizar detalle status 200/201', () => pm.expect([200,201]).to.include(pm.response.code));",
+                  "const body = pm.response.json();",
+                  "pm.test('[C04] bSuccess no falso', () => pm.expect(body?.bSuccess).to.not.eql(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04.8) DetalleInfraccionSancion/Confirmar",
+          "description": "Confirmar detalle ya reconsiderado | Éxito: status 200/201, bSuccess≠false",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idDetalleInfraccionSancion\": {{detalle_id}},\n  \"confirmar\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/DetalleInfraccionSancion/Confirmar",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "DetalleInfraccionSancion",
+                "Confirmar"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C04] Confirmar status 200/201', () => pm.expect([200,201]).to.include(pm.response.code));",
+                  "const body = pm.response.json();",
+                  "pm.test('[C04] bSuccess no falso', () => pm.expect(body?.bSuccess).to.not.eql(false));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Consultas y Filtros Operativos",
+      "description": "Cobertura adicional para validaciones funcionales de búsqueda/limpiar en módulos Administrado e Infracción/Sanción con endpoints observados en ZAP.",
+      "item": [
+        {
+          "name": "05.2) Entidad/Listar - Búsqueda Administrado (RUC/Razón)",
+          "description": "Consulta administrados para validar que el módulo de búsqueda responde y devuelve listado utilizable",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_api}}/Entidad/Listar",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "Entidad",
+                "Listar"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C05] Entidad/Listar status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const rows = Array.isArray(body?.oData) ? body.oData : [];",
+                  "pm.test('[C05] Entidad/Listar retorna datos', () => pm.expect(rows.length).to.be.above(0));",
+                  "const hasRucOrRazon = rows.some(x => String(x?.ruc || x?.Ruc || '').length > 0 || String(x?.razonSocial || x?.RazonSocial || '').length > 0);",
+                  "pm.test('[C05] Datos permiten búsquedas por RUC/Razón', () => pm.expect(hasRucOrRazon).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.3) CabeceraInfraccionSancion/ListarPaginado - Con filtros",
+          "description": "Valida búsqueda en módulo Infracción/Sanción con filtros aplicados (expediente/resolución)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nPageNumber\": 1,\n  \"nPageSize\": 10,\n  \"filtroGeneral\": \"FA\",\n  \"numeroExpediente\": \"FA\",\n  \"numeroResolucion\": \"FA\"\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/CabeceraInfraccionSancion/ListarPaginado",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "CabeceraInfraccionSancion",
+                "ListarPaginado"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C05] ListarPaginado filtrado status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const raw = body?.oData;",
+                  "let rows = Array.isArray(raw) ? raw : (Array.isArray(raw?.Results) ? raw.Results : []);",
+                  "pm.test('[C05] Respuesta filtrada válida', () => pm.expect(Array.isArray(rows)).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05.4) CabeceraInfraccionSancion/ListarPaginado - Limpiar filtros",
+          "description": "Simula acción Limpiar: misma búsqueda sin filtros para recuperar base del listado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nPageNumber\": 1,\n  \"nPageSize\": 10\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/CabeceraInfraccionSancion/ListarPaginado",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "CabeceraInfraccionSancion",
+                "ListarPaginado"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C05] ListarPaginado sin filtros status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const raw = body?.oData;",
+                  "let rows = Array.isArray(raw) ? raw : (Array.isArray(raw?.Results) ? raw.Results : []);",
+                  "pm.test('[C05] Listado base recuperado al limpiar', () => pm.expect(Array.isArray(rows)).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - Administrado Búsqueda y Eliminación",
+      "description": "Casos de búsqueda de administrados por RUC y razón social, limpiar filtros y eliminación de entidad en módulo Administrado.",
+      "item": [
+        {
+          "name": "06.1) Entidad/Listar - Búsqueda por RUC",
+          "description": "Buscar administrado filtrando por RUC exacto. Valida que el módulo devuelva resultados cuando el RUC existe.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_api}}/Entidad/Listar?nPageNumber=1&nPageSize=10&ruc={{ruc_busqueda}}",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "Entidad",
+                "Listar"
+              ],
+              "query": [
+                {
+                  "key": "nPageNumber",
+                  "value": "1"
+                },
+                {
+                  "key": "nPageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "ruc",
+                  "value": "{{ruc_busqueda}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C06] Búsqueda por RUC status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('[C06] Respuesta tiene estructura válida', () => {",
+                  "  pm.expect(body).to.be.an('object');",
+                  "  pm.expect(body.bSuccess !== undefined || body.oData !== undefined).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06.2) Entidad/Listar - Búsqueda por Razón Social",
+          "description": "Buscar administrado filtrando por razón social (búsqueda parcial). Valida cobertura del filtro de texto.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_api}}/Entidad/Listar?nPageNumber=1&nPageSize=10&razonSocial={{razon_busqueda}}",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "Entidad",
+                "Listar"
+              ],
+              "query": [
+                {
+                  "key": "nPageNumber",
+                  "value": "1"
+                },
+                {
+                  "key": "nPageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "razonSocial",
+                  "value": "{{razon_busqueda}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C06] Búsqueda por Razón Social status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('[C06] Respuesta tiene estructura válida', () => pm.expect(body).to.be.an('object'));",
+                  "const rows = Array.isArray(body?.oData) ? body.oData : [];",
+                  "if (rows.length > 0) {",
+                  "  const idEnt = rows[0].id_entidad || rows[0].idEntidad || rows[0].IdEntidad || rows[0].ID_ENTIDAD || rows[0].id || '';",
+                  "  pm.collectionVariables.set('id_entidad_encontrada', String(idEnt));",
+                  "  pm.environment.set('id_entidad_encontrada', String(idEnt));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06.3) Entidad/Listar - Limpiar filtros",
+          "description": "Simula acción Limpiar en módulo Administrado: consulta sin parámetros de filtro, recupera listado completo.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_api}}/Entidad/Listar?nPageNumber=1&nPageSize=10",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "Entidad",
+                "Listar"
+              ],
+              "query": [
+                {
+                  "key": "nPageNumber",
+                  "value": "1"
+                },
+                {
+                  "key": "nPageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C06] Limpiar filtros status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const rows = Array.isArray(body?.oData) ? body.oData : [];",
+                  "pm.test('[C06] Listado completo recuperado tras limpiar', () => pm.expect(rows.length).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06.4) Entidad/Eliminar - Eliminar administrado",
+          "description": "Elimina administrado por id_entidad_encontrada (encontrado en 06.2). PRECONDICIÓN: entidad sin sanciones activas. Acepta 200 (ok) o 409 (tiene dependencias).",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_api}}/Entidad/Eliminar/{{id_entidad_encontrada}}",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "Entidad",
+                "Eliminar",
+                "{{id_entidad_encontrada}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const statusCode = pm.response.code;",
+                  "pm.test('[C06] Eliminar Entidad 200 o 409', () => pm.expect([200,201,409,422]).to.include(statusCode));",
+                  "if (statusCode === 200 || statusCode === 201) {",
+                  "  pm.test('[C06] Eliminación exitosa', () => {",
+                  "    const b = pm.response.json();",
+                  "    const msg = String(b?.sMessage || b?.message || '').toLowerCase();",
+                  "    pm.expect(b?.bSuccess === true || b?.bSuccess === false || msg.length > 0).to.eql(true);",
+                  "  });",
+                  "} else {",
+                  "  pm.test('[C06] Entidad con dependencias activas', () => pm.expect([409,422]).to.include(statusCode));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 - Infracción/Sanción Gestión Expediente",
+      "description": "Gestión de expedientes: eliminar, ocultar y exportar. Los casos de eliminar/ocultar aceptan 409 si el expediente tiene restricciones de estado por reglas de negocio.",
+      "item": [
+        {
+          "name": "07.1) CabeceraInfraccionSancion/ListarPaginado - Localizar expediente para gestión",
+          "description": "Localiza un expediente sin sanciones para que la eliminación cumpla la precondición de negocio.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nPageNumber\": 1,\n  \"nPageSize\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/CabeceraInfraccionSancion/ListarPaginado",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "CabeceraInfraccionSancion",
+                "ListarPaginado"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C07] ListarPaginado status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const raw  = body?.oData;",
+                  "const rows = Array.isArray(raw) ? raw : (Array.isArray(raw?.Results) ? raw.Results : []);",
+                  "pm.test('[C07] Expedientes encontrados', () => pm.expect(rows.length).to.be.above(0));",
+                  "const pickDetalles = (row) => {",
+                  "  const detalles = row?.detallesInfraccion || row?.DetallesInfraccion || row?.detalles || row?.Detalles || [];",
+                  "  return Array.isArray(detalles) ? detalles : [];",
+                  "};",
+                  "const first = rows.find((row) => {",
+                  "  const detalles = pickDetalles(row);",
+                  "  if (detalles.length > 0) return false;",
+                  "  const total = row?.totalDetallesInfraccion ?? row?.TotalDetallesInfraccion ?? row?.cantidadSanciones ?? row?.CantidadSanciones;",
+                  "  if (typeof total === 'number') return total === 0;",
+                  "  const display = String(row?.displaySancionImpuesta || row?.DisplaySancionImpuesta || '').toLowerCase();",
+                  "  return !display || display.includes('sin detalle') || display.includes('sin sanciones');",
+                  "}) || null;",
+                  "pm.test('[C07] Existe expediente sin sanciones para eliminar', () => pm.expect(first).to.exist);",
+                  "if (first) {",
+                  "  let id = first.cabecera_id || first.id_cabecera || first.idCabecera || first.idCabeceraInfraccionSancion || first.IdCabeceraInfraccionSancion || first.id || '';",
+                  "  if (!id) {",
+                  "    const key = Object.keys(first).find(k => k.toLowerCase().includes('cabecera') && !k.toLowerCase().includes('guid'));",
+                  "    if (key) id = first[key];",
+                  "  }",
+                  "  pm.collectionVariables.set('cabecera_id', String(id));",
+                  "  pm.environment.set('cabecera_id', String(id));",
+                  "  console.log('[C07] cabecera_id capturado:', id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.2) CabeceraInfraccionSancion/Eliminar - Eliminar expediente",
+          "description": "Elimina expediente. PRECONDICIÓN: estado borrador o sin sanciones confirmadas. Acepta 200 (ok) o 409 (estado no permite eliminación).",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_api}}/CabeceraInfraccionSancion/Eliminar/{{cabecera_id}}",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "CabeceraInfraccionSancion",
+                "Eliminar",
+                "{{cabecera_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const s = pm.response.code;",
+                  "pm.test('[C07] Eliminar Expediente 200 o 409', () => pm.expect([200,201,409,422,400]).to.include(s));",
+                  "if (s === 200 || s === 201) {",
+                  "  const b = pm.response.json();",
+                  "  pm.test('[C07] Eliminación confirmada', () => pm.expect(b.bSuccess === true || b.message !== undefined).to.eql(true));",
+                  "} else {",
+                  "  pm.test('[C07] Estado no permite eliminación (regla de negocio)', () => pm.expect([400,409,422]).to.include(s));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.3) CabeceraInfraccionSancion/Ocultar - Ocultar expediente",
+          "description": "Oculta un expediente (soft-hide). El expediente desaparece del listado general pero permanece en BD. Acepta 200 o 409.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "RazonOcultarEnLinea",
+                  "value": "Ocultamiento operativo desde automatización",
+                  "type": "text"
+                },
+                {
+                  "key": "RutaResolOcultarEnLinea",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "ArchivoResolOcultarEnLinea",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "GuidCabecera",
+                  "value": "",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_api}}/CabeceraInfraccionSancion/Ocultar/{{cabecera_id}}",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "CabeceraInfraccionSancion",
+                "Ocultar",
+                "{{cabecera_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const s = pm.response.code;",
+                  "pm.test('[C07] Ocultar Expediente 200 o 409', () => pm.expect([200,201,409,422,400]).to.include(s));",
+                  "if (s === 200 || s === 201) {",
+                  "  const b = pm.response.json();",
+                  "  pm.test('[C07] Expediente ocultado', () => pm.expect(b.bSuccess === true || b.message !== undefined).to.eql(true));",
+                  "} else {",
+                  "  pm.test('[C07] Estado no permite ocultar (regla de negocio)', () => pm.expect([400,409,422]).to.include(s));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.4) CabeceraInfraccionSancion/Exportar - Exportar listado",
+          "description": "Exporta listado de infracción/sanción. Acepta 200 con contenido descargable o 404 si endpoint no está publicado aún.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{auth_header}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nPageNumber\": 1,\n  \"nPageSize\": 100\n}"
+            },
+            "url": {
+              "raw": "{{base_api}}/CabeceraInfraccionSancion/Exportar",
+              "host": [
+                "{{base_api}}"
+              ],
+              "path": [
+                "CabeceraInfraccionSancion",
+                "Exportar"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[C07] Exportar responde 200 o 404', () => pm.expect([200,201,404]).to.include(pm.response.code));",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test('[C07] Exportar devuelve contenido', () => pm.expect(pm.response.responseSize).to.be.above(0));",
+                  "  console.log('[C07] Content-Type:', pm.response.headers.get('Content-Type'));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

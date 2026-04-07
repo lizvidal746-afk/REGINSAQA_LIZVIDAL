@@ -5,7 +5,8 @@ Este checklist permite validar rápidamente cada workflow YAML por caso y tipo d
 ## Tabla Resumen de Validación
 
 | Caso/Test         | Workflow YAML                                         | ¿Existe? | ¿Ejecuta correctamente? | ¿Sube artefactos? | ¿Documentado? |
-|-------------------|------------------------------------------------------|
+| ------------------- | ------------------------------------------------------ |
+
 -----------|------------------------|-------------------|---------------|
 
 | k6 Caso 1         | reginsa-k6-caso01-selfhosted.yml                     | [ ]      | [ ]                    | [ ]               | [ ]           |

@@ -1,0 +1,22 @@
+{
+  "generatedAt": "2026-04-06T22:16:23.460Z",
+  "apiBase": "https://reginsaapiqa.sunedu.gob.pe/api",
+  "datasetPath": "D:\\SUNEDU\\AUTOMATIZACION\\REGINSA\\reportes\\k6-caso01-dataset.json",
+  "listCount": 767,
+  "sampleSize": 3,
+  "found": 3,
+  "missing": 0,
+  "persistRate": 1,
+  "k6SummaryFile": "D:\\SUNEDU\\AUTOMATIZACION\\REGINSA\\reportes\\k6-caso01-summary-local.json",
+  "k6Business": {
+    "createHttp200": 3,
+    "createHttp201": 0,
+    "createHttp409": 0,
+    "createBusinessOk": 3,
+    "createBusinessFail": 0,
+    "createBsuccessFalse": 0,
+    "createDuplicate409": 0,
+    "http429": 0
+  },
+  "missingSample": []
+}

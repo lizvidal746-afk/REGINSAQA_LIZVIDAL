@@ -3,6 +3,7 @@
     "target": "ES2021",
     "module": "commonjs",
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "types": ["node", "@playwright/test"],
     "strict": false,
@@ -17,5 +18,8 @@
     "tests/**/*.d.ts",
     "helpers/**/*.ts",
     "playwright.config.ts"
+  ],
+  "exclude": [
+    "tests/component/**"
   ]
 }

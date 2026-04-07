@@ -28,6 +28,7 @@ const reporters: any[] = reporterMode === 'minimal'
 
 export default defineConfig({
   testDir: './tests',
+  testIgnore: ['**/component/**'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: resolvedRetries,

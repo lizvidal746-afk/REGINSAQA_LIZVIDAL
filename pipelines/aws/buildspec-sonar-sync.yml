@@ -1,0 +1,98 @@
+version: 0.2
+
+# SonarQube Scan + Sync bugs a Azure DevOps
+#
+# Variables necesarias:
+#   SONAR_HOST_URL  - URL de SonarQube
+#   SONAR_TOKEN     - Token SonarQube (Secrets Manager: reginsa/sonar:token)
+#   AZDO_ORG        - Organización Azure DevOps (ej: mi-empresa)
+#   AZDO_PROJECT    - Proyecto Azure DevOps (ej: REGINSA)
+#   AZDO_TOKEN      - PAT Azure DevOps (Secrets Manager: reginsa/azdo:token)
+#   RUN_MODE        - scan | sync | full (default: full)
+#   DRY_RUN         - true/false (default: false)
+#   PROJECT_KEYS    - Project keys separados por coma
+
+env:
+  variables:
+    PROJECT_KEYS: "si091reginsafrontend,si091reginsabackend,si091reginsaenlinea"
+    RUN_MODE: "full"
+    DRY_RUN: "false"
+  secrets-manager:
+    SONAR_TOKEN: "reginsa/sonar:token"
+    AZDO_TOKEN: "reginsa/azdo:token"
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "[install] npm ci"
+      - npm ci
+      - |
+        if ! command -v pwsh >/dev/null 2>&1; then
+          echo "Instalando PowerShell..."
+          wget -q https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb
+          dpkg -i packages-microsoft-prod.deb
+          apt-get update
+          apt-get install -y powershell
+        fi
+      - pwsh -Version
+
+  pre_build:
+    commands:
+      - echo "[pre_build] Validando variables..."
+      - |
+        if [ -z "$SONAR_HOST_URL" ]; then
+          echo "ERROR: SONAR_HOST_URL no definida."; exit 1;
+        fi
+      - |
+        if [ -z "$SONAR_TOKEN" ]; then
+          echo "ERROR: SONAR_TOKEN no definida."; exit 1;
+        fi
+      - echo "[pre_build] RUN_MODE=$RUN_MODE DRY_RUN=$DRY_RUN"
+      - echo "[pre_build] PROJECT_KEYS=$PROJECT_KEYS"
+
+  build:
+    commands:
+      # Paso 1: Escaneo SonarQube
+      - |
+        if [ "$RUN_MODE" = "scan" ] || [ "$RUN_MODE" = "full" ]; then
+          echo "=== [SCAN] Ejecutando escaneo SonarQube ==="
+          PROJECTS=$(echo "$PROJECT_KEYS" | sed 's/si091reginsa//g')
+          pwsh -NoProfile -ExecutionPolicy Bypass \
+            -File scripts/security/escanear-repos-sonar.ps1 \
+            -Projects "$PROJECTS" \
+            -SonarHostUrl "$SONAR_HOST_URL" \
+            -SonarToken "$SONAR_TOKEN"
+        else
+          echo "[SKIP] Escaneo SonarQube omitido (RUN_MODE=$RUN_MODE)"
+        fi
+
+      # Paso 2: Sync a Azure DevOps
+      - |
+        if [ "$RUN_MODE" = "sync" ] || [ "$RUN_MODE" = "full" ]; then
+          if [ -z "$AZDO_TOKEN" ] || [ -z "$AZDO_ORG" ] || [ -z "$AZDO_PROJECT" ]; then
+            echo "[SKIP] AZDO_TOKEN, AZDO_ORG o AZDO_PROJECT no configurados. Omitiendo sync."
+          else
+            echo "=== [SYNC] Sincronizando issues → Azure DevOps ==="
+            ARGS=""
+            if [ "$DRY_RUN" = "true" ]; then
+              ARGS="--dry-run"
+            fi
+            export SONAR_PROJECT_KEYS="$PROJECT_KEYS"
+            node scripts/sonar-to-azdo-sync.js $ARGS
+          fi
+        else
+          echo "[SKIP] Sync a Azure DevOps omitido (RUN_MODE=$RUN_MODE)"
+        fi
+
+  post_build:
+    commands:
+      - echo "[post_build] Proceso completado"
+      - ls reportes/security/ 2>/dev/null || echo "(sin reportes generados)"
+
+artifacts:
+  files:
+    - "reportes/security/**/*"
+  name: sonarqube-sync-$(date +%Y%m%d-%H%M%S)
+  discard-paths: no

@@ -7,7 +7,7 @@ REGINSA presenta madurez operativa en automatizacion (Playwright, k6, ZAP y pipe
 ## 2. Riesgos prioritarios
 
 | Riesgo | Impacto | Probabilidad | Prioridad |
-|--------|---------|--------------|-----------|
+| -------- | --------- | -------------- | ----------- |
 
 | Bypass de reglas de negocio por API | Alto (integridad y cumplimiento) | Alta | Critica |
 | Errores bajo concurrencia (500, deadlock) | Alto (disponibilidad y datos) | Media/Alta | Alta |

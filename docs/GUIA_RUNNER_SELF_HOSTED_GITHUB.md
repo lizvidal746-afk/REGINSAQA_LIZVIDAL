@@ -168,6 +168,7 @@ En **Settings** > **Secrets and variables** > **Actions**, definir:
 Para escalar más allá de slots fijos, definir además (opcional):
 
 - `REGINSA_CREDENTIALS_JSON`
+
 Formato sugerido: `[ {"usuario":"u1","contrasena":"p1"}, {"usuario":"u2","contrasena":"p2"} ]`
 
 Opcional:

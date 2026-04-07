@@ -29,6 +29,8 @@ const RIS_MODE = (__ENV.K6_RIS_MODE || 'fixed').toLowerCase();
 const SANCION_MODE = (__ENV.K6_SANCION_MODE || 'sequence').toLowerCase();
 const FORCE_SINGLE_SANCION = (__ENV.K6_FORCE_SINGLE_SANCION || '1') === '1';
 const FORCE_SINGLE_MEDIDA = (__ENV.K6_FORCE_SINGLE_MEDIDA || '1') === '1';
+const HTTP_DETAIL_MODE = (__ENV.K6_HTTP_DETAIL_MODE || 'all').toLowerCase();
+const HTTP_PUBLIC_NAME = (__ENV.K6_HTTP_PUBLIC_NAME || 'CabeceraInfraccionSancion/Crear').trim() || 'CabeceraInfraccionSancion/Crear';
 
 function buildRunId() {
   const requested = String(__ENV.K6_RUN_ID || '').replace(/\D/g, '').slice(-4);
@@ -66,6 +68,7 @@ const REGISTRO_OK_RATE = new Rate('registro_ok_rate');
 const REGISTRO_OK_TOTAL = new Counter('registro_ok_total');
 
 export const options = {
+  systemTags: ['status', 'method', 'name', 'scenario', 'group', 'check', 'error'],
   scenarios: {
     caso02_registrar_sancion: {
       executor: BURST_MODE ? 'per-vu-iterations' : 'shared-iterations',
@@ -220,13 +223,13 @@ function obtainTokenByLogin() {
   const payloads = authPayloadTemplates(cred.user, cred.pass);
   for (let retry = 0; retry <= AUTH_RETRY_MAX; retry += 1) {
     for (const payload of payloads) {
-      const response = http.post(url, JSON.stringify(payload), {
+      const response = http.post(url, JSON.stringify(payload), withRequestTags({
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json'
         },
         timeout: `${AUTH_TIMEOUT_MS}ms`
-      });
+      }, 'Auth/Login'));
 
       if (response.status < 200 || response.status >= 300) {
         continue;
@@ -268,6 +271,12 @@ function formHeaders() {
       'Authorization': tokenActual().trim()
     }
   };
+}
+
+function withRequestTags(baseOptions, endpointName) {
+  const visibleName = HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : endpointName;
+  const opts = baseOptions || {};
+  return { ...opts, tags: { ...(opts.tags || {}), name: visibleName } };
 }
 
 function reportRateLimit(res, endpoint) {
@@ -497,7 +506,7 @@ function generarPayload(globalIdx) {
 }
 
 function listarInfracciones(idRis) {
-  const res = http.post(`${BASE_API}/Infraccion/Listar`, JSON.stringify({ idRis }), headers());
+  const res = http.post(`${BASE_API}/Infraccion/Listar`, JSON.stringify({ idRis }), withRequestTags(headers(), 'Infraccion/Listar'));
   const limited = reportRateLimit(res, 'Infraccion/Listar');
   const ok = check(res, { 'listar_infracciones_status_ok': (r) => r.status === 200 || r.status === 429 });
   STEP_OK_RATE.add(ok);
@@ -585,7 +594,7 @@ function crearCabecera(data) {
   for (const candidate of candidates) {
     let attempt = 0;
     do {
-      res = http.post(`${BASE_API}/CabeceraInfraccionSancion/Crear`, candidate.body, candidate.requestHeaders);
+      res = http.post(`${BASE_API}/CabeceraInfraccionSancion/Crear`, candidate.body, withRequestTags(candidate.requestHeaders, 'CabeceraInfraccionSancion/Crear'));
 
       if (res.status === 200 || res.status === 201) {
         break;
@@ -632,7 +641,7 @@ function crearMedida(idCabecera, medida) {
     idCabeceraInfraccionSancion: idCabecera,
     descripcionMedidaCorrectiva: medida.descripcionMedidaCorrectiva,
     orden: medida.orden
-  }), headers());
+  }), withRequestTags(headers(), 'MedidaCorrectiva/Crear'));
 
   reportRateLimit(res, 'MedidaCorrectiva/Crear');
   const ok = check(res, { 'crear_medida_status_ok': (r) => isBusinessSuccess(r, false) });
@@ -657,7 +666,7 @@ function crearDetalle(idCabecera, detalle, idInfraccion, desInfraccion, idRis) {
     tempId: -2
   };
 
-  const res = http.post(`${BASE_API}/DetalleInfraccionSancion/Crear`, JSON.stringify(payload), headers());
+  const res = http.post(`${BASE_API}/DetalleInfraccionSancion/Crear`, JSON.stringify(payload), withRequestTags(headers(), 'DetalleInfraccionSancion/Crear'));
   reportRateLimit(res, 'DetalleInfraccionSancion/Crear');
   if (res.status >= 400) {
     logDebug('DetalleInfraccionSancion/Crear', payload, res);

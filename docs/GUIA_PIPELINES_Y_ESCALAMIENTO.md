@@ -1,4 +1,19 @@
-# Guía de pipelines y escalamiento (REGINSA)
+# GUIA PIPELINES Y ESCALAMIENTO (DEPRECADA)
+
+## Estado del documento
+
+Este documento queda en estado **deprecado** para evitar duplicidad.
+
+Guia canonica vigente:
+
+- `docs/manuales/GUIA_PIPELINES.md`
+
+Uso recomendado:
+
+1. Seguir la guia canonica para ejecucion operativa.
+2. Mantener este archivo solo como referencia historica de detalle.
+
+## Guía de pipelines y escalamiento (REGINSA)
 
 ## 1) ¿Se reemplaza `test:01:fast` por `test:01:scale`?
 

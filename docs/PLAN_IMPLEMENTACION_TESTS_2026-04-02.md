@@ -3,7 +3,8 @@
 ## Paso 1: Auditoría de Estado Actual
 
 ### Estructura Existente
-```
+
+```text
 REGINSA/
 ├── tests/
 │   ├── funcionales/          → 01-login-smoke.spec.ts (solo 1 archivo)
@@ -26,6 +27,7 @@ REGINSA/
 ```
 
 **ACCIÓN REQUERIDA:** Verificar contenido de:
+
 - `tests/casos-prueba/` ¿qué tiene?
 - `tests/fixtures/` ¿fixtures qué?
 - `tests/pages/` ¿Page Objects o algo más?
@@ -36,6 +38,7 @@ REGINSA/
 ## Paso 2: Crear Estructura de Carpetas Nueva
 
 ### 2.1 Crear directorio base para E2E
+
 ```powershell
 # En PowerShell dentro de REGINSA/
 mkdir -Force "tests\e2e\cases\caso-01-agregar-admin" | Out-Null
@@ -48,6 +51,7 @@ mkdir -Force "tests\e2e\utils" | Out-Null
 ```
 
 ### 2.2 Crear directorio base para API
+
 ```powershell
 mkdir -Force "tests\api\collections" | Out-Null
 mkdir -Force "tests\api\environments" | Out-Null
@@ -56,6 +60,7 @@ mkdir -Force "tests\api\runners" | Out-Null
 ```
 
 ### 2.3 Reorganizar Performance
+
 ```powershell
 mkdir -Force "tests\performance\scripts\caso-00-smoke" | Out-Null
 mkdir -Force "tests\performance\scripts\caso-01-add-admin" | Out-Null
@@ -70,6 +75,7 @@ mkdir -Force "tests\performance\fixtures" | Out-Null
 ```
 
 ### 2.4 Reorganizar Security
+
 ```powershell
 mkdir -Force "tests\security\owasp-zap\configs" | Out-Null
 mkdir -Force "tests\security\owasp-zap\rules" | Out-Null
@@ -82,6 +88,7 @@ mkdir -Force "tests\security\sonarqube\runners" | Out-Null
 ```
 
 ### 2.5 Crear reportes consolidados
+
 ```powershell
 mkdir -Force "reports\e2e-results" | Out-Null
 mkdir -Force "reports\k6-results" | Out-Null
@@ -97,6 +104,7 @@ mkdir -Force "reports\archive" | Out-Null
 ## Paso 3: Migración de Archivos
 
 ### 3.1 Migrar Tests E2E (Playwright)
+
 ```powershell
 # Mover test actual
 Move-Item -Path "tests\funcionales\01-login-smoke.spec.ts" `
@@ -110,7 +118,8 @@ Move-Item -Path "tests\funcionales\01-login-smoke.spec.ts" `
 
 ### 3.2 Migrar Tests Performance (k6)
 
-**Opción A: Mantener estructura corta (recomendado)**
+#### Opción A: Mantener estructura corta (recomendado)
+
 ```powershell
 # k6/ (local) → tests/performance/scripts/
 
@@ -143,7 +152,8 @@ tests/performance/scripts/
     └── ocultar-cabecera.js
 ```
 
-**Opción B: Mantener nombres largos (compatibilidad)**
+#### Opción B: Mantener nombres largos (compatibilidad)
+
 ```powershell
 # Si tienes referencias externas a "k6/" o "k6-grafana/":
 # Crear symlinks (PowerShell)
@@ -152,6 +162,7 @@ New-Item -ItemType SymbolicLink -Path "k6-grafana" -Target "tests\performance\sc
 ```
 
 ### 3.3 Migrar Colecciones Postman
+
 ```powershell
 # API_TEST/postman/*.collection.json
 # → tests/api/collections/
@@ -167,6 +178,7 @@ Move-Item -Path "API_TEST\postman\*environment.json" `
 ```
 
 ### 3.4 Migrar Configuraciones ZAP
+
 ```powershell
 # tests/security/zap/*.yaml
 # → tests/security/owasp-zap/configs/
@@ -176,6 +188,7 @@ Move-Item -Path "tests\security\zap\*.yaml" `
 ```
 
 ### 3.5 Migrar Runners PowerShell
+
 ```powershell
 # scripts/run-caso*.ps1
 # → tests/performance/runners/run-caso*.ps1
@@ -198,6 +211,7 @@ Move-Item -Path "scripts\security\generar-reportes-owasp-*.ps1" `
 ## Paso 4: Crear README por Subsección
 
 ### 4.1 tests/e2e/README.md
+
 ```markdown
 # E2E Tests (Playwright)
 
@@ -222,6 +236,7 @@ npm run test:smoke            # Login solo
 ```
 
 ### 4.2 tests/performance/README.md
+
 ```markdown
 # Performance Tests (k6)
 
@@ -252,6 +267,7 @@ Definidos en `config/thresholds.js`:
 ```
 
 ### 4.3 tests/api/README.md
+
 ```markdown
 # API Tests (Postman/Newman)
 
@@ -278,6 +294,7 @@ npm run test:api:smoke        # Smoke collections
 ```
 
 ### 4.4 tests/security/README.md
+
 ```markdown
 # Security Tests (OWASP ZAP + SonarQube)
 
@@ -309,6 +326,7 @@ npm run test:security:sonar   # Solo SonarQube
 ## Paso 5: Actualizar package.json con npm scripts
 
 ### 5.1 Reorganizar scripts E2E
+
 ```json
 {
   "scripts": {
@@ -325,6 +343,7 @@ npm run test:security:sonar   # Solo SonarQube
 ```
 
 ### 5.2 Reorganizar scripts Performance
+
 ```json
 {
   "scripts": {
@@ -344,6 +363,7 @@ npm run test:security:sonar   # Solo SonarQube
 ```
 
 ### 5.3 Scripts API & Security
+
 ```json
 {
   "scripts": {
@@ -351,7 +371,7 @@ npm run test:security:sonar   # Solo SonarQube
     "test:api:smoke": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/api/runners/run-api-tests.ps1 -Smoke",
     "test:api:caso:03": "newman run tests/api/collections/reginsa-caso03-api-test.collection.json ...",
     "test:api:caso:04": "newman run tests/api/collections/reginsa-caso04-api-test.collection.json ...",
-    
+
     "test:security": "npm run test:security:zap && npm run test:security:sonar",
     "test:security:zap": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/security/owasp-zap/runners/run-baseline.ps1",
     "test:security:zap:full": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/security/owasp-zap/runners/run-full.ps1",
@@ -363,6 +383,7 @@ npm run test:security:sonar   # Solo SonarQube
 ```
 
 ### 5.4 Scripts de Suite Integrada
+
 ```json
 {
   "scripts": {
@@ -409,6 +430,7 @@ k6-results/
 ## Paso 7: Crear Archivos de Configuración Centrales
 
 ### 7.1 tests/performance/config/base-config.js
+
 ```javascript
 // Configuración base reutilizable
 export const BASE_CONFIG = {
@@ -425,6 +447,7 @@ export const SETUP = {
 ```
 
 ### 7.2 tests/performance/config/thresholds.js
+
 ```javascript
 // Umbrales reutilizables
 export const THRESHOLDS = {
@@ -436,6 +459,7 @@ export const THRESHOLDS = {
 ```
 
 ### 7.3 tests/api/environments/qa-local.postman_environment.json
+
 ```json
 {
   "name": "QA Local",
@@ -452,6 +476,7 @@ export const THRESHOLDS = {
 ## Paso 8: Crear Runners Principales
 
 ### 8.1 scripts/run/run-smoke.ps1
+
 ```powershell
 param([switch]$Local, [switch]$Cloud)
 
@@ -477,6 +502,7 @@ Write-Host "`n✓ Smoke tests completados" -ForegroundColor Green
 ```
 
 ### 8.2 scripts/run/run-regression.ps1
+
 ```powershell
 Write-Host "Ejecutando Regression Tests..." -ForegroundColor Cyan
 
@@ -502,6 +528,7 @@ Write-Host "`n✓ Regression tests completados" -ForegroundColor Green
 ## Paso 9: Actualizar Documentación
 
 ### 9.1 Crear TEST_EXECUTION_GUIDE.md
+
 ```markdown
 # Guía de Ejecución de Tests
 
@@ -531,6 +558,7 @@ npm run test:suite:nightly      # 45-60 min, completo
 ## Paso 10: Validar & Limpiar
 
 ### 10.1 Checklist de Migración
+
 - [ ] Carpetas nuevas creadas
 - [ ] Archivos movidos sin errores
 - [ ] package.json actualizado
@@ -541,6 +569,7 @@ npm run test:suite:nightly      # 45-60 min, completo
 - [ ] Workflows CI/CD actualizados (mañana)
 
 ### 10.2 Limpiar Carpetas Antiguas
+
 ```powershell
 # DESPUÉS de verificar que todo funciona:
 Remove-Item -Path "tests\funcionales" -Recurse -Force
@@ -555,7 +584,7 @@ Remove-Item -Path "API_TEST" -Recurse -Force
 ## Paso 11: Tiempo Estimado
 
 | Paso | Duración | Notas |
-|------|----------|-------|
+| ------ | ---------- | ------- |
 | 1. Auditoría | 15 min | Revisar qué existe |
 | 2. Crear carpetas | 5 min | Comandos PowerShell |
 | 3. Migrar archivos | 20 min | Move-Item loop |
@@ -578,6 +607,7 @@ Remove-Item -Path "API_TEST" -Recurse -Force
 4. **¿Qué piensas de los npm scripts?** ¿Demasiados? ¿Faltan algunos?
 
 **Tu decisión:**
+
 - Opción A: Migración completa (recomendado)
 - Opción B: Solo crear estructura + manual después
 - Opción C: Solo README + documentación sin reorganizar

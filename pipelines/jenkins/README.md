@@ -21,7 +21,7 @@ Guía paso a paso para configurar el pipeline de seguridad en Jenkins.
 En el **agente Jenkins** (el servidor donde corren los builds) deben estar instalados:
 
 | Requisito | Versión mínima | Cómo verificar |
-|---|---|---|
+| --- | --- | --- |
 | Jenkins | 2.400+ | `jenkins --version` |
 | Docker | 20+ | `docker --version` |
 | Node.js | 20 | `node --version` |
@@ -55,16 +55,17 @@ La URL del entorno QA se guarda como credencial de tipo **Secret text** en Jenki
 ### Plugin obligatorio:
 
 | Plugin | Para qué sirve | Cómo instalar |
-|---|---|---|
+| --- | --- | --- |
 | **Pipeline** | Ejecutar archivos Jenkinsfile | Suele venir preinstalado |
 
 ### Plugin opcional (pero recomendado):
 
 | Plugin | Para qué sirve | Cómo instalar |
-|---|---|---|
+| --- | --- | --- |
 | **HTML Publisher** | Ver reportes HTML directamente en Jenkins | Jenkins → Manage Plugins → buscar "HTML Publisher" |
 
 ### Para instalar plugins:
+
 1. Ir a **Jenkins → Manage Jenkins → Manage Plugins**
 2. Pestaña **"Available plugins"**
 3. Buscar el nombre del plugin
@@ -81,17 +82,17 @@ La URL del entorno QA se guarda como credencial de tipo **Secret text** en Jenki
 
 ### Configuración del job:
 
-5. En la sección **"General"**:
+1. En la sección **"General"**:
    - ✅ Marcar **"This project is parameterized"** (se configura solo desde el Jenkinsfile)
 
-6. En la sección **"Pipeline"**:
+2. En la sección **"Pipeline"**:
    - **Definition:** `Pipeline script from SCM`
    - **SCM:** `Git`
    - **Repository URL:** `https://github.com/lizvidal746-afk/REGINSAQA_LIZVIDAL.git`
    - **Branch Specifier:** `*/main`
    - **Script Path:** `pipelines/jenkins/Jenkinsfile-security`
 
-7. Hacer clic en **"Save"**
+3. Hacer clic en **"Save"**
 
 ---
 
@@ -107,7 +108,7 @@ La URL del entorno QA se guarda como credencial de tipo **Secret text** en Jenki
 Hacer clic en **"Build with Parameters"** y configurar:
 
 | Parámetro | Por defecto | Descripción |
-|---|---|---|
+| --- | --- | --- |
 | `RUN_ZAP` | `false` | Activa el scan DAST con OWASP ZAP (~10 min extra) |
 | `RUN_NUCLEI` | `false` | Activa el scan DAST con Nuclei (~5 min extra) |
 | `RUN_TRIVY` | `true` | Activa el scan de contenedor con Trivy |
@@ -122,7 +123,7 @@ Hacer clic en **"Build with Parameters"** y configurar:
 ### ✅ Herramientas incluidas en este pipeline:
 
 | Herramienta | Categoría | Parámetro |
-|---|---|---|
+| --- | --- | --- |
 | **Gitleaks** | Secret Detection | Siempre activo |
 | **Semgrep** | SAST | Siempre activo |
 | **npm audit** | SCA | Siempre activo |
@@ -134,7 +135,7 @@ Hacer clic en **"Build with Parameters"** y configurar:
 ### ❌ Herramientas NO incluidas (y por qué):
 
 | Herramienta | Razón |
-|---|---|
+| --- | --- |
 | **CodeQL** | Exclusivo de GitHub Actions. GitHub no permite ejecutar CodeQL en sistemas externos como Jenkins. Para análisis SAST en Jenkins, este pipeline usa **Semgrep** como alternativa completa y gratuita. |
 
 ---
@@ -143,7 +144,7 @@ Hacer clic en **"Build with Parameters"** y configurar:
 
 Los reportes se archivan como artifacts de Jenkins y también se publican como HTML (si el plugin está instalado):
 
-```
+```text
 reportes/
 └── security/
     ├── dependency-check/
@@ -166,5 +167,6 @@ semgrep-report.json     ← Hallazgos SAST
 ```
 
 Para ver los reportes en Jenkins:
+
 - **Artifacts:** hacer clic en el build → "Build Artifacts"
 - **HTML Reports:** hacer clic en el build → "Security Reports" (requiere plugin HTML Publisher)

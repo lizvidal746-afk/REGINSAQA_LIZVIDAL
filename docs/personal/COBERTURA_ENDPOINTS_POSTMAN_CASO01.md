@@ -3,7 +3,7 @@
 ## Estado actual de cobertura (coleccion Caso 01)
 
 | Item Postman | Endpoint | Metodo | Validacion actual | Estado |
-|--------------|----------|--------|-------------------|--------|
+| -------------- | ---------- | -------- | ------------------- | -------- |
 
 | 1) Auth/Login | /Auth/Login | POST | Status 200/201 y token presente; guarda token/auth_header para siguientes requests | Cubierto |
 | 2) Entidad/Crear - Exito | /Entidad/Crear | POST | Status 200/201/409 y control de exito (bSuccess) o conflicto esperado | Cubierto |
@@ -20,7 +20,7 @@
 ## Brechas para criterio "Listo para comite"
 
 | Brecha | Impacto | Recomendacion |
-|--------|---------|---------------|
+| -------- | --------- | --------------- |
 
 | Falta caso negativo de autorizacion (token ausente/invalido/expirado) | No evidencia de control de acceso robusto | Agregar 3 requests negativas de auth en la misma coleccion |
 | Falta validacion de campos obligatorios (payload incompleto) | Riesgo de aceptar datos invalidos | Agregar casos 400/422 por campos obligatorios |

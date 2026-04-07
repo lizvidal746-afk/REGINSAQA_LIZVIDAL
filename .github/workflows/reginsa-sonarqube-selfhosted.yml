@@ -32,7 +32,7 @@ jobs:
     timeout-minutes: 90
     defaults:
       run:
-        shell: powershell
+        shell: cmd
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -49,10 +49,30 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Verify environment
+        shell: cmd
+        run: |
+          echo === Node.js ===
+          node --version
+          echo === npm ===
+          npm --version
+          echo === Working directory ===
+          cd
+          echo === Workspace contents ===
+          dir /b
+
       - name: Install dependencies
-        run: npm ci
+        shell: cmd
+        run: |
+          if not exist node_modules (
+            echo [CI] node_modules no encontrado, ejecutando npm ci...
+            npm ci
+          ) else (
+            echo [CI] node_modules ya existe, skip npm ci
+          )
 
       - name: Run Sonar scan (3 repos centralizados)
+        shell: pwsh
         run: |
           $dispatchHost = "${{ github.event.inputs.sonar_host_url }}"
           if (-not [string]::IsNullOrWhiteSpace($dispatchHost)) {
@@ -68,10 +88,10 @@ jobs:
 
           # Escanea frontend, backend y enlinea con sus carpetas especificas
           # Sin crear archivos dentro de los repos clonados
-          pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/escanear-repos-sonar.ps1 -Projects frontend,backend,enlinea
+          & ./scripts/security/escanear-repos-sonar.ps1 -Projects frontend,backend,enlinea
 
       - name: Build Sonar quality gate summary
-        shell: powershell
+        shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
 
@@ -183,6 +203,28 @@ jobs:
 
           Write-Host "Summary generated: $summaryPath"
           Write-Host "Summary generated: $jsonPath"
+
+      - name: Sync SonarQube issues to Azure DevOps
+        if: always() && env.AZDO_TOKEN != ''
+        shell: pwsh
+        env:
+          AZDO_ORG: ${{ secrets.AZDO_ORG }}
+          AZDO_PROJECT: ${{ secrets.AZDO_PROJECT }}
+          AZDO_TOKEN: ${{ secrets.AZDO_TOKEN }}
+          SONAR_PROJECT_KEYS: ${{ github.event.inputs.project_keys }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:AZDO_ORG) -or [string]::IsNullOrWhiteSpace($env:AZDO_PROJECT)) {
+            Write-Host "[SKIP] AZDO_ORG o AZDO_PROJECT no configurados. Omitiendo sync a Azure DevOps."
+            exit 0
+          }
+
+          $dispatchHost = "${{ github.event.inputs.sonar_host_url }}"
+          if (-not [string]::IsNullOrWhiteSpace($dispatchHost)) {
+            $env:SONAR_HOST_URL = $dispatchHost
+          }
+
+          Write-Host "[SYNC] Sincronizando issues SonarQube → Azure DevOps..."
+          node scripts/sonar-to-azdo-sync.js
 
       - name: Upload scanner artifacts
         if: always() && github.event.inputs.upload_artifacts == 'true'

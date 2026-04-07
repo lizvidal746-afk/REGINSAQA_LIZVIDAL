@@ -2,7 +2,7 @@
 
 ## 1. Estructura de Carpetas Multi-Niveles
 
-```
+```text
 REGINSA/
 ├── tests/                              # Raíz de todos los tests
 │   ├── README.md                       # Índice y guía de ejecución
@@ -210,7 +210,7 @@ REGINSA/
 
 ## 2. Clasificación de Tests por Pirámide
 
-```
+```text
                     ╭─────┬─────╮
                     │  E2E │  5% │  Casos funcionales (Playwright)
                     ├─────┴─────┤
@@ -225,6 +225,7 @@ REGINSA/
 ```
 
 **Ratios sugeridos:**
+
 - **E2E (5%)**: 4 casos × 1-2 tests = ~5 tests
 - **API (15%)**: Colecciones Postman con múltiples requests
 - **Performance (20%)**: k6 casos 00-04 + API operations
@@ -236,7 +237,7 @@ REGINSA/
 ## 3. Matriz de Ejecución: Cuándo Correr Qué
 
 | Trigger | E2E | API | Performance | Security | Reportes |
-|---------|-----|-----|-------------|----------|----------|
+| --------- | ----- | ----- | ------------- | ---------- | ---------- |
 | **Pre-commit** (local) | ✓ smoke | - | - | ✓ sonar (rápido) | - |
 | **PR/MR check** | ✓ smoke | ✓ rápido | - | ✓ sonar | dashboard |
 | **Nightly** (2am) | ✓ full | ✓ full | ✓ k6 local | ✓ ZAP full | ✓ completo |
@@ -248,7 +249,8 @@ REGINSA/
 ## 4. Naming Conventions (Convenciones)
 
 ### Tests E2E (Playwright)
-```
+
+```text
 {caso-number}-{area}-{scenario}.spec.ts
 
 Ejemplos:
@@ -260,7 +262,8 @@ Ejemplos:
 ```
 
 ### Scripts Performance (k6)
-```
+
+```text
 {caso-number}-{operation}.js o {operation}-{variant}.js
 
 Ejemplos:
@@ -270,7 +273,8 @@ Ejemplos:
 ```
 
 ### Colecciones API (Postman)
-```
+
+```text
 reginsa-{caso-number}-{workflow}.collection.json
 
 Ejemplos:
@@ -279,7 +283,8 @@ Ejemplos:
 ```
 
 ### Configuraciones Seguridad
-```
+
+```text
 {tool}-{scope}-{mode}.{yaml|properties}
 
 Ejemplos:
@@ -294,6 +299,7 @@ Ejemplos:
 ## 5. Ejecución desde npm scripts
 
 ### Smoke Tests (rápido, sin dependencias externas)
+
 ```bash
 npm run test:smoke           # Playwright smoke
 npm run test:api:smoke       # Postman smoke collections
@@ -302,6 +308,7 @@ npm run test:security:quick  # SonarQube análisis rápido
 ```
 
 ### Full Test Suites
+
 ```bash
 npm run test:e2e             # Todos los E2E (Playwright)
 npm run test:api             # Todos los API (Newman)
@@ -311,6 +318,7 @@ npm run test:security        # OWASP ZAP + SonarQube
 ```
 
 ### Caso Específico
+
 ```bash
 npm run test:caso:01         # E2E caso 01
 npm run test:perf:caso:01    # K6 caso 01 local
@@ -319,6 +327,7 @@ npm run test:api:caso:03     # API contracts caso 03
 ```
 
 ### Suites Integradas (múltiples test types)
+
 ```bash
 npm run test:suite:smoke          # E2E + API smoke + K6 caso00
 npm run test:suite:regression     # E2E full + API full
@@ -328,6 +337,7 @@ npm run test:suite:full           # TODO: E2E + API + K6 + ZAP + SonarQube
 ```
 
 ### Reportes
+
 ```bash
 npm run report:consolidate        # Mezcla todos los reportes
 npm run report:dashboard          # Genera dashboard HTML
@@ -339,6 +349,7 @@ npm run report:archive            # Archiva resultados históricos
 ## 6. Integración CI/CD (Pipelines)
 
 ### GitHub Actions (Self-hosted)
+
 ```yaml
 # .github/workflows/tests-smoke.yml
 on: [push, pull_request]
@@ -361,6 +372,7 @@ jobs:
 ```
 
 ### Jenkins / Azure DevOps / AWS CodeBuild
+
 Similar structure con stages/jobs por tipo de test
 
 ---
@@ -368,6 +380,7 @@ Similar structure con stages/jobs por tipo de test
 ## 7. Estrategia de Datos Compartidos
 
 ### Fixtures (datos reutilizables)
+
 ```typescript
 // tests/e2e/fixtures/test-data.ts
 export const TEST_ACCOUNTS = {
@@ -382,6 +395,7 @@ export const TEST_ENTITIES = [
 ```
 
 ### Payloads (datos dinámicos)
+
 ```javascript
 // tests/performance/fixtures/payloads.js
 export function generateAdminPayload() {
@@ -394,6 +408,7 @@ export function generateAdminPayload() {
 ```
 
 ### Seeds (limpieza/preparación)
+
 ```bash
 npm run data:seed            # Carga datos iniciales
 npm run data:cleanup         # Limpia datos de prueba
@@ -405,7 +420,8 @@ npm run data:reset           # Reset completo
 ## 8. Gestión de Resultados & Reportes
 
 ### Consolidación de Reportes
-```
+
+```text
 reportes/
 ├── E2E/              → allure-results/ → Dashboard Allure
 ├── Performance/      → k6-results/     → JSON k6
@@ -418,7 +434,9 @@ reportes/
 ```
 
 ### Dashboard Consolidado
+
 Se genera con npm scripts que mezclan:
+
 - Snapshots E2E (passed/failed/skipped)
 - Métricas K6 (p95, throughput, errores)
 - Vulnerabilidades OWASP ZAP
@@ -470,21 +488,25 @@ npm run report:consolidate
 ## 11. Hoja de Ruta: Implementación
 
 **Fase 1 (Semana 1):** Reorganizar carpetas existentes
+
 - Mover tests/funcionales → tests/e2e/cases/
 - Mover tests/performance → tests/performance/ (ya existe, refactorizar)
 - Crear tests/api/ con Postman collections
 - Crear tests/security/ con OWASP + SonarQube
 
 **Fase 2 (Semana 2):** Crear runners inteligentes
+
 - scripts/run/run-smoke.ps1
 - scripts/run/run-regression.ps1
 - npm scripts unificados
 
 **Fase 3 (Semana 3):** Consolidación de reportes
+
 - Merge de Allure + k6 + Newman + ZAP
 - Dashboard HTML único
 
 **Fase 4 (Semana 4):** Integración CI/CD
+
 - Workflows GitHub Actions
 - Jenkins pipelines
 - Azure DevOps

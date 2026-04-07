@@ -1,0 +1,19 @@
+﻿{
+    "version":  "2.1.0",
+    "runs":  [
+                 {
+                     "tool":  {
+                                  "driver":  {
+                                                 "rules":  [
+
+                                                           ],
+                                                 "name":  "Nuclei",
+                                                 "informationUri":  "https://github.com/projectdiscovery/nuclei"
+                                             }
+                              },
+                     "results":  [
+
+                                 ]
+                 }
+             ]
+}

@@ -55,10 +55,12 @@ npm run test:04 -- --workers=2 --repeat-each=5 --project=chromium
 Modo demo (abre reportes automáticamente como Caso 01):
 
 ```bash
+
 npm run test:02:demo -- --headed
 npm run test:03:demo -- --headed
 npm run test:04:demo -- --headed
-```
+
+```text
 
 ## 3) K6 por caso (self-hosted)
 

@@ -2,11 +2,14 @@ import http from 'k6/http';
 import { check } from 'k6';
 import { sleep } from 'k6';
 import { Rate, Counter } from 'k6/metrics';
+import { ipPoolParams, logPoolStatus, getIpLastOctet } from './helpers/ip-pool.js';
 
 const BASE_URL = (__ENV.BASE_URL || 'https://reginsaapiqa.sunedu.gob.pe/api').replace(/\/+$/, '');
 const ENDPOINT = (__ENV.K6_LOGIN_CHECK_ENDPOINT || '/Entidad/Listar').trim();
 const METHOD = String(__ENV.K6_LOGIN_CHECK_METHOD || 'GET').trim().toUpperCase();
 const EXPECT_RATE_LIMIT = (__ENV.K6_EXPECT_RATE_LIMIT || '1') === '1';
+const HTTP_DETAIL_MODE = (__ENV.K6_HTTP_DETAIL_MODE || 'all').toLowerCase();
+const HTTP_PUBLIC_NAME = (__ENV.K6_HTTP_PUBLIC_NAME || 'Entidad/Listar').trim() || 'Entidad/Listar';
 const AUTH_HEADER = (__ENV.K6_AUTH_HEADER || __ENV.TOKEN1 || __ENV.TOKEN || '').trim();
 const AUTH_HEADERS_POOL = String(__ENV.K6_AUTH_HEADERS || '')
   .split(',')
@@ -43,6 +46,7 @@ if (!auth && authPool.length === 0) {
 }
 
 export const options = {
+  systemTags: ['status', 'method', 'name', 'scenario', 'group', 'check', 'error'],
   tags: { caso: '00', tipo: 'login' },
   scenarios: {
     caso00_login: {
@@ -60,16 +64,25 @@ export const options = {
   }
 };
 
+logPoolStatus();
+
 export default function () {
   const url = `${BASE_URL}${ENDPOINT.startsWith('/') ? ENDPOINT : `/${ENDPOINT}`}`;
   const selectedAuth = authPool.length > 0 ? authPool[(__VU - 1) % authPool.length] : auth;
+
+  const endpointName = ENDPOINT.replace(/^\//, '');
+  const _ipSuffix = getIpLastOctet();
+  const _ipPfx = _ipSuffix ? `IP ${_ipSuffix} ` : '';
+  const visibleName = `${_ipPfx}${HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : endpointName}`;
 
   let response;
   if (METHOD === 'GET') {
     response = http.get(url, {
       headers: {
         Authorization: selectedAuth
-      }
+      },
+      tags: { name: visibleName },
+      ...ipPoolParams()
     });
   } else {
     // Payload minimo para validar autenticacion sin depender de datos de negocio.
@@ -77,7 +90,9 @@ export default function () {
       headers: {
         'Content-Type': 'application/json',
         Authorization: selectedAuth
-      }
+      },
+      tags: { name: visibleName },
+      ...ipPoolParams()
     });
   }
 

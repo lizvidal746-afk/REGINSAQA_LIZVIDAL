@@ -26,8 +26,22 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
+# Leer --casos desde npm si no fue pasado explicitamente como parametro PS
+if ($Casos -eq '00,01,02,03,04' -and -not [string]::IsNullOrWhiteSpace($env:npm_config_casos)) {
+  $Casos = $env:npm_config_casos
+}
+
 if ($K6Cantidad -le 0) {
   throw 'Debes indicar -K6Cantidad mayor a 0.'
+}
+
+# Leer --vus desde npm_config_vus si no fue pasado explicitamente
+$vusFromEnv = $env:npm_config_vus
+if (-not [string]::IsNullOrWhiteSpace($vusFromEnv)) {
+  $vusParsed = 0
+  if ([int]::TryParse($vusFromEnv, [ref]$vusParsed) -and $vusParsed -gt 0) {
+    $K6Vus = $vusParsed
+  }
 }
 
 function Resolve-NonEmpty([string]$primary, [string]$fallback) {
@@ -45,11 +59,15 @@ if (Test-Path $envLoader) {
   & $envLoader -Path $EnvFile
 }
 
+# Auto-detectar pool de IPs secundarias para k6 localAddress
+$ipDetector = Join-Path $PSScriptRoot 'shared/detect-k6-ips.ps1'
+if (Test-Path $ipDetector) { & $ipDetector }
+
 $cloudProjectId = Resolve-NonEmpty $GrafanaProjectId $env:K6_CLOUD_PROJECT_ID
 $cloudToken = Resolve-NonEmpty $GrafanaToken $env:K6_CLOUD_TOKEN
 
 if (Get-Command Resolve-GrafanaCloudSecrets -ErrorAction SilentlyContinue) {
-  $resolvedGrafanaSecrets = Resolve-GrafanaCloudSecrets -GrafanaProjectId $cloudProjectId -GrafanaToken $cloudToken -PersistProvided
+  $resolvedGrafanaSecrets = Resolve-GrafanaCloudSecrets -GrafanaProjectId $cloudProjectId -GrafanaToken $cloudToken -PersistProvided -Interactive:($K6Output -eq 'cloud')
   $cloudProjectId = [string]$resolvedGrafanaSecrets.ProjectId
   $cloudToken = [string]$resolvedGrafanaSecrets.Token
 }
@@ -197,7 +215,7 @@ Write-Output "`nGenerando resumen final..."
 
 $failed = @($statusMap.GetEnumerator() | Where-Object { -not $_.Value.ok }).Count
 if ($failed -gt 0) {
-  throw "Finalizó con $failed caso(s) fallidos. Revisa reportes/k6-presentacion-00-04-resumen.md"
+  throw "Finalizo con $failed caso(s) fallidos. Revisa reportes/k6-presentacion-00-04-resumen.md"
 }
 
 Write-Output "`nPresentación k6 00-04 completada."

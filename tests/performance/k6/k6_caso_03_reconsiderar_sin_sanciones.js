@@ -6,6 +6,8 @@ import { Counter, Rate } from 'k6/metrics';
 const BASE_API = __ENV.BASE_API || __ENV.BASE_URL || 'https://reginsaapiqa.sunedu.gob.pe/api';
 const BURST_MODE = (__ENV.K6_BURST_MODE || '0') === '1';
 const DEBUG_ERRORS = (__ENV.K6_DEBUG_ERRORS || '0') === '1';
+const HTTP_DETAIL_MODE = (__ENV.K6_HTTP_DETAIL_MODE || 'all').toLowerCase();
+const HTTP_PUBLIC_NAME = (__ENV.K6_HTTP_PUBLIC_NAME || 'Caso03').trim() || 'Caso03';
 const DEBUG_LIMIT = Math.max(1, Number.parseInt(__ENV.K6_DEBUG_ERRORS_MAX || '8', 10) || 8);
 
 const ENDPOINT_LISTAR_CABECERA = __ENV.K6_CASO03_LISTAR_CABECERA || '/CabeceraInfraccionSancion/Listar';
@@ -55,6 +57,7 @@ const STEP_OK_RATE = new Rate('step_ok_rate');
 const REGISTRO_OK_RATE = new Rate('registro_ok_rate');
 
 export const options = {
+  systemTags: ['status', 'method', 'name', 'scenario', 'group', 'check', 'error'],
   scenarios: {
     caso03_reconsiderar_sin_sanciones: {
       executor: BURST_MODE ? 'per-vu-iterations' : 'shared-iterations',
@@ -196,7 +199,8 @@ function obtainTokenByLogin() {
     for (const payload of payloads) {
       const response = http.post(url, JSON.stringify(payload), {
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        timeout: `${AUTH_TIMEOUT_MS}ms`
+        timeout: `${AUTH_TIMEOUT_MS}ms`,
+        tags: { name: HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : 'Auth/Login' }
       });
       if (response.status < 200 || response.status >= 300) continue;
       const token = extractTokenFromData(safeJson(response));
@@ -255,8 +259,12 @@ function isBusinessSuccess(response, requireData) {
   return json.oData !== null && json.oData !== undefined;
 }
 
-function postJson(endpoint, payload) {
-  return http.post(`${BASE_API}${endpoint}`, JSON.stringify(payload), headers());
+function postJson(endpoint, payload, tagName) {
+  const opts = headers();
+  if (tagName) {
+    opts.tags = { name: HTTP_DETAIL_MODE === 'guardar_only' ? HTTP_PUBLIC_NAME : tagName };
+  }
+  return http.post(`${BASE_API}${endpoint}`, JSON.stringify(payload), opts);
 }
 
 function pickCabeceraId(listResponse) {
@@ -282,7 +290,7 @@ export default function () {
     nPageSize: LIST_PAGE_SIZE,
     sinSanciones: true,
     reconsideracionPendiente: true
-  });
+  }, 'CabeceraInfraccionSancion/Listar');
   reportStatus(listarResp, 'Caso03/ListarCabecera');
   const listarOk = check(listarResp, { 'caso03_listar_ok': (r) => r.status === 200 || r.status === 429 });
   STEP_OK_RATE.add(listarOk);
@@ -294,7 +302,7 @@ export default function () {
     numeroReconsideracion: `K6-REC-${Date.now()}`,
     fechaReconsideracion: new Date().toISOString(),
     sinSanciones: true
-  });
+  }, 'Reconsideracion/GuardarCabecera');
   reportStatus(guardarResp, 'Caso03/GuardarReconsideracion');
   const guardarOk = check(guardarResp, { 'caso03_guardar_ok': (r) => isBusinessSuccess(r, false) || r.status === 429 });
   STEP_OK_RATE.add(guardarOk);
@@ -304,7 +312,7 @@ export default function () {
     nPageSize: DETAIL_PAGE_SIZE,
     idCabeceraInfraccionSancion: cabeceraId,
     sinSanciones: true
-  });
+  }, 'DetalleInfraccionSancion/Listar');
   reportStatus(detalleResp, 'Caso03/ListarDetalle');
   const detalleOk = check(detalleResp, { 'caso03_detalle_ok': (r) => r.status === 200 || r.status === 429 });
   STEP_OK_RATE.add(detalleOk);

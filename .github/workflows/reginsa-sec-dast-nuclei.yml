@@ -24,7 +24,7 @@ jobs:
         uses: projectdiscovery/nuclei-action@main
         with:
           target: ${{ github.event.inputs.target_url || secrets.REGINSA_URL }}
-          flags: "-severity critical,high,medium -exclude-type dos"
+          flags: "-severity critical,high,medium -exclude-tags dos"
           output: nuclei-report.jsonl
           sarif-export: nuclei-report.sarif
 

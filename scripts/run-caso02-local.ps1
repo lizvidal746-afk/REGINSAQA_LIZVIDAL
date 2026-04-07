@@ -12,7 +12,7 @@ param(
   [ValidateSet('local','cloud')]
   [string]$K6Output = 'local',
 
-  [int]$K6Cantidad = 2,
+  [int]$K6Cantidad = 1,
   [double]$K6SleepSeconds = -1,
   [int]$K6Vus = 0,
   [int]$K6SancionesPorRegistro = 1,
@@ -24,8 +24,8 @@ param(
   [string]$K6ExpectRateLimit = '1',
   [ValidateSet('0','1')]
   [string]$K6EnforceOkRate = '0',
-  [ValidateSet('guardar_only','full')]
-  [string]$K6HttpDetailMode = 'guardar_only',
+  [ValidateSet('all','guardar_only')]
+  [string]$K6HttpDetailMode = 'all',
   [ValidateSet('fixed','rotate','rotate_1_2','random')]
   [string]$K6RisMode = 'random',
   [string]$PerfDuration = '10m',
@@ -66,6 +66,14 @@ function Resolve-NonEmpty([string]$primary, [string]$fallback) {
 $grafanaSecretsHelper = Join-Path $PSScriptRoot 'shared/grafana-secrets.ps1'
 if (Test-Path $grafanaSecretsHelper) {
   . $grafanaSecretsHelper
+}
+
+# Detectar pool de IPs si el toggle esta activo y el padre no heredo K6_LOCAL_IPS ya.
+# Cuando lo llama run-k6-presentacion-00-04.ps1, K6_LOCAL_IPS ya esta seteado -> se omite.
+# Cuando lo llama k6:02:cloud directamente y el toggle esta ON -> detecta y activa el pool.
+if ([string]::IsNullOrWhiteSpace($env:K6_LOCAL_IPS)) {
+  $ipDetector = Join-Path $PSScriptRoot 'shared/detect-k6-ips.ps1'
+  if (Test-Path $ipDetector) { & $ipDetector }
 }
 
 function Get-CliOption([string]$name) {
@@ -122,11 +130,19 @@ if (-not [string]::IsNullOrWhiteSpace($cantidadRaw)) {
   }
 }
 
+$vusRaw = Resolve-NonEmpty (Get-CliOption 'vus') $env:npm_config_vus
+if (-not [string]::IsNullOrWhiteSpace($vusRaw)) {
+  $vusParsed = 0
+  if ([int]::TryParse($vusRaw, [ref]$vusParsed) -and $vusParsed -gt 0) {
+    $K6Vus = $vusParsed
+  }
+}
+
 $GrafanaProjectId = Resolve-NonEmpty $GrafanaProjectId (Resolve-NonEmpty (Get-CliOption 'project') $env:npm_config_project)
 $GrafanaToken = Resolve-NonEmpty $GrafanaToken (Resolve-NonEmpty (Get-CliOption 'token') $env:npm_config_token)
 
 if (Get-Command Resolve-GrafanaCloudSecrets -ErrorAction SilentlyContinue) {
-  $resolvedGrafanaSecrets = Resolve-GrafanaCloudSecrets -GrafanaProjectId $GrafanaProjectId -GrafanaToken $GrafanaToken -PersistProvided
+  $resolvedGrafanaSecrets = Resolve-GrafanaCloudSecrets -GrafanaProjectId $GrafanaProjectId -GrafanaToken $GrafanaToken -PersistProvided -Interactive:($K6Output -eq 'cloud')
   $GrafanaProjectId = [string]$resolvedGrafanaSecrets.ProjectId
   $GrafanaToken = [string]$resolvedGrafanaSecrets.Token
 }
@@ -173,6 +189,9 @@ $env:K6_EXPECT_RATE_LIMIT = $K6ExpectRateLimit
 $env:K6_ENFORCE_OK_RATE = $K6EnforceOkRate
 $env:K6_HTTP_DETAIL_MODE = $K6HttpDetailMode
 $env:K6_RIS_MODE = $K6RisMode
+# Limpiar env vars de corrida anterior para que el generador incremente correctamente
+Remove-Item Env:K6_PREFIX_SEQUENCE -ErrorAction SilentlyContinue
+Remove-Item Env:K6_RUN_ID -ErrorAction SilentlyContinue
 $k6PrefixInfo = $null
 try {
   $k6PrefixRaw = & node scripts/generar-k6-prefijo-global.js
@@ -234,12 +253,14 @@ if ($Mode -in @('all','k6')) {
   }
 
   Write-Host "[INFO] caso02 run_id=$($env:K6_TRACE_CASE) modo=$k6Mode cantidad=$k6CantidadFinal vus=$k6VusFinal" -ForegroundColor DarkCyan
-  $k6SystemTagsArg = ''
-  if ($K6HttpDetailMode -eq 'guardar_only') {
-    $k6SystemTagsArg = ' --system-tags=status,method,name,scenario,group,check,error'
+
+  $k6LocalIpsArg = ''
+  if (-not [string]::IsNullOrWhiteSpace($env:K6_LOCAL_IPS)) {
+    $k6LocalIpsArg = " --env K6_LOCAL_IPS=$($env:K6_LOCAL_IPS)"
+    Write-Host "[k6-ips] Pool activo: $($env:K6_LOCAL_IPS.Split(',').Count) IPs -> $($env:K6_LOCAL_IPS)" -ForegroundColor Cyan
   }
 
-  $k6Cmd = "k6 run$k6SystemTagsArg tests/performance/k6-grafana/k6_caso_02_registrar_sancion.js --env BASE_API=$baseApiFinal --env K6_CANTIDAD=$k6CantidadFinal --env K6_MODE=$k6Mode --env K6_TOTAL_REGISTROS=$k6CantidadFinal --env K6_FIXED_ITERATIONS=$k6CantidadFinal --env K6_VUS=$k6VusFinal --env K6_FIXED_VUS=$k6VusFinal --env K6_SLEEP_SECONDS=$k6SleepFinal --env K6_SANCIONES_POR_REGISTRO=$($env:K6_SANCIONES_POR_REGISTRO) --env K6_FORCE_SINGLE_SANCION=$K6ForceSingleSancion --env K6_FORCE_SINGLE_MEDIDA=$K6ForceSingleMedida --env K6_HTTP_DETAIL_MODE=$K6HttpDetailMode --env K6_RIS_MODE=$K6RisMode --env PERF_DURATION=$PerfDuration --summary-export reportes/k6-caso02-summary-local.json"
+  $k6Cmd = "k6 run tests/performance/k6-grafana/k6_caso_02_registrar_sancion.js --env BASE_API=$baseApiFinal --env K6_CANTIDAD=$k6CantidadFinal --env K6_MODE=$k6Mode --env K6_TOTAL_REGISTROS=$k6CantidadFinal --env K6_FIXED_ITERATIONS=$k6CantidadFinal --env K6_VUS=$k6VusFinal --env K6_FIXED_VUS=$k6VusFinal --env K6_SLEEP_SECONDS=$k6SleepFinal --env K6_SANCIONES_POR_REGISTRO=$($env:K6_SANCIONES_POR_REGISTRO) --env K6_FORCE_SINGLE_SANCION=$K6ForceSingleSancion --env K6_FORCE_SINGLE_MEDIDA=$K6ForceSingleMedida --env K6_HTTP_DETAIL_MODE=$K6HttpDetailMode --env K6_RIS_MODE=$K6RisMode --env PERF_DURATION=$PerfDuration --summary-export reportes/k6-caso02-summary-local.json$k6LocalIpsArg"
 
   if (-not [string]::IsNullOrWhiteSpace($cloudProjectId)) {
     $k6Cmd += " --env K6_CLOUD_PROJECT_ID=$cloudProjectId"
@@ -249,7 +270,7 @@ if ($Mode -in @('all','k6')) {
     if ([string]::IsNullOrWhiteSpace($cloudToken) -or [string]::IsNullOrWhiteSpace($cloudProjectId)) {
       throw 'K6Output=cloud requiere K6_CLOUD_TOKEN y K6_CLOUD_PROJECT_ID.'
     }
-    $k6Cmd = "k6 run$k6SystemTagsArg -o cloud tests/performance/k6-grafana/k6_caso_02_registrar_sancion.js --env BASE_API=$baseApiFinal --env K6_CANTIDAD=$k6CantidadFinal --env K6_MODE=$k6Mode --env K6_TOTAL_REGISTROS=$k6CantidadFinal --env K6_FIXED_ITERATIONS=$k6CantidadFinal --env K6_VUS=$k6VusFinal --env K6_FIXED_VUS=$k6VusFinal --env K6_SLEEP_SECONDS=$k6SleepFinal --env K6_SANCIONES_POR_REGISTRO=$($env:K6_SANCIONES_POR_REGISTRO) --env K6_FORCE_SINGLE_SANCION=$K6ForceSingleSancion --env K6_FORCE_SINGLE_MEDIDA=$K6ForceSingleMedida --env K6_HTTP_DETAIL_MODE=$K6HttpDetailMode --env K6_RIS_MODE=$K6RisMode --env PERF_DURATION=$PerfDuration --env K6_CLOUD_PROJECT_ID=$cloudProjectId"
+    $k6Cmd = "k6 run -o cloud tests/performance/k6-grafana/k6_caso_02_registrar_sancion.js --env BASE_API=$baseApiFinal --env K6_CANTIDAD=$k6CantidadFinal --env K6_MODE=$k6Mode --env K6_TOTAL_REGISTROS=$k6CantidadFinal --env K6_FIXED_ITERATIONS=$k6CantidadFinal --env K6_VUS=$k6VusFinal --env K6_FIXED_VUS=$k6VusFinal --env K6_SLEEP_SECONDS=$k6SleepFinal --env K6_SANCIONES_POR_REGISTRO=$($env:K6_SANCIONES_POR_REGISTRO) --env K6_FORCE_SINGLE_SANCION=$K6ForceSingleSancion --env K6_FORCE_SINGLE_MEDIDA=$K6ForceSingleMedida --env K6_HTTP_DETAIL_MODE=$K6HttpDetailMode --env K6_RIS_MODE=$K6RisMode --env PERF_DURATION=$PerfDuration --env K6_CLOUD_PROJECT_ID=$cloudProjectId$k6LocalIpsArg"
   }
 
   & $invokeOrFail $k6Cmd 'Ejecucion k6 caso 02'

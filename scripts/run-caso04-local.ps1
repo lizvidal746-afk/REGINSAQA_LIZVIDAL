@@ -29,6 +29,11 @@ if (Test-Path $envLoader) {
 $grafanaSecretsHelper = Join-Path $PSScriptRoot "shared/grafana-secrets.ps1"
 if (Test-Path $grafanaSecretsHelper) { . $grafanaSecretsHelper }
 
+if ([string]::IsNullOrWhiteSpace($env:K6_LOCAL_IPS)) {
+  $ipDetector = Join-Path $PSScriptRoot 'shared/detect-k6-ips.ps1'
+  if (Test-Path $ipDetector) { & $ipDetector }
+}
+
 function Get-ResolvedValue {
   param($val, $fallback)
   if ($null -eq $val -or $val -eq "") { return $fallback }
@@ -78,7 +83,7 @@ if ([string]::IsNullOrWhiteSpace($pCli)) { $pCli = [string]$env:K6_CLOUD_PROJECT
 if ([string]::IsNullOrWhiteSpace($tCli)) { $tCli = [string]$env:K6_CLOUD_TOKEN }
 
 if (Get-Command Resolve-GrafanaCloudSecrets -ErrorAction SilentlyContinue) {
-  $secrets = Resolve-GrafanaCloudSecrets -GrafanaProjectId $pCli -GrafanaToken $tCli -PersistProvided
+  $secrets = Resolve-GrafanaCloudSecrets -GrafanaProjectId $pCli -GrafanaToken $tCli -PersistProvided -Interactive:($K6Output -eq 'cloud')
   $grafanaProjectIdFinal = $secrets.ProjectId
   $grafanaTokenFinal = $secrets.Token
 } else {
@@ -99,7 +104,7 @@ if (Test-Path $counterFile) {
 $currentCount | Out-File $counterFile -Encoding ascii
 $runId = $currentCount.ToString("00")
 
-$cant = [int](Resolve-K6Value -cliName "cantidad" -paramValue $K6Cantidad -defaultValue 5)
+$cant = [int](Resolve-K6Value -cliName "cantidad" -paramValue $K6Cantidad -defaultValue 1)
 $vusFinal = [int](Resolve-K6Value -cliName "vus" -paramValue $K6Vus -defaultValue 1)
 $sleepFinal = [double](Resolve-K6Value -cliName "sleep" -paramValue $K6Sleep -defaultValue 0)
 $debugFinal = [int](Resolve-K6Value -cliName "debug" -paramValue $K6Debug -defaultValue 1)
@@ -157,6 +162,7 @@ try {
   $argsList += "--env"; $argsList += "K6_RUN_ID=$runId"
   $argsList += "--env"; $argsList += "K6_SLEEP_SECONDS=$sleepFinal"
   $argsList += "--env"; $argsList += "K6_DEBUG_ERRORS=$debugFinal"
+  $argsList += "--env"; $argsList += "K6_HTTP_DETAIL_MODE=all"
   $argsList += "--summary-export"; $argsList += "reportes/k6-caso04-summary.json"
 
   $logsDir = Join-Path $root "reportes/logs"

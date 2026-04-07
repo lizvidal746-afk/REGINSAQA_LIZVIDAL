@@ -258,5 +258,5 @@ Archivos clave:
 2. Validar referencias activas a SI091_REGINSA_FRONTEND vs SI091_REGINSA_FRONTEND-1.
 3. Confirmar si k6_caso_02_registrar_sancion_completo.js de raiz se conserva o archiva.
 4. Ejecutar limpieza final de duplicados solo despues de respaldo.
-Estado de cierre de este mapa: actualizado al 2026-04-02 y listo para validacion en GitHub Actions.
 
+Estado de cierre de este mapa: actualizado al 2026-04-02 y listo para validacion en GitHub Actions.

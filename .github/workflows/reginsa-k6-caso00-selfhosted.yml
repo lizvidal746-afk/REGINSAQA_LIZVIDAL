@@ -31,6 +31,10 @@ on:
         description: "Upload artifacts (true/false)"
         required: false
         default: "true"
+      local_ips:
+        description: "IP pool: auto (detect from adapter) | off | comma-separated IPs"
+        required: false
+        default: "auto"
 
 jobs:
   k6-caso00:
@@ -57,8 +61,44 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Verify environment
+        shell: cmd
+        run: |
+          echo === Node.js ===
+          node --version
+          echo === npm ===
+          npm --version
+          echo === Working directory ===
+          cd
+          echo === Workspace contents ===
+          dir /b
+
       - name: Setup k6
         uses: grafana/setup-k6-action@v1
+
+      - name: Verify k6
+        shell: cmd
+        run: k6 version || echo [WARN] k6 no encontrado, instalar manualmente en el runner
+
+      - name: Detect IP Pool
+        shell: pwsh
+        env:
+          LOCAL_IPS_INPUT: ${{ github.event.inputs.local_ips || 'auto' }}
+        run: |
+          if ($env:LOCAL_IPS_INPUT -eq 'off') {
+            Write-Host '[k6-ips] Pool desactivado por parametro'
+          } elseif ($env:LOCAL_IPS_INPUT -ne 'auto' -and $env:LOCAL_IPS_INPUT -ne '') {
+            "K6_LOCAL_IPS=$($env:LOCAL_IPS_INPUT)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            Write-Host "[k6-ips] Manual: K6_LOCAL_IPS=$($env:LOCAL_IPS_INPUT)"
+          } else {
+            $detector = Join-Path $PWD 'scripts/shared/detect-k6-ips.ps1'
+            if (Test-Path $detector) {
+              & $detector
+              if ($env:K6_LOCAL_IPS) {
+                "K6_LOCAL_IPS=$($env:K6_LOCAL_IPS)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+              }
+            }
+          }
 
       - name: Run K6 Caso 00 (Smoke - Login/Logout)
         env:
