@@ -39,6 +39,13 @@ PLAN_DE_PRUEBAS_RENDIMIENTO_REGINSA_*.xlsx
 REGINSA_K6_STRESS/PLAN_DE_PRUEBAS_RENDIMIENTO_REGINSA_*.xlsx
 REGINSA_K6_STRESS/PLANTILLA_EVIDENCIA_PROFESIONAL_REGINSA.docx
 
+# Borradores locales / grabaciones codegen que pueden contener datos reales
+nuevo*_profesional.js
+REGINSA_K6_STRESS/nuevo*_profesional.js
+scripts/security/*.ps1.new
+scripts/REGINSA.code-workspace
+5. Comandos completos para el inforSEGURIDAD.txt
+
 # Build outputs
 dist/
 build/
