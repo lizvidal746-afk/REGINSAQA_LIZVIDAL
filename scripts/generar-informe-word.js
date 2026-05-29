@@ -43,8 +43,23 @@ fs.mkdirSync(INFORMES, { recursive: true });
 const now = new Date();
 const pad = n => String(n).padStart(2, '0');
 const fechaHoy   = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}`;
+const fechaSolo  = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
 const fechaHora  = new Date().toLocaleString('es-PE', { timeZone: 'America/Lima' });
 const ciclo      = args.ciclo ?? `Ciclo ${new Date().toLocaleDateString('es-PE', { month: 'long', year: 'numeric' })}`;
+
+// Si se genera por tipo, guardar en subcarpeta fechada
+const tipoArg    = args.tipo ?? null;   // null = informe general
+// INFORME_DIR se decide DESPUES de localizar el JSON consolidado para usar su timestamp
+let INFORME_DIR = INFORMES;
+
+// Nombre del archivo de salida por tipo
+const TIPO_SUFIJOS = {
+  'Seguridad':    'SEGURIDAD',
+  'Funcional':    'FUNCIONAL',
+  'Performance':  'RENDIMIENTO',
+  'API':          'API',
+};
+const tipoSufijo = tipoArg ? (TIPO_SUFIJOS[tipoArg] ?? tipoArg.toUpperCase()) : 'GENERAL';
 
 // ── Buscar hallazgos JSON ──────────────────────────────────────────────────
 function findHallazgosJson(fecha) {
@@ -70,6 +85,12 @@ const jsonPath  = findHallazgosJson(args.fecha);
 const raw       = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 const meta      = raw.meta;
 const todosHall = raw.hallazgos ?? [];
+
+// Derivar carpeta fechada a partir del timestamp del JSON consolidado
+// para alinear Word/Excel/Comparativo en la misma corrida
+const jsonStamp = (path.basename(jsonPath).match(/(\d{4}-\d{2}-\d{2}_\d{2}-\d{2})/) || [])[1] || fechaHoy;
+INFORME_DIR = path.join(INFORMES, jsonStamp);
+fs.mkdirSync(INFORME_DIR, { recursive: true });
 
 // ── Cargar registros k6 (opcional — no falla si no existe) ────────────────
 function loadK6Regs(casoNum) {
@@ -156,7 +177,7 @@ function tableRow(values, isHeader = false, bgOverride) {
   return new TableRow({
     children: values.map((v, i) => {
       const background = bgOverride ?? (isHeader ? AZUL_OSC : (i % 2 === 0 ? GRIS : BLANCO));
-      return cell(v, { header: isHeader, bg: background, size: isHeader ? 9 : 9 });
+      return cell(v, { header: isHeader, bg: background, size: isHeader ? 9 : 8 });
     }),
     tableHeader: isHeader,
   });
@@ -470,17 +491,134 @@ async function main() {
         width: { size: 100, type: WidthType.PERCENTAGE },
         rows: [
           tableRow(['ID', 'CVE / Paquete', 'Descripción', 'Severidad', 'Componente', 'Actualizar a'], true),
-          ...subTrivy.map(h => { const c = SEV_COLORS[h.severidad] ?? SEV_COLORS.BAJA; return new TableRow({ children: [cell(h.id, { bg: BLANCO, size: 8 }), cell(h.hallazgo, { bg: BLANCO, size: 8 }), cell(h.significado, { bg: BLANCO, size: 8 }), cell(h.severidad, { bg: c.bg, color: c.fg, size: 8 }), cell(h.componente ?? '', { bg: BLANCO, size: 8 }), cell(h.recomendacion, { bg: BLANCO, size: 8 })], margins: { top: 40, bottom: 40 } }); }),
+          ...subTrivy.map(h => { const c = SEV_COLORS[h.severidad] ?? SEV_COLORS.BAJA; return new TableRow({ children: [cell(h.id, { bg: BLANCO, size: 8 }), cell(h.hallazgo, { bg: BLANCO, size: 8 }), cell(h.significado, { bg: BLANCO, size: 8 }), cell(h.severidad, { bg: c.bg, color: c.fg, size: 8 }), cell(h.componente_afectado ?? '', { bg: BLANCO, size: 8 }), cell(h.recomendacion, { bg: BLANCO, size: 8 })], margins: { top: 40, bottom: 40 } }); }),
         ],
       }));
     }
     seccion6.push(para([]));
   }
 
-  // ── 6.6 Accesibilidad (Lighthouse) ────────────────────────────────────
+  // ── 6.6 SonarQube — Calidad y Seguridad de Código (condicional) ────────
+  {
+    const sonarUrl   = process.env.SONAR_HOST_URL;
+    const sonarToken = process.env.SONAR_TOKEN;
+    seccion6.push(h2('6.6 SonarQube — Calidad y Seguridad de Código (SAST)'));
+
+    if (!sonarUrl || !sonarToken) {
+      seccion6.push(para([txt(
+        'SonarQube no configurado en este entorno. Para incluir datos de SonarQube ejecutar:',
+        { italic: true, color: '757575' }
+      )]));
+      seccion6.push(para([txt(
+        '  $env:SONAR_HOST_URL="http://localhost:9000" ; $env:SONAR_TOKEN="tu-token" ; npm run report:word:seguridad',
+        { italic: true, color: '1565C0', size: 9 }
+      )]));
+      seccion6.push(para([txt(
+        'O bien ejecutar el reporte dedicado: npm run report:sonar:local',
+        { italic: true, color: '757575', size: 9 }
+      )]));
+    } else {
+      // Consultar SonarQube via API
+      const https = require('https');
+      const http  = require('http');
+      const projectKeys = ['si091reginsafrontend','si091reginsabackend','si091reginsaenlinea','si091reginsaconfig'];
+      const basicAuth   = Buffer.from(`${sonarToken}:`).toString('base64');
+
+      const fetchSonar = (urlStr) => new Promise((resolve, reject) => {
+        const lib = urlStr.startsWith('https') ? https : http;
+        lib.get(urlStr, { headers: { Authorization: `Basic ${basicAuth}` } }, (res) => {
+          let data = '';
+          res.on('data', c => data += c);
+          res.on('end', () => {
+            try { resolve(JSON.parse(data)); } catch(e) { resolve(null); }
+          });
+        }).on('error', reject);
+      });
+
+      let sonarRows = [];
+      let totalSonarIssues = 0;
+      let sonarError = null;
+
+      try {
+        for (const key of projectKeys) {
+          const url = `${sonarUrl.replace(/\/$/, '')}/api/issues/search?componentKeys=${key}&severities=CRITICAL,BLOCKER&resolved=false&ps=20`;
+          const data = await fetchSonar(url);
+          if (data && data.issues) {
+            totalSonarIssues += data.total || data.issues.length;
+            for (const issue of data.issues.slice(0, 5)) {
+              sonarRows.push(tableRow([
+                key.replace('si091reginsa','').toUpperCase(),
+                issue.severity ?? '',
+                issue.message ?? '',
+                issue.component?.split(':').pop() ?? '',
+                issue.rule ?? '',
+              ]));
+            }
+          }
+        }
+
+        // Quality Gate por proyecto
+        const qgRows = [];
+        for (const key of projectKeys) {
+          const qgUrl = `${sonarUrl.replace(/\/$/, '')}/api/qualitygates/project_status?projectKey=${key}`;
+          const qgData = await fetchSonar(qgUrl);
+          if (qgData?.projectStatus) {
+            const status = qgData.projectStatus.status;
+            const color  = status === 'OK' ? '2E7D32' : 'DC143C';
+            const emoji  = status === 'OK' ? '🟢 PASA' : '🔴 FALLA';
+            qgRows.push(tableRow([
+              key.replace('si091reginsa','').toUpperCase(),
+              emoji,
+              `${qgData.projectStatus.conditions?.filter(c => c.status === 'ERROR').length ?? 0} condiciones fallidas`,
+              `${sonarUrl}/dashboard?id=${key}`,
+            ]));
+          }
+        }
+
+        seccion6.push(infoTable([
+          ['Servidor SonarQube', sonarUrl],
+          ['Proyectos analizados', projectKeys.map(k => k.replace('si091reginsa','')).join(', ')],
+          ['Issues Críticos/Blocker (top)', String(totalSonarIssues)],
+          ['Norma', 'ISO/IEC 25010 §6.3 (Maintainability + Security), OWASP ASVS V14'],
+        ]));
+        seccion6.push(para([]));
+
+        if (qgRows.length > 0) {
+          seccion6.push(h3('Quality Gate por Proyecto'));
+          seccion6.push(new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              tableRow(['Proyecto', 'Quality Gate', 'Condiciones fallidas', 'Dashboard URL'], true),
+              ...qgRows,
+            ],
+          }));
+          seccion6.push(para([]));
+        }
+
+        if (sonarRows.length > 0) {
+          seccion6.push(h3('Top Issues Críticos/Blocker'));
+          seccion6.push(new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              tableRow(['Proyecto', 'Severidad', 'Mensaje', 'Archivo', 'Regla'], true),
+              ...sonarRows,
+            ],
+          }));
+        } else {
+          seccion6.push(para([txt('No se encontraron issues críticos o bloqueantes en SonarQube. ✅', { color: '2E7D32' })]));
+        }
+      } catch (err) {
+        sonarError = err.message;
+        seccion6.push(para([txt(`Error consultando SonarQube: ${sonarError}. Verificar que el servidor esté disponible en ${sonarUrl}.`, { italic: true, color: 'DC143C' })]));
+      }
+    }
+    seccion6.push(para([]));
+  }
+
+  // ── 6.7 Accesibilidad (Lighthouse) ────────────────────────────────────
   {
     const subAcc = hallazgos.filter(h => h.tipo_prueba === 'Accesibilidad');
-    seccion6.push(h2('6.6 Accesibilidad (Lighthouse)'));
+    seccion6.push(h2('6.7 Accesibilidad (Lighthouse — WCAG 2.1)'));
     if (subAcc.length === 0) {
       seccion6.push(para([txt('Sin hallazgos registrados para este tipo de prueba en el ciclo actual.', { italic: true, color: '757575' })]));
     } else {
@@ -503,7 +641,7 @@ async function main() {
 
   // ── 6.7 Detalle de Registros k6 ───────────────────────────────────────
   {
-    seccion6.push(h2('6.7 Detalle de Registros Ejecutados en k6'));
+    seccion6.push(h2('6.8 Detalle de Registros Ejecutados en k6'));
 
     const anyK6Data = k6RegsC01 || k6RegsC02 || k6RegsC04;
     if (!anyK6Data) {
@@ -528,7 +666,7 @@ async function main() {
 
       // ── 6.7.1 Caso 01 — Alta de Administrado ─────────────────────────
       if (k6RegsC01 && Array.isArray(k6RegsC01.registros) && k6RegsC01.registros.length > 0) {
-        seccion6.push(h3('6.7.1 Caso 01 — Alta de Administrado (Entidad)'));
+        seccion6.push(h3('6.8.1 Caso 01 — Alta de Administrado (Entidad)'));
         seccion6.push(metaTable(k6RegsC01));
         seccion6.push(para([]));
         const r01 = k6RegsC01.registros;
@@ -560,7 +698,7 @@ async function main() {
 
       // ── 6.7.2 Caso 02 — Registro de Infracción/Sanción ───────────────
       if (k6RegsC02 && Array.isArray(k6RegsC02.registros) && k6RegsC02.registros.length > 0) {
-        seccion6.push(h3('6.7.2 Caso 02 — Registro de Infracción / Sanción'));
+        seccion6.push(h3('6.8.2 Caso 02 — Registro de Infracción / Sanción'));
         seccion6.push(metaTable(k6RegsC02));
         seccion6.push(para([]));
         const r02 = k6RegsC02.registros;
@@ -592,7 +730,7 @@ async function main() {
 
       // ── 6.7.3 Caso 04 — Reconsideración de Sanciones ─────────────────
       if (k6RegsC04 && Array.isArray(k6RegsC04.registros) && k6RegsC04.registros.length > 0) {
-        seccion6.push(h3('6.7.3 Caso 04 — Reconsideración de Cabecera + Sanciones'));
+        seccion6.push(h3('6.8.3 Caso 04 — Reconsideración de Cabecera + Sanciones'));
         seccion6.push(metaTable(k6RegsC04));
         seccion6.push(para([]));
         const r04 = k6RegsC04.registros;
@@ -628,7 +766,7 @@ async function main() {
         ...(k6RegsC04?.registros || []).map(r => r.ip || 'local'),
       ]);
       if (allIps.size > 1 || (allIps.size === 1 && !allIps.has('local'))) {
-        seccion6.push(h3('6.7.4 Resumen por IP'));
+        seccion6.push(h3('6.8.4 Resumen por IP'));
         const ipRows = Array.from(allIps).sort().map(ip => {
           const c01 = (k6RegsC01?.registros || []).filter(r => (r.ip || 'local') === ip).length;
           const c02 = (k6RegsC02?.registros || []).filter(r => (r.ip || 'local') === ip).length;
@@ -650,7 +788,7 @@ async function main() {
   // ── 6.8 Inconsistencias de Validación Frontend vs Backend ─────────────
   {
     const fvbHalls = hallazgos.filter(h => h.tipo_prueba === 'Inconsistencia-FvB');
-    seccion6.push(h2('6.8 Inconsistencias de Validación Frontend vs Backend'));
+    seccion6.push(h2('6.9 Inconsistencias de Validación Frontend vs Backend'));
     if (fvbHalls.length === 0) {
       seccion6.push(para([txt('Sin inconsistencias registradas en el ciclo actual. Para documentar nuevas, editar: reportes/inconsistencias-fvb.json', { italic: true, color: '757575' })]));
     } else {
@@ -862,7 +1000,39 @@ async function main() {
     h2('11.3 Principales Riesgos'),
     ...(critica > 0 ? [para([txt(`• ⚠️  Existen ${critica} hallazgos CRÍTICOS que requieren atención INMEDIATA antes del siguiente release.`, { bold: true, color: 'DC143C' })])] : []),
     ...(alta > 0    ? [para([txt(`• Existen ${alta} hallazgos ALTOS que deben resolverse en el sprint siguiente.`)])]                                                               : []),
-    h2('11.4 Acciones Críticas para el Siguiente Release'),
+    h2('11.4 Distribución de CRÍTICOS y ALTOS por Herramienta'),
+    para([txt('La siguiente tabla detalla qué herramienta detectó cada hallazgo crítico y alto, para asignar responsables y priorizar.', { italic: true, color: '757575' })]),
+    (() => {
+      const tools = {};
+      hallazgos.filter(h => h.severidad === 'CRITICA' || h.severidad === 'ALTA').forEach(h => {
+        const t = h.herramienta || 'Desconocida';
+        if (!tools[t]) tools[t] = { CRITICA: 0, ALTA: 0, tipo: h.tipo_prueba ?? '-' };
+        tools[t][h.severidad]++;
+      });
+      const rows = Object.entries(tools)
+        .map(([tool, v]) => ({ tool, ...v, total: v.CRITICA + v.ALTA }))
+        .sort((a, b) => b.CRITICA - a.CRITICA || b.ALTA - a.ALTA);
+      const totalCrit = rows.reduce((s, r) => s + r.CRITICA, 0);
+      const totalAlt  = rows.reduce((s, r) => s + r.ALTA, 0);
+      return new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          tableRow(['Herramienta', 'Tipo de prueba', 'CRÍTICOS', 'ALTOS', 'Total'], true),
+          ...rows.map(r => new TableRow({
+            children: [
+              cell(r.tool,  { bg: BLANCO, size: 8 }),
+              cell(r.tipo,  { bg: BLANCO, size: 8 }),
+              cell(String(r.CRITICA), { bg: r.CRITICA > 0 ? SEV_COLORS.CRITICA.bg : BLANCO, color: r.CRITICA > 0 ? SEV_COLORS.CRITICA.fg : '212121', size: 8 }),
+              cell(String(r.ALTA),    { bg: r.ALTA    > 0 ? SEV_COLORS.ALTA.bg    : BLANCO, color: r.ALTA    > 0 ? SEV_COLORS.ALTA.fg    : '212121', size: 8 }),
+              cell(String(r.total),   { bg: BLANCO, size: 8, header: true }),
+            ],
+          })),
+          tableRow(['TOTAL', '', String(totalCrit), String(totalAlt), String(totalCrit + totalAlt)], false, AZUL_CLAR),
+        ],
+      });
+    })(),
+    para([txt('')]),
+    h2('11.5 Acciones Críticas para el Siguiente Release'),
     ...(critica + alta > 0
       ? sorted.filter(h => h.severidad !== 'BAJA' && h.severidad !== 'MEDIA').slice(0, 5).map((h, i) =>
           para([txt(`${i + 1}. [${h.severidad}] ${h.recomendacion}`, { bold: h.severidad === 'CRITICA' })])
@@ -918,7 +1088,7 @@ async function main() {
     }],
   });
 
-  const outFile = path.join(INFORMES, `INFORME_QA_REGINSA_${fechaHoy}.docx`);
+  const outFile = path.join(INFORME_DIR, `INFORME_QA_REGINSA_${tipoSufijo}_${fechaHoy}.docx`);
   const buffer  = await Packer.toBuffer(doc);
   fs.writeFileSync(outFile, buffer);
 

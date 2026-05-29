@@ -1,0 +1,72 @@
+﻿name: 📦 REGINSA Sec — SCA Syft SBOM + Grype CVE
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - package.json
+      - package-lock.json
+      - Dockerfile
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'  # Lunes 6am UTC
+  workflow_dispatch:
+
+# Flujo: Syft genera SBOM (CycloneDX JSON) -> Grype escanea el SBOM
+# SBOM = Software Bill of Materials: requerido por NTP-ISO/IEC 12207 y NTIA SBOM
+# Grype: alternativa Trivy para CVE, complementa con base Grype/AnchoreSec
+# Norma: NTP-ISO/IEC 12207, CVSSv3.1, CWE/NVD, NIST SP 800-161
+
+permissions:
+  contents: read
+
+jobs:
+  syft-grype:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare reports folder
+        run: mkdir -p reportes/security/sbom
+
+      - name: Generate SBOM with Syft (CycloneDX JSON)
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: reportes/security/sbom/sbom-cyclonedx.json
+          artifact-name: sbom-cyclonedx-${{ github.run_number }}
+
+      - name: Scan SBOM with Grype (SARIF output)
+        uses: anchore/scan-action@v3
+        with:
+          sbom: reportes/security/sbom/sbom-cyclonedx.json
+          output-format: sarif
+          fail-build: false
+          severity-cutoff: high
+
+      - name: Upload Grype SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          category: grype-sca
+        continue-on-error: true
+
+      - name: Copy Grype SARIF to reports folder
+        if: always()
+        run: cp results.sarif reportes/security/sbom/grype-results.sarif 2>/dev/null || true
+
+      - name: Upload SBOM + Grype artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-grype-report-${{ github.run_number }}
+          path: reportes/security/sbom/
+          if-no-files-found: warn

@@ -1,0 +1,153 @@
+version: '3.8'
+
+# ============================================================
+#  REGINSA Phase 5 — n8n + DefectDojo
+#  Flujo: detectar → notificar → esperar corrección → re-escanear
+#
+#  Puertos:
+#    http://localhost:5678  → n8n  (usuario/password via .env)
+#    http://localhost:8080  → DefectDojo  (usuario/password via .env)
+# ============================================================
+
+services:
+
+  # ─────────────────────────────────────────────────────────
+  #  n8n  — motor de workflows / orquestador de alertas
+  # ─────────────────────────────────────────────────────────
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: reginsa-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=America/Lima
+      - N8N_LOG_LEVEL=info
+      # Definir en docker/n8n-defectdojo/.env local. No versionar secretos reales.
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:?Set N8N_BASIC_AUTH_PASSWORD}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - reginsa-sec
+
+  # ─────────────────────────────────────────────────────────
+  #  DefectDojo — SOAR de gestión de hallazgos
+  # ─────────────────────────────────────────────────────────
+  dojo-postgres:
+    image: postgres:16-alpine
+    container_name: reginsa-dojo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: defectdojo
+      POSTGRES_USER: defectdojo
+      POSTGRES_PASSWORD: ${DOJO_POSTGRES_PASSWORD:?Set DOJO_POSTGRES_PASSWORD}
+    volumes:
+      - dojo_postgres:/var/lib/postgresql/data
+    networks:
+      - reginsa-sec
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U defectdojo"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  dojo-redis:
+    image: redis:7-alpine
+    container_name: reginsa-dojo-redis
+    restart: unless-stopped
+    networks:
+      - reginsa-sec
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  dojo-django:
+    image: defectdojo/defectdojo-django:latest
+    container_name: reginsa-dojo-django
+    restart: unless-stopped
+    depends_on:
+      dojo-postgres:
+        condition: service_healthy
+      dojo-redis:
+        condition: service_healthy
+    environment:
+      DD_DATABASE_URL: "postgresql://defectdojo:${DOJO_POSTGRES_PASSWORD:?Set DOJO_POSTGRES_PASSWORD}@dojo-postgres:5432/defectdojo"
+      DD_CELERY_BROKER_URL: "redis://dojo-redis:6379/0"
+      DD_SECRET_KEY: "${DD_SECRET_KEY:?Set DD_SECRET_KEY}"
+      DD_CREDENTIAL_AES_256_KEY: "${DD_CREDENTIAL_AES_256_KEY:?Set DD_CREDENTIAL_AES_256_KEY}"
+      DD_ALLOWED_HOSTS: "*"
+      DD_DEBUG: "False"
+      DD_INITIALIZE: "true"
+      DD_SUPERUSER_NAME: ${DOJO_SUPERUSER_NAME:-admin}
+      DD_SUPERUSER_PASSWORD: ${DOJO_PASSWORD:?Set DOJO_PASSWORD}
+      DD_SUPERUSER_EMAIL: "${DOJO_SUPERUSER_EMAIL:-qa@example.local}"
+      DD_SITE_URL: "http://localhost:8080"
+      DD_TIME_ZONE: "America/Lima"
+      DD_SOCIAL_AUTH_AZUREAD_OAUTH2_ENABLED: "False"
+    volumes:
+      - dojo_media:/app/media
+    command: uwsgi
+    networks:
+      - reginsa-sec
+
+  dojo-celery-beat:
+    image: defectdojo/defectdojo-django:latest
+    container_name: reginsa-dojo-celery-beat
+    restart: unless-stopped
+    depends_on:
+      - dojo-django
+    environment:
+      DD_DATABASE_URL: "postgresql://defectdojo:${DOJO_POSTGRES_PASSWORD:?Set DOJO_POSTGRES_PASSWORD}@dojo-postgres:5432/defectdojo"
+      DD_CELERY_BROKER_URL: "redis://dojo-redis:6379/0"
+      DD_SECRET_KEY: "${DD_SECRET_KEY:?Set DD_SECRET_KEY}"
+      DD_CREDENTIAL_AES_256_KEY: "${DD_CREDENTIAL_AES_256_KEY:?Set DD_CREDENTIAL_AES_256_KEY}"
+    command: celery-beat
+    networks:
+      - reginsa-sec
+
+  dojo-celery-worker:
+    image: defectdojo/defectdojo-django:latest
+    container_name: reginsa-dojo-celery-worker
+    restart: unless-stopped
+    depends_on:
+      - dojo-django
+    environment:
+      DD_DATABASE_URL: "postgresql://defectdojo:${DOJO_POSTGRES_PASSWORD:?Set DOJO_POSTGRES_PASSWORD}@dojo-postgres:5432/defectdojo"
+      DD_CELERY_BROKER_URL: "redis://dojo-redis:6379/0"
+      DD_SECRET_KEY: "${DD_SECRET_KEY:?Set DD_SECRET_KEY}"
+      DD_CREDENTIAL_AES_256_KEY: "${DD_CREDENTIAL_AES_256_KEY:?Set DD_CREDENTIAL_AES_256_KEY}"
+    command: celery-worker
+    volumes:
+      - dojo_media:/app/media
+    networks:
+      - reginsa-sec
+
+  dojo-nginx:
+    image: defectdojo/defectdojo-nginx:latest
+    container_name: reginsa-dojo-nginx
+    restart: unless-stopped
+    depends_on:
+      - dojo-django
+    ports:
+      - "8080:8080"
+    environment:
+      NGINX_METRICS_ENABLED: "false"
+    networks:
+      - reginsa-sec
+
+networks:
+  reginsa-sec:
+    driver: bridge
+
+volumes:
+  n8n_data:
+  dojo_postgres:
+  dojo_media:

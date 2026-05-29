@@ -10,12 +10,20 @@ if ([string]::IsNullOrWhiteSpace($Target)) {
 
 New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 
-$cwd = Get-Location
+$cwd = (Get-Location).Path
+# Si OutputDir es ruta absoluta, calcular relativa al cwd para que ZAP la resuelva
+# dentro de /zap/wrk/ correctamente. Si ya es relativa, usarla tal cual.
+$resolvedOutput = [System.IO.Path]::GetFullPath($OutputDir)
+if ($resolvedOutput.StartsWith($cwd, [System.StringComparison]::OrdinalIgnoreCase)) {
+  $relOutput = $resolvedOutput.Substring($cwd.Length).TrimStart('\', '/')
+} else {
+  $relOutput = $OutputDir
+}
 # ZAP corre en contenedor Linux; normalizar a '/' evita rutas invalidas con '\\'.
-$outputDirForZap = (($OutputDir -replace '\\', '/') -replace '/+$', '')
+$outputDirForZap = ($relOutput -replace '\\', '/') -replace '/+$', ''
 $reportHtmlRel = "$outputDirForZap/zap-baseline-report.html"
 $reportJsonRel = "$outputDirForZap/zap-baseline-report.json"
-$reportMdRel = "$outputDirForZap/zap-baseline-report.md"
+$reportMdRel   = "$outputDirForZap/zap-baseline-report.md"
 
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
   throw "Docker no esta instalado o no esta en PATH. Instala/abre Docker Desktop y reintenta."
@@ -58,9 +66,11 @@ if ($LASTEXITCODE -eq 0) {
 
 # Limpieza automatica del Markdown generado por ZAP para reducir warnings repetitivos de markdownlint.
 $normalizeScript = "scripts/security/normalize-owasp-markdown.ps1"
-if (Test-Path $normalizeScript) {
-  & powershell -NoProfile -ExecutionPolicy Bypass -File $normalizeScript -InputPath $reportMdRel
+# Pasar ruta absoluta Windows al script de normalizacion (no la ruta Unix relativa de ZAP)
+$reportMdAbs = Join-Path $resolvedOutput "zap-baseline-report.md"
+if ((Test-Path $normalizeScript) -and (Test-Path $reportMdAbs)) {
+  & powershell -NoProfile -ExecutionPolicy Bypass -File $normalizeScript -InputPath $reportMdAbs
   if ($LASTEXITCODE -ne 0) {
-    throw "Fallo la normalizacion Markdown OWASP para $reportMdRel"
+    throw "Fallo la normalizacion Markdown OWASP para $reportMdAbs"
   }
 }

@@ -64,13 +64,33 @@ parameters:
     default: all
     values:
       - all
+      - sast
+      - sca
+      - dast
+      - infra
       - zap
       - nuclei
       - gitleaks
       - semgrep
       - trivy
       - depcheck
-      - npm-audit
+      - bearer
+      - checkov
+      - trufflehog
+      - osv
+      - retirejs
+      - grype
+      - lynis
+      - codeql
+  - name: includeSonar
+    type: boolean
+    default: false
+  - name: skipDast
+    type: boolean
+    default: false
+  - name: includeCodeQL
+    type: boolean
+    default: false
 
 pool:
   vmImage: ubuntu-latest
@@ -154,79 +174,50 @@ stages:
                   *) echo "caseTarget inválido para k6: ${{ parameters.caseTarget }}"; exit 1 ;;
                 esac
               fi
-              if [ "${{ parameters.testType }}" = "security" ]; then
-                TOOL="${{ parameters.securityTool }}"
-                mkdir -p reportes/security
-
-                # --- Gitleaks ---
-                if [ "$TOOL" = "all" ] || [ "$TOOL" = "gitleaks" ]; then
-                  echo "=== [SEC] Gitleaks — Secret Detection ==="
-                  mkdir -p reportes/security/gitleaks
-                  curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz -o /tmp/gitleaks.tar.gz
-                  tar xzf /tmp/gitleaks.tar.gz -C /usr/local/bin/ gitleaks
-                  gitleaks detect --source . --report-format json --report-path reportes/security/gitleaks/gitleaks-report.json --config .gitleaks.toml || true
-                fi
-
-                # --- Semgrep ---
-                if [ "$TOOL" = "all" ] || [ "$TOOL" = "semgrep" ]; then
-                  echo "=== [SEC] Semgrep — SAST ==="
-                  mkdir -p reportes/security/semgrep
-                  pip3 install --quiet semgrep
-                  semgrep scan --config auto --config p/owasp-top-ten --config p/typescript --config p/javascript --config p/secrets --json -o reportes/security/semgrep/semgrep-report.json . || true
-                fi
-
-                # --- npm audit ---
-                if [ "$TOOL" = "all" ] || [ "$TOOL" = "npm-audit" ] || [ "$TOOL" = "depcheck" ]; then
-                  echo "=== [SEC] npm audit — SCA ==="
-                  mkdir -p reportes/security/sca
-                  npm audit --audit-level=high --json > reportes/security/sca/npm-audit.json || true
-                fi
-
-                # --- Dependency-Check ---
-                if [ "$TOOL" = "all" ] || [ "$TOOL" = "depcheck" ]; then
-                  echo "=== [SEC] OWASP Dependency-Check — SCA ==="
-                  mkdir -p reportes/security/dependency-check
-                  docker run --rm -v "$(pwd):/src" -v "$(pwd)/reportes/security/dependency-check:/report" \
-                    owasp/dependency-check:latest --project "REGINSA-QA" --scan /src \
-                    --format HTML --format JSON --out /report --failOnCVSS 9 || true
-                fi
-
-                # --- Trivy ---
-                if [ "$TOOL" = "all" ] || [ "$TOOL" = "trivy" ]; then
-                  echo "=== [SEC] Trivy — Container/Filesystem ==="
-                  mkdir -p reportes/security/trivy
-                  curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-                  trivy fs . --severity HIGH,CRITICAL --format json --output reportes/security/trivy/trivy-fs-report.json || true
-                fi
-
-                # --- OWASP ZAP ---
-                if [ "$TOOL" = "all" ] || [ "$TOOL" = "zap" ]; then
-                  echo "=== [SEC] OWASP ZAP — DAST ==="
-                  pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/generar-reportes-owasp-fechados.ps1 -Target "$(REGINSA_URL)" -BaseDir "reportes/security"
-                fi
-
-                # --- Nuclei ---
-                if [ "$TOOL" = "all" ] || [ "$TOOL" = "nuclei" ]; then
-                  echo "=== [SEC] Nuclei — DAST ==="
-                  mkdir -p reportes/security/nuclei
-                  docker run --rm -v "$(pwd)/reportes/security/nuclei:/output" \
-                    projectdiscovery/nuclei:latest \
-                    -u "$(REGINSA_URL)" \
-                    -severity critical,high,medium -exclude-tags dos \
-                    -jsonl -output /output/nuclei-report.jsonl \
-                    -sarif-export /output/nuclei-report.sarif || true
-                fi
-              fi
-              if [ "${{ parameters.testType }}" = "sonar" ]; then
-                # Requiere SonarQube accesible desde el agente (self-hosted o URL publica)
-                # Configurar variable SONAR_HOST_URL y secreto SONAR_TOKEN en el pipeline
-                pwsh -NoProfile -ExecutionPolicy Bypass \
-                  -File scripts/security/escanear-repos-sonar.ps1 \
-                  -Projects frontend,backend,enlinea \
-                  -SonarHostUrl "$(SONAR_HOST_URL)" \
-                  -SonarToken "$(SONAR_TOKEN)"
+              # security y sonar son manejados por los steps pwsh dedicados abajo
+              if [ "${{ parameters.testType }}" = "security" ] || [ "${{ parameters.testType }}" = "sonar" ]; then
+                echo "[CI] Tipo '${{ parameters.testType }}' delegado a step PowerShell dedicado"
               fi
             displayName: Run selected suite
+          # ── Security scan: 19 herramientas via run-all-security.ps1 ──────────────
+          - ${{ if eq(parameters.testType, 'security') }}:
+            - task: PowerShell@2
+              displayName: 'Security scan (run-all-security.ps1)'
+              inputs:
+                filePath: scripts/security/run-all-security.ps1
+                arguments: >
+                  -Target "$(REGINSA_URL)"
+                  ${{ if eq(parameters.skipDast, true) }}-SkipDast${{ end }}
+                  ${{ if eq(parameters.includeCodeQL, true) }}-IncludeCodeQL${{ end }}
+                  ${{ if eq(parameters.includeSonar, true) }}-IncludeSonar${{ end }}
+                pwsh: true
+                failOnStderr: false
+              env:
+                SONAR_TOKEN:    $(SONAR_TOKEN)
+                SONAR_HOST_URL: $(SONAR_HOST_URL)
+                REGINSA_URL:    $(REGINSA_URL)
+
+          # ── SonarQube: escanear + reporte ejecutivo ───────────────────────────────
+          - ${{ if eq(parameters.testType, 'sonar') }}:
+            - task: PowerShell@2
+              displayName: 'SonarQube scan'
+              inputs:
+                filePath: scripts/security/escanear-repos-sonar.ps1
+                arguments: -Projects frontend,backend,enlinea
+                pwsh: true
+              env:
+                SONAR_TOKEN:    $(SONAR_TOKEN)
+                SONAR_HOST_URL: $(SONAR_HOST_URL)
+            - task: PowerShell@2
+              displayName: 'SonarQube reporte ejecutivo'
+              inputs:
+                filePath: scripts/security/generar-reporte-sonar-local.ps1
+                arguments: -SonarHostUrl "$(SONAR_HOST_URL)" -SonarToken "$(SONAR_TOKEN)"
+                pwsh: true
+              env:
+                SONAR_TOKEN:    $(SONAR_TOKEN)
+                SONAR_HOST_URL: $(SONAR_HOST_URL)
+
           - task: PublishBuildArtifacts@1
             inputs:
               PathtoPublish: 'reportes'

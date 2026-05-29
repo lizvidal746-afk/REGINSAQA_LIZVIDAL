@@ -1,10 +1,10 @@
-Set-StrictMode -Version Latest
-$ErrorActionPreference = 'Stop'
-
 param(
   [string]$ProjectDir = ".",
   [string]$OutputDir = "reportes/security/gitleaks"
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 $commonFunctions = Join-Path (Split-Path -Parent $PSScriptRoot) 'common/functions.ps1'
 if (Test-Path $commonFunctions) {
@@ -37,7 +37,7 @@ New-DirectoryIfMissing -Path $outputPath
 Assert-DockerAvailable
 
 $scanTarget = if ($projectPath.StartsWith($workspacePath, [System.StringComparison]::OrdinalIgnoreCase)) {
-  $relativeProject = $projectPath.Substring($workspacePath.Length).TrimStart('\\', '/')
+  $relativeProject = $projectPath.Substring($workspacePath.Length).TrimStart([char[]]@('\', '/'))
   if ([string]::IsNullOrWhiteSpace($relativeProject)) {
     '/repo'
   } else {

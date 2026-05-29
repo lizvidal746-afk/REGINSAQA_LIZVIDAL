@@ -78,7 +78,11 @@ const hallazgos = args.tipo
   ? todos.filter(h => h.tipo_prueba?.toLowerCase().includes(args.tipo.toLowerCase()))
   : todos;
 
-const outFile = path.join(INFORMES, `METRICAS_QA_REGINSA_${fechaHoy}.xlsx`);
+// Carpeta fechada alineada con el JSON consolidado
+const jsonStamp = (path.basename(jsonPath).match(/(\d{4}-\d{2}-\d{2}_\d{2}-\d{2})/) || [])[1] || fechaHoy;
+const INFORME_DIR = path.join(INFORMES, jsonStamp);
+fs.mkdirSync(INFORME_DIR, { recursive: true });
+const outFile = path.join(INFORME_DIR, `METRICAS_QA_REGINSA_${fechaHoy}.xlsx`);
 
 // ── Paleta de colores ──────────────────────────────────────────────────────
 const C = {
@@ -107,6 +111,14 @@ function sevColor(sev) {
     default:        return { fgColor: C.verde,    bgColor: C.verFondo  };
   }
 }
+
+// ── Bordes estándar (usado en múltiples hojas) ───────────────────────────
+const BORDERS = {
+  top:    { style: 'thin' },
+  bottom: { style: 'thin' },
+  left:   { style: 'thin' },
+  right:  { style: 'thin' },
+};
 
 // ── Helpers de estilo ──────────────────────────────────────────────────────
 function hdrStyle(ws, row, cols, bgColor = C.azulOsc, fgColor = C.blanco) {
@@ -273,7 +285,7 @@ async function main() {
       { header: 'Tipo de Prueba',        key: 'tipo_prueba',           width: 16 },
       { header: 'ISO 25010',             key: 'caracteristica_iso25010', width: 20 },
       { header: 'Hallazgo',              key: 'hallazgo',              width: 42 },
-      { header: 'Significado',           key: 'significado',           width: 50 },
+      { header: 'Significado',           key: 'significado',           width: 65 },
       { header: 'Impacto Técnico',       key: 'impacto_tecnico',       width: 40 },
       { header: 'Impacto Negocio',       key: 'impacto_negocio',       width: 40 },
       { header: 'Severidad',             key: 'severidad',             width: 12 },
@@ -530,6 +542,78 @@ async function main() {
     hdrStyle(ws, r, 6, C.azulMed);
 
     console.log(`  ✅  Hoja 9: Distribución por Herramienta`);
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // HOJA 9b — CRÍTICOS por Herramienta (detalle)
+  // ────────────────────────────────────────────────────────────────────────
+  {
+    const ws = wb.addWorksheet('9b-CRÍTICOS x Herramienta');
+    const criticos = hallazgos.filter(h => h.severidad === 'CRITICA')
+      .sort((a, b) => (a.herramienta || '').localeCompare(b.herramienta || ''));
+    ws.columns = [
+      { header: 'ID',                   key: 'id',                   width: 10 },
+      { header: 'Herramienta',          key: 'herramienta',          width: 18 },
+      { header: 'Tipo de prueba',       key: 'tipo_prueba',          width: 16 },
+      { header: 'Hallazgo',             key: 'hallazgo',             width: 45 },
+      { header: 'Significado',          key: 'significado',          width: 65 },
+      { header: 'Componente',           key: 'componente_afectado',  width: 24 },
+      { header: 'Recomendación',        key: 'recomendacion',        width: 50 },
+      { header: 'Responsable',          key: 'responsable_sugerido', width: 20 },
+      { header: 'Estado',               key: 'estado',               width: 14 },
+    ];
+    hdrStyle(ws, 1, ws.columns.length, C.rojo);
+    let r = 2;
+    for (const h of criticos) {
+      ws.getRow(r).values = ws.columns.map(c => h[c.key] ?? '');
+      ws.getRow(r).eachCell(cell => {
+        cell.alignment = { wrapText: true, vertical: 'top' };
+        cell.font = { size: 9 };
+        cell.border = { top: { style: 'hair' }, bottom: { style: 'hair' }, left: { style: 'hair' }, right: { style: 'hair' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: C.rojoFondo };
+      });
+      ws.getRow(r).height = 36;
+      r++;
+    }
+    ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: Math.max(r - 1, 1), column: ws.columns.length } };
+    ws.views = [{ state: 'frozen', xSplit: 0, ySplit: 1 }];
+    console.log(`  ✅  Hoja 9b: CRÍTICOS por Herramienta (${criticos.length} registros)`);
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // HOJA 9c — ALTOS por Herramienta (detalle)
+  // ────────────────────────────────────────────────────────────────────────
+  {
+    const ws = wb.addWorksheet('9c-ALTOS x Herramienta');
+    const altos = hallazgos.filter(h => h.severidad === 'ALTA')
+      .sort((a, b) => (a.herramienta || '').localeCompare(b.herramienta || ''));
+    ws.columns = [
+      { header: 'ID',                   key: 'id',                   width: 10 },
+      { header: 'Herramienta',          key: 'herramienta',          width: 18 },
+      { header: 'Tipo de prueba',       key: 'tipo_prueba',          width: 16 },
+      { header: 'Hallazgo',             key: 'hallazgo',             width: 45 },
+      { header: 'Significado',          key: 'significado',          width: 65 },
+      { header: 'Componente',           key: 'componente_afectado',  width: 24 },
+      { header: 'Recomendación',        key: 'recomendacion',        width: 50 },
+      { header: 'Responsable',          key: 'responsable_sugerido', width: 20 },
+      { header: 'Estado',               key: 'estado',               width: 14 },
+    ];
+    hdrStyle(ws, 1, ws.columns.length, C.naranja);
+    let r = 2;
+    for (const h of altos) {
+      ws.getRow(r).values = ws.columns.map(c => h[c.key] ?? '');
+      ws.getRow(r).eachCell(cell => {
+        cell.alignment = { wrapText: true, vertical: 'top' };
+        cell.font = { size: 9 };
+        cell.border = { top: { style: 'hair' }, bottom: { style: 'hair' }, left: { style: 'hair' }, right: { style: 'hair' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: C.narFondo };
+      });
+      ws.getRow(r).height = 36;
+      r++;
+    }
+    ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: Math.max(r - 1, 1), column: ws.columns.length } };
+    ws.views = [{ state: 'frozen', xSplit: 0, ySplit: 1 }];
+    console.log(`  ✅  Hoja 9c: ALTOS por Herramienta (${altos.length} registros)`);
   }
 
   // ────────────────────────────────────────────────────────────────────────
@@ -803,11 +887,159 @@ async function main() {
     }
   }
 
-  // ── HOJA 12 — Inconsistencias Frontend vs Backend ─────────────────────
+  // ── HOJA 12 — SonarQube (SAST — condicional) ─────────────────────────
+  {
+    const sonarUrl   = process.env.SONAR_HOST_URL;
+    const sonarToken = process.env.SONAR_TOKEN;
+    const ws = wb.addWorksheet('12-SonarQube');
+
+    // Título
+    ws.mergeCells('A1:F1');
+    const sqTitle = ws.getCell('A1');
+    sqTitle.value     = `SONARQUBE — Calidad y Seguridad de Código (SAST) | ${fechaHora}`;
+    sqTitle.font      = { bold: true, size: 12, color: C.blanco };
+    sqTitle.fill      = { type: 'pattern', pattern: 'solid', fgColor: C.azulOsc };
+    sqTitle.alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(1).height = 26;
+
+    ws.getColumn(1).width = 20;
+    ws.getColumn(2).width = 18;
+    ws.getColumn(3).width = 16;
+    ws.getColumn(4).width = 50;
+    ws.getColumn(5).width = 28;
+    ws.getColumn(6).width = 22;
+
+    if (!sonarUrl || !sonarToken) {
+      ws.getCell('A3').value = 'SonarQube no configurado.';
+      ws.getCell('A3').font  = { italic: true, color: C.grisOsc, size: 10 };
+      ws.getCell('A4').value = 'Para activar, definir antes de ejecutar:';
+      ws.getCell('A4').font  = { italic: true, color: C.grisOsc, size: 9 };
+      ws.getCell('A5').value = '$env:SONAR_HOST_URL="http://localhost:9000" ; $env:SONAR_TOKEN="tu-token" ; npm run report:excel';
+      ws.getCell('A5').font  = { color: C.azulMed, size: 9 };
+      console.log('  ℹ️   Hoja 12-SonarQube: sin credenciales (env vars no definidas)');
+    } else {
+      const https = require('https');
+      const http  = require('http');
+      const projectKeys = ['si091reginsafrontend','si091reginsabackend','si091reginsaenlinea','si091reginsaconfig'];
+      const basicAuth   = Buffer.from(`${sonarToken}:`).toString('base64');
+
+      const fetchSq = (urlStr) => new Promise((resolve) => {
+        const lib = urlStr.startsWith('https') ? https : http;
+        lib.get(urlStr, { headers: { Authorization: `Basic ${basicAuth}` } }, (res) => {
+          let data = '';
+          res.on('data', c => data += c);
+          res.on('end', () => { try { resolve(JSON.parse(data)); } catch { resolve(null); } });
+        }).on('error', () => resolve(null));
+      });
+
+      try {
+        // Quality Gate por proyecto
+        let qgRow = 3;
+        ws.getCell(qgRow, 1).value = 'Quality Gate por Proyecto';
+        ws.getCell(qgRow, 1).font  = { bold: true, size: 10, color: C.azulMed };
+        qgRow++;
+        const qgHdrs = ['Proyecto', 'Quality Gate', 'Condiciones Fallidas', 'URL Dashboard'];
+        qgHdrs.forEach((h, i) => {
+          const cell = ws.getCell(qgRow, i + 1);
+          cell.value = h;
+          cell.font  = { bold: true, color: C.blanco, size: 9 };
+          cell.fill  = { type: 'pattern', pattern: 'solid', fgColor: C.azulMed };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.border = BORDERS;
+        });
+        qgRow++;
+
+        for (const key of projectKeys) {
+          const qgUrl  = `${sonarUrl.replace(/\/$/, '')}/api/qualitygates/project_status?projectKey=${key}`;
+          const qgData = await fetchSq(qgUrl);
+          const status = qgData?.projectStatus?.status ?? 'N/D';
+          const failed = qgData?.projectStatus?.conditions?.filter(c => c.status === 'ERROR').length ?? 0;
+          const label  = status === 'OK' ? '🟢 PASA' : '🔴 FALLA';
+          const bgFill = status === 'OK' ? C.verFondo : C.rojoFondo;
+          const rowVals = [
+            key.replace('si091reginsa','').toUpperCase(),
+            label,
+            String(failed),
+            `${sonarUrl}/dashboard?id=${key}`,
+          ];
+          rowVals.forEach((val, i) => {
+            const cell   = ws.getCell(qgRow, i + 1);
+            cell.value   = val;
+            cell.fill    = { type: 'pattern', pattern: 'solid', fgColor: i === 1 ? bgFill : (qgRow % 2 === 0 ? C.grisClar : C.blanco) };
+            cell.font    = { size: 9, bold: i === 0 };
+            cell.alignment = { horizontal: i === 0 ? 'left' : 'center', vertical: 'middle' };
+            cell.border  = BORDERS;
+          });
+          qgRow++;
+        }
+
+        // Issues críticos/blocker
+        let issRow = qgRow + 2;
+        ws.getCell(issRow, 1).value = 'Top Issues CRITICAL / BLOCKER (por proyecto)';
+        ws.getCell(issRow, 1).font  = { bold: true, size: 10, color: C.azulMed };
+        issRow++;
+        const issHdrs = ['Proyecto', 'Severidad', 'Mensaje', 'Archivo', 'Regla', 'Tipo'];
+        issHdrs.forEach((h, i) => {
+          const cell = ws.getCell(issRow, i + 1);
+          cell.value = h;
+          cell.font  = { bold: true, color: C.blanco, size: 9 };
+          cell.fill  = { type: 'pattern', pattern: 'solid', fgColor: C.azulMed };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.border = BORDERS;
+        });
+        issRow++;
+
+        let totalIss = 0;
+        for (const key of projectKeys) {
+          const issUrl  = `${sonarUrl.replace(/\/$/, '')}/api/issues/search?componentKeys=${key}&severities=CRITICAL,BLOCKER&resolved=false&ps=10`;
+          const issData = await fetchSq(issUrl);
+          if (issData?.issues) {
+            totalIss += issData.total || issData.issues.length;
+            for (const iss of issData.issues.slice(0, 5)) {
+              const sev   = iss.severity ?? '';
+              const bg    = sev === 'BLOCKER' ? C.rojoFondo : sev === 'CRITICAL' ? C.narFondo : C.amFondo;
+              const vals  = [
+                key.replace('si091reginsa','').toUpperCase(),
+                sev,
+                iss.message   ?? '',
+                (iss.component ?? '').split(':').pop(),
+                iss.rule      ?? '',
+                iss.type      ?? '',
+              ];
+              vals.forEach((val, i) => {
+                const cell   = ws.getCell(issRow, i + 1);
+                cell.value   = val;
+                cell.fill    = { type: 'pattern', pattern: 'solid', fgColor: i === 1 ? bg : (issRow % 2 === 0 ? C.grisClar : C.blanco) };
+                cell.font    = { size: 9, bold: i <= 1 };
+                cell.alignment = { horizontal: i <= 1 ? 'center' : 'left', vertical: 'top', wrapText: true };
+                cell.border  = BORDERS;
+              });
+              ws.getRow(issRow).height = 36;
+              issRow++;
+            }
+          }
+        }
+
+        if (totalIss === 0) {
+          ws.getCell(issRow, 1).value = '✅ No se encontraron issues CRITICAL/BLOCKER en ningún proyecto.';
+          ws.getCell(issRow, 1).font  = { color: C.verde, size: 10 };
+        }
+
+        ws.views = [{ state: 'frozen', xSplit: 0, ySplit: 2 }];
+        console.log(`  ✅  Hoja 12-SonarQube (${totalIss} issues críticos/blocker)`);
+      } catch (err) {
+        ws.getCell('A3').value = `Error consultando SonarQube: ${err.message}`;
+        ws.getCell('A3').font  = { color: C.rojo, size: 10 };
+        console.warn(`  ⚠️   SonarQube error: ${err.message}`);
+      }
+    }
+  }
+
+  // ── HOJA 13 — Inconsistencias Frontend vs Backend ─────────────────────
   {
     const fvbHalls = todos.filter(h => h.tipo_prueba === 'Inconsistencia-FvB');
     if (fvbHalls.length > 0) {
-      const ws = wb.addWorksheet('12-Incons. F-B');
+      const ws = wb.addWorksheet('13-Incons. F-B');
       ws.columns = [
         { header: 'N°',                   key: 'n',     width: 5  },
         { header: 'Subtipo',              key: 'sub',   width: 10 },
@@ -865,7 +1097,7 @@ async function main() {
       });
 
       ws.views = [{ state: 'frozen', xSplit: 0, ySplit: 1 }];
-      console.log(`  ✅  Hoja 12-Incons. F-B (${fvbHalls.length} inconsistencias)`);
+      console.log(`  ✅  Hoja 13-Incons. F-B (${fvbHalls.length} inconsistencias)`);
     }
   }
 

@@ -1,16 +1,121 @@
 // Pipeline declarativo de seguridad para REGINSA-QA
-// Herramientas incluidas: Gitleaks, Semgrep, npm audit, OWASP Dependency-Check, Trivy, OWASP ZAP, Nuclei
+// Orquestador: scripts/security/run-all-security.ps1 (19 herramientas)
+// SAST:  Semgrep, Bearer, Gitleaks, TruffleHog, Checkov, (CodeQL opcional)
+// SCA:   OSV, Dependency-Check, RetireJS, Grype, Trivy
+// DAST:  ZAP, Nuclei, Nikto, Wapiti, Restler
+// Infra: Lynis | Red: Nmap+Vulners (solo con autorizacion formal)
 //
-// ❌ CodeQL NO está incluido: es exclusivo de GitHub Actions y no puede ejecutarse
-//    en Jenkins ni en otros CI/CD. Para análisis SAST semántico en Jenkins se usa Semgrep.
-//
-// Requisitos previos:
-//   - Jenkins con Docker disponible en el agente
-//   - Python 3 / pip instalados en el agente (para Semgrep)
-//   - Node.js 20 instalado en el agente
-//   - Plugin "HTML Publisher" instalado (opcional, para visualizar reportes HTML)
-//   - Plugin "Pipeline" instalado (obligatorio)
-//   - Credencial Jenkins "reginsa-url" configurada con la URL del entorno QA
+// Requisitos del agente:
+//   - PowerShell 7 (pwsh) instalado
+//   - Docker disponible (/var/run/docker.sock)
+//   - Node.js 20 instalado
+//   - Credencial Jenkins "reginsa-url" configurada
+//   - Credencial Jenkins "sonar-token" (si se usa SonarQube)
+
+pipeline {
+    agent any
+
+    environment {
+        REGINSA_URL    = credentials('reginsa-url')
+        SONAR_TOKEN    = credentials('sonar-token')
+        SONAR_HOST_URL = credentials('sonar-host-url')
+    }
+
+    parameters {
+        booleanParam(
+            name: 'INCLUDE_CODEQL',
+            defaultValue: false,
+            description: 'Ejecutar CodeQL SAST (~20 min, requiere imagen reginsa-codeql)'
+        )
+        booleanParam(
+            name: 'INCLUDE_SONAR',
+            defaultValue: false,
+            description: 'Ejecutar escaneo SonarQube (requiere sonar-token y sonar-host-url)'
+        )
+        booleanParam(
+            name: 'SKIP_DAST',
+            defaultValue: false,
+            description: 'Omitir DAST (ZAP/Nuclei/Nikto/Wapiti/Restler) — solo SAST + SCA'
+        )
+        booleanParam(
+            name: 'INCLUDE_NETWORK',
+            defaultValue: false,
+            description: 'Ejecutar Nmap+Vulners (REQUIERE autorizacion formal previa)'
+        )
+    }
+
+    options {
+        timeout(time: 90, unit: 'MINUTES')
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Setup') {
+            steps {
+                sh 'node --version && npm ci'
+            }
+        }
+
+        stage('Security Suite — run-all-security.ps1') {
+            steps {
+                script {
+                    def flags = "-Target '${env.REGINSA_URL}'"
+                    if (params.SKIP_DAST)      { flags += ' -SkipDast' }
+                    if (params.INCLUDE_CODEQL) { flags += ' -IncludeCodeQL' }
+                    if (params.INCLUDE_SONAR)  { flags += ' -IncludeSonar' }
+                    if (params.INCLUDE_NETWORK){ flags += ' -IncludeNetwork' }
+
+                    sh """
+                        pwsh -NoProfile -ExecutionPolicy Bypass \\
+                          -File scripts/security/run-all-security.ps1 \\
+                          ${flags} || true
+                    """
+                }
+                archiveArtifacts artifacts: 'reportes/security/**', allowEmptyArchive: true
+            }
+        }
+
+        stage('Extraer Hallazgos') {
+            steps {
+                sh """
+                    pwsh -NoProfile -ExecutionPolicy Bypass \\
+                      -File scripts/extraer-hallazgos.ps1 || true
+                """
+                archiveArtifacts artifacts: 'reportes/informes/**', allowEmptyArchive: true
+            }
+        }
+
+    }
+
+    post {
+        always {
+            echo '=== Scan de seguridad finalizado. Ver artifacts para reportes detallados. ==='
+            publishHTML(target: [
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'reportes/security',
+                reportFiles: '**/*.html',
+                reportName: 'Security Reports'
+            ])
+        }
+        unstable {
+            echo 'ADVERTENCIA: Hallazgos criticos detectados. Revise los informes.'
+        }
+        failure {
+            echo 'ERROR: El pipeline fallo antes de generar reportes. Revise los logs.'
+        }
+    }
+}
+
 
 pipeline {
     agent any

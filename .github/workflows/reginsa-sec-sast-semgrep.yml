@@ -28,6 +28,8 @@ jobs:
             --config p/typescript \
             --config p/javascript \
             --config p/secrets \
+            --config p/nodejs \
+            --config p/security-audit \
             --sarif \
             --output semgrep-results.sarif \
             --error \

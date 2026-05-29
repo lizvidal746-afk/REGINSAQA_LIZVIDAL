@@ -1,0 +1,67 @@
+# =============================================================================
+# .semgrepignore — REGINSA QA Framework
+# Reduce el ruido de Semgrep excluyendo:
+#   - Herramientas de testing/seguridad (templates de payloads, no son código)
+#   - Reportes generados (artefactos, no código fuente)
+#   - Configuración local del IDE
+#   - Dependencias y artefactos de build
+# =============================================================================
+
+# --- Herramientas de seguridad (templates de payloads, no son código) ---
+.nuclei-templates/
+templates/nuclei/
+nuclei-templates/
+
+# --- Reportes y artefactos generados ---
+reportes/
+allure-report/
+allure-results/
+playwright-report/
+test-results/
+screenshots/
+
+# --- Configuración local / IDE ---
+.vscode/
+.idea/
+.git/
+
+# --- Dependencias y builds ---
+node_modules/
+dist/
+build/
+bin/
+obj/
+__pycache__/
+*.egg-info/
+
+# --- Pipelines (se escanean con Checkov, no con Semgrep) ---
+pipelines/
+
+# --- Datos de prueba (no son código fuente del producto) ---
+test-files/
+storageState.json
+*.har
+
+# --- Archivos binarios y de datos ---
+*.pdf
+*.csv
+*.xlsx
+*.docx
+*.zip
+*.tar
+*.gz
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.woff
+*.woff2
+*.ttf
+*.eot
+
+# --- Reportes JSON/SARIF/XML generados por herramientas ---
+*-report.json
+*.sarif
+*-results.xml
+*.junit.xml

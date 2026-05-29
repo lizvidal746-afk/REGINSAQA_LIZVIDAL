@@ -1,0 +1,59 @@
+﻿name: 🔑 REGINSA Sec — SAST TruffleHog Secret Verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Diferencia vs Gitleaks: TruffleHog v3 verifica activamente si los secretos
+# detectados son validos (hace la llamada real contra la API). Reduce falsos positivos.
+# Norma: ISO/IEC 27001 A.9.4.1, OWASP ASVS V2.10
+
+permissions:
+  contents: read
+
+jobs:
+  trufflehog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run TruffleHog v3 (only verified secrets)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified --json
+
+      - name: Prepare artifact folder
+        if: always()
+        run: mkdir -p reportes/security/trufflehog
+
+      - name: Export full TruffleHog filesystem scan to JSON
+        if: always()
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            trufflesecurity/trufflehog:latest \
+            git file:///repo \
+            --only-verified \
+            --json \
+            > reportes/security/trufflehog/trufflehog-results.json 2>&1 || true
+
+      - name: Upload TruffleHog report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trufflehog-report-${{ github.run_number }}
+          path: reportes/security/trufflehog/
+          if-no-files-found: warn

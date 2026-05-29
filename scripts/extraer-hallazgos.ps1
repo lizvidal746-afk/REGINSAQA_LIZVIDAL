@@ -80,6 +80,50 @@ function Map-Severity {
     }
 }
 
+# ── Explicacion simple para no-tecnicos (coordinador, jefatura) ────────────
+function Get-ExplicacionSimple {
+    param(
+        [string]$Herramienta,
+        [string]$Severidad
+    )
+    $base = switch -Wildcard ($Herramienta) {
+        '*Trivy*'      { "Una libreria del proyecto tiene una vulnerabilidad publica conocida (CVE). Si un atacante la encuentra puede aprovecharla para ingresar al sistema. Debe actualizarse a la version corregida." }
+        '*Semgrep*'    { "El analizador de codigo encontro una linea sospechosa que sigue un patron historicamente inseguro (por ejemplo manejo de datos sin validar). El desarrollador debe revisar y aplicar la correccion sugerida." }
+        '*Bearer*'     { "Se detecto que datos sensibles (informacion personal o credenciales) podrian estar viajando o almacenandose sin proteccion. Debe revisarse el flujo y agregar cifrado o validacion." }
+        '*Gitleaks*'   { "Se encontro un posible secreto (clave, contrasena o token) escrito directamente en el codigo. Si esto llega a produccion, cualquiera con acceso al repositorio podria usarlo. Debe revocarse y mover a variables de entorno." }
+        '*TruffleHog*' { "Igual que Gitleaks: se detecto algo que parece una credencial dentro del historial git. Debe verificarse y, si es real, revocarse y rotarse." }
+        '*OSV*'        { "Una libreria del proyecto figura en la base oficial de vulnerabilidades de Google (OSV). Hay que actualizarla a una version segura." }
+        '*OWASP DepCheck*' { "El proyecto usa una libreria con CVE registrado en la base nacional de vulnerabilidades (NVD). Debe actualizarse." }
+        '*Retire*'     { "Una libreria JavaScript del frontend esta desactualizada y tiene problemas conocidos. Debe reemplazarse por la version mas reciente." }
+        '*Grype*'      { "El escaner de dependencias detecto CVE en componentes del proyecto. Igual que Trivy: actualizar al fix disponible." }
+        '*OWASP ZAP*'  { "El escaneo dinamico contra el sistema en linea encontro una respuesta o configuracion del servidor que puede aprovecharse (ej: cabeceras inseguras, cookies sin proteccion). El equipo de infraestructura/desarrollo debe corregir la configuracion." }
+        '*Nikto*'      { "El servidor web tiene archivos o configuraciones por defecto expuestas que un atacante podria descubrir y usar. Debe quitarse o protegerse." }
+        '*Wapiti*'     { "Wapiti probo enviar valores maliciosos (SQL injection, XSS, etc) y el sistema respondio de forma anomala. Debe revisarse el endpoint y reforzar la validacion." }
+        '*Nuclei*'     { "Nuclei detecto que el servidor coincide con un patron de vulnerabilidad publica. Confirmar con el equipo de seguridad y aplicar el parche o configuracion correctiva." }
+        '*Restler*'    { "El fuzzer de API envio peticiones malformadas y la API devolvio respuestas inesperadas. Debe validarse mejor las entradas en el backend." }
+        '*Lynis*'      { "El analisis de hardening del sistema operativo encontro configuraciones que se pueden endurecer (ej: SSH abierto, kernel sin parches). Tarea para Infraestructura." }
+        '*CodeQL*'     { "El analizador semantico de GitHub encontro un patron de codigo riesgoso. Recomendable revisar la sugerencia y refactorizar." }
+        '*Checkov*'    { "Una pieza de infraestructura como codigo (Dockerfile, GitHub Actions) tiene una mala practica de seguridad. Debe corregirse antes del despliegue." }
+        '*Sonar*'      { "SonarQube detecto un problema de calidad o seguridad de codigo. Para CRITICA/BUG debe corregirse pronto; para Hotspot debe revisarse manualmente y marcarse como seguro o vulnerable." }
+        '*Nmap*'       { "Escaneo de red Nmap. Si dice NO_EJECUTADO, esta categoria no se midio (requiere autorizacion previa). Si dice CVE, hay un servicio expuesto que puede explotarse." }
+        '*Newman*'     { "Una validacion automatica de API (colecciones Postman) fallo. Significa que un endpoint no devolvio lo esperado. Es bug funcional o de contrato." }
+        '*k6*'         { "Las pruebas de carga detectaron que la API responde lento o falla bajo carga. Debe optimizarse el endpoint o ampliar recursos del servidor." }
+        '*Playwright*' { "Una prueba funcional automatica fallo: una pantalla, formulario o flujo de usuario no se comporto como deberia." }
+        '*Lighthouse*' { "Lighthouse detecto problemas de rendimiento, accesibilidad o SEO en el frontend. Afecta la experiencia de usuario." }
+        '*bypass*'     { "Inconsistencia Frontend-Backend: el formulario valida en pantalla pero la API acepta valores invalidos cuando se llama directamente. Riesgo: cualquier cliente con token puede saltarse las reglas del UI." }
+        default        { "Hallazgo de aseguramiento de calidad. Revisar la recomendacion y asignar al responsable indicado." }
+    }
+    # Anexar urgencia segun severidad
+    $urgencia = switch ($Severidad) {
+        'CRITICA' { ' URGENCIA: Resolver ANTES del proximo release.' }
+        'ALTA'    { ' URGENCIA: Resolver en el sprint en curso.' }
+        'MEDIA'   { ' URGENCIA: Programar correccion en proximo sprint.' }
+        'BAJA'    { ' URGENCIA: Mejora deseable, sin bloqueante.' }
+        default   { '' }
+    }
+    return ($base + $urgencia)
+}
+
 # ══════════════════════════════════════════════════════════════════════════════
 # BLOQUE 1 — PLAYWRIGHT / ALLURE (Funcional)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -295,7 +339,11 @@ if ($TodosTipos -or $TipoPrueba -contains 'Performance') {
 # ══════════════════════════════════════════════════════════════════════════════
 if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
     Write-Step "Extrayendo: OWASP ZAP"
-    $ZapJsons = Get-ChildItem -Path (Join-Path $Reportes 'security') -Filter 'zap-baseline-report.json' -Recurse -ErrorAction SilentlyContinue |
+    # Busca cualquier JSON con 'zap' en el nombre dentro de reportes/security/
+    # Cubre: zap-baseline-report.json, zap-full-report.json, zap_scan_*.json, etc.
+    # Para reportes manuales: guarda el JSON en reportes/security/<cualquier-subcarpeta>/
+    $ZapJsons = Get-ChildItem -Path (Join-Path $Reportes 'security') -Filter '*zap*.json' -Recurse -ErrorAction SilentlyContinue |
+                Where-Object { $_.Length -gt 10 } |
                 Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
     $ZapCount  = 0
@@ -340,64 +388,121 @@ if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
 
     # ── SonarQube ──────────────────────────────────────────────────────────
     Write-Step "Extrayendo: SonarQube"
-    $SonarJsons = Get-ChildItem -Path (Join-Path $Reportes 'security\sonar') -Filter '*.json' -Recurse -ErrorAction SilentlyContinue |
-                  Sort-Object LastWriteTime -Descending | Select-Object -First 3
-
+    # IMPORTANTE: Este bloque LEE datos de SonarQube — NO ejecuta el scanner.
+    # Para tener datos frescos primero hay que correr: npm run sonar:scan
+    # Fuente 1: API en vivo (si SONAR_HOST_URL esta disponible)
+    # Fuente 2: JSON local en reportes/security/sonar/*.json (fallback)
     $SonarCount = 0
-    foreach ($f in $SonarJsons) {
-        try {
-            $data = Get-Content $f.FullName -Raw | ConvertFrom-Json
-            $issues = if ($data.issues) { $data.issues } elseif ($data.components) { $null } else { $null }
-            if (!$issues) { continue }
-            foreach ($issue in $issues) {
-                if ($issue.status -in @('CLOSED','RESOLVED','WONTFIX')) { continue }
-                $snrSev  = Map-Severity (if ($issue.severity) { $issue.severity } else { 'INFO' })
-                $snrChar = if ($issue.type -in @('VULNERABILITY','SECURITY_HOTSPOT')) { 'Seguridad' } elseif ($issue.type -eq 'BUG') { 'Fiabilidad' } else { 'Mantenibilidad' }
-                $snrComp = if ($issue.component) { $issue.component } else { 'Desconocido' }
-                $snrLine = if ($null -ne $issue.line) { [string]$issue.line } else { '0' }
-                $snrBiz  = if ($issue.type -eq 'VULNERABILITY') { 'Esta vulnerabilidad puede exponer el sistema a ataques si no se corrige.' } else { 'Aumenta la deuda tecnica y dificulta el mantenimiento del codigo.' }
-                $snrEvid = $f.FullName.Replace($Root.Path, '.')
-                $Hallazgos.Add(@{
-                    id                    = New-ID
-                    fecha_deteccion       = $FechaHoraTS
-                    herramienta           = 'SonarQube'
-                    tipo_prueba           = 'Seguridad'
-                    caracteristica_iso25010 = $snrChar
-                    hallazgo              = "$($issue.type): $($issue.message)"
-                    significado           = "SonarQube detecto tipo '$($issue.type)' en '$snrComp' linea ${snrLine}: $($issue.message)"
-                    impacto_tecnico       = "Archivo: $snrComp — Regla: $($issue.rule)"
-                    impacto_negocio       = $snrBiz
-                    severidad             = $snrSev
-                    componente_afectado   = $snrComp
-                    responsable_sugerido  = 'Equipo de Desarrollo'
-                    recomendacion         = "Aplicar la solucion recomendada por la regla $($issue.rule) en SonarQube."
-                    evidencia             = $snrEvid
-                    estado                = 'ABIERTO'
-                    sprint_objetivo       = ''
-                    fecha_cierre          = ''
-                })
-                $SonarCount++
-            }
-        } catch { if ($Verbose) { Write-Warn "  No se pudo parsear: $($f.Name)" } }
+    $sonarUrl   = $env:SONAR_HOST_URL
+    $sonarToken = $env:SONAR_TOKEN
+    $sonarProjects = @('si091reginsabackend', 'si091reginsaenlinea', 'si091reginsafrontend')
+
+    # Fuente 1: API en vivo
+    if (-not [string]::IsNullOrWhiteSpace($sonarUrl) -and -not [string]::IsNullOrWhiteSpace($sonarToken)) {
+        $headers = @{ Authorization = "Basic $([Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${sonarToken}:")))" }
+        foreach ($proj in $sonarProjects) {
+            try {
+                # SonarQube 9.x: types + statuses + severities (sin &issueStatuses que es SQ10+)
+                $uri  = "$sonarUrl/api/issues/search?componentKeys=$proj&types=VULNERABILITY,BUG&severities=CRITICAL,BLOCKER,MAJOR&statuses=OPEN,CONFIRMED,REOPENED&ps=500"
+                $resp = Invoke-RestMethod -Uri $uri -Headers $headers -TimeoutSec 10 -ErrorAction Stop
+                foreach ($issue in ($resp.issues ?? @())) {
+                    $snrSev  = Map-Severity ($issue.severity ?? 'INFO')
+                    $snrChar = if ($issue.type -in @('VULNERABILITY','SECURITY_HOTSPOT')) { 'Seguridad' } elseif ($issue.type -eq 'BUG') { 'Fiabilidad' } else { 'Mantenibilidad' }
+                    $snrComp = $issue.component ?? 'Desconocido'
+                    $snrLine = if ($null -ne $issue.line) { [string]$issue.line } else { '0' }
+                    $Hallazgos.Add(@{
+                        id                      = New-ID
+                        fecha_deteccion         = $FechaHoraTS
+                        herramienta             = 'SonarQube'
+                        tipo_prueba             = 'Seguridad'
+                        caracteristica_iso25010 = $snrChar
+                        hallazgo                = "$($issue.type): $($issue.message)"
+                        significado             = "SonarQube detecto '$($issue.type)' en '$snrComp' linea ${snrLine}: $($issue.message)"
+                        impacto_tecnico         = "Proyecto: $proj — Archivo: $snrComp — Regla: $($issue.rule)"
+                        impacto_negocio         = if ($issue.type -eq 'VULNERABILITY') { 'Vulnerabilidad que puede exponer el sistema a ataques.' } else { 'Deuda tecnica que dificulta el mantenimiento.' }
+                        severidad               = $snrSev
+                        componente_afectado     = $snrComp
+                        responsable_sugerido    = 'Equipo de Desarrollo'
+                        recomendacion           = "Revisar regla $($issue.rule) en SonarQube: $sonarUrl/project/issues?id=$proj"
+                        evidencia               = "$sonarUrl/project/issues?id=$proj"
+                        estado                  = 'ABIERTO'
+                        sprint_objetivo         = ''
+                        fecha_cierre            = ''
+                    })
+                    $SonarCount++
+                }
+            } catch { if ($Verbose) { Write-Warn "  SonarQube API error ($proj): $($_.Exception.Message)" } }
+        }
+        if ($SonarCount -gt 0) { Write-Ok "  SonarQube (API): $SonarCount hallazgos" }
     }
-    if ($SonarCount -gt 0) { Write-Ok "  SonarQube: $SonarCount hallazgos" }
-    else { Write-Skip "  SonarQube: sin issues (o sin reportes)" }
+
+    # Fuente 2: JSON local (fallback cuando SonarQube no esta corriendo)
+    if ($SonarCount -eq 0) {
+        $SonarJsons = Get-ChildItem -Path (Join-Path $Reportes 'security') -Filter '*sonar*.json' -Recurse -ErrorAction SilentlyContinue |
+                      Where-Object { $_.Length -gt 10 } |
+                      Sort-Object LastWriteTime -Descending | Select-Object -First 3
+        foreach ($f in $SonarJsons) {
+            try {
+                $data = Get-Content $f.FullName -Raw | ConvertFrom-Json
+                $issues = $data.issues ?? @()
+                foreach ($issue in $issues) {
+                    if ($issue.status -in @('CLOSED','RESOLVED','WONTFIX')) { continue }
+                    $snrSev  = Map-Severity ($issue.severity ?? 'INFO')
+                    $snrChar = if ($issue.type -in @('VULNERABILITY','SECURITY_HOTSPOT')) { 'Seguridad' } elseif ($issue.type -eq 'BUG') { 'Fiabilidad' } else { 'Mantenibilidad' }
+                    $Hallazgos.Add(@{
+                        id                      = New-ID
+                        fecha_deteccion         = $FechaHoraTS
+                        herramienta             = 'SonarQube'
+                        tipo_prueba             = 'Seguridad'
+                        caracteristica_iso25010 = $snrChar
+                        hallazgo                = "$($issue.type): $($issue.message)"
+                        significado             = "SonarQube (local) detecto '$($issue.type)' en '$($issue.component ?? '')' linea $($issue.line ?? 0)"
+                        impacto_tecnico         = "Archivo: $($issue.component ?? '') — Regla: $($issue.rule ?? '')"
+                        impacto_negocio         = if ($issue.type -eq 'VULNERABILITY') { 'Vulnerabilidad que puede exponer el sistema a ataques.' } else { 'Deuda tecnica que dificulta el mantenimiento.' }
+                        severidad               = $snrSev
+                        componente_afectado     = $issue.component ?? 'Desconocido'
+                        responsable_sugerido    = 'Equipo de Desarrollo'
+                        recomendacion           = "Aplicar la solucion recomendada por la regla $($issue.rule ?? '') en SonarQube."
+                        evidencia               = $f.FullName.Replace($Root.Path, '.')
+                        estado                  = 'ABIERTO'
+                        sprint_objetivo         = ''
+                        fecha_cierre            = ''
+                    })
+                    $SonarCount++
+                }
+            } catch { if ($Verbose) { Write-Warn "  No se pudo parsear: $($f.Name)" } }
+        }
+        if ($SonarCount -gt 0) { Write-Ok "  SonarQube (JSON local): $SonarCount hallazgos" }
+        else { Write-Skip "  SonarQube: sin issues (sonar no corriendo y sin JSON local)" }
+    }
 
     # ── Trivy ──────────────────────────────────────────────────────────────
     Write-Step "Extrayendo: Trivy"
+    # Preferir archivos en carpetas fechadas (yyyyMMdd / yyyy-MM-dd*) sobre carpetas sin fecha
     $TrivyJson = Get-ChildItem -Path (Join-Path $Reportes 'security') -Filter '*trivy*.json' -Recurse -ErrorAction SilentlyContinue |
+                 Where-Object { $_.DirectoryName -match '\d{4}-\d{2}-\d{2}' } |
                  Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if (-not $TrivyJson) {
+        $TrivyJson = Get-ChildItem -Path (Join-Path $Reportes 'security') -Filter '*trivy*.json' -Recurse -ErrorAction SilentlyContinue |
+                     Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    }
 
     $TrivyCount = 0
     if ($TrivyJson) {
         try {
-            $data = Get-Content $TrivyJson.FullName -Raw | ConvertFrom-Json
-            $results = $data.Results ?? @()
+            # ReadAllText es mas fiable que Get-Content -Raw para JSON grandes (>5MB)
+            $rawTrivy = [System.IO.File]::ReadAllText($TrivyJson.FullName, [System.Text.Encoding]::UTF8)
+            $data = $rawTrivy | ConvertFrom-Json -Depth 30
+            $results = if ($data.PSObject.Properties['Results']) { @($data.Results) } else { @() }
             foreach ($result in $results) {
-                foreach ($vuln in ($result.Vulnerabilities ?? @())) {
+                # En modo strict, acceder a una propiedad que no existe lanza error.
+                # Trivy puede traer entries 'lang-pkgs' que solo tienen Packages (sin Vulnerabilities).
+                $vulns = if ($result.PSObject.Properties['Vulnerabilities']) { @($result.Vulnerabilities) } else { @() }
+                foreach ($vuln in $vulns) {
+                    try {
                     $sev = Map-Severity ($vuln.Severity ?? 'UNKNOWN')
                     if ($sev -notin @('CRITICA','ALTA')) { continue }  # Solo critica/alta
-                    $trivTitle = if ($vuln.Title) { $vuln.Title } else { $vuln.VulnerabilityID }
+                    $trivTitle = if ($vuln.PSObject.Properties['Title'] -and $vuln.Title) { $vuln.Title } else { $vuln.VulnerabilityID }
 
                     # Severidad en español para el significado
                     $sevLabel = switch ($sev) {
@@ -406,33 +511,45 @@ if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
                         'MEDIA'   { 'media'   }
                         default   { 'baja'    }
                     }
-                    # CVSSScore si existe
+                    # CVSSScore si existe (proteccion contra estructura ausente)
                     $cvssInfo = ''
-                    if ($vuln.CVSS) {
-                        $nvdScore = $vuln.CVSS.nvd.V3Score ?? $vuln.CVSS.nvd.V2Score ?? $null
-                        $ghsaScore = $vuln.CVSS.ghsa.V3Score ?? $null
-                        $scoreVal = $nvdScore ?? $ghsaScore
+                    $scoreVal = $null
+                    if ($vuln.PSObject.Properties['CVSS'] -and $vuln.CVSS) {
+                        $cvssObj = $vuln.CVSS
+                        if ($cvssObj.PSObject.Properties['nvd'] -and $cvssObj.nvd) {
+                            if ($cvssObj.nvd.PSObject.Properties['V3Score']) { $scoreVal = $cvssObj.nvd.V3Score }
+                            elseif ($cvssObj.nvd.PSObject.Properties['V2Score']) { $scoreVal = $cvssObj.nvd.V2Score }
+                        }
+                        if (-not $scoreVal -and $cvssObj.PSObject.Properties['ghsa'] -and $cvssObj.ghsa -and $cvssObj.ghsa.PSObject.Properties['V3Score']) {
+                            $scoreVal = $cvssObj.ghsa.V3Score
+                        }
                         if ($scoreVal) { $cvssInfo = " (CVSS $scoreVal)" }
                     }
                     # CWEs si existen
                     $cweInfo = ''
-                    if ($vuln.CweIDs -and $vuln.CweIDs.Count -gt 0) {
-                        $cweInfo = " — CWE: $($vuln.CweIDs -join ', ')"
+                    $cweList = @()
+                    if ($vuln.PSObject.Properties['CweIDs'] -and $vuln.CweIDs) {
+                        $cweList = @($vuln.CweIDs)
+                        if ($cweList.Count -gt 0) { $cweInfo = " — CWE: $($cweList -join ', ')" }
                     }
+                    $pkgName  = if ($vuln.PSObject.Properties['PkgName']) { $vuln.PkgName } else { '' }
+                    $instVer  = if ($vuln.PSObject.Properties['InstalledVersion']) { $vuln.InstalledVersion } else { '' }
+                    $fixedVer = if ($vuln.PSObject.Properties['FixedVersion']) { $vuln.FixedVersion } else { '' }
+                    $vulnID   = if ($vuln.PSObject.Properties['VulnerabilityID']) { $vuln.VulnerabilityID } else { 'CVE-?' }
 
-                    $trivSig = "Vulnerabilidad de severidad $sevLabel$cvssInfo en el paquete '$($vuln.PkgName)' " +
-                               "(version instalada: $($vuln.InstalledVersion))$cweInfo. " +
-                               "Identificada como $($vuln.VulnerabilityID): $trivTitle."
+                    $trivSig = "Vulnerabilidad de severidad $sevLabel$cvssInfo en el paquete '$pkgName' " +
+                               "(version instalada: $instVer)$cweInfo. " +
+                               "Identificada como ${vulnID}: $trivTitle."
 
                     # Construir impacto tecnico en español basado en datos estructurados del CVE
-                    $fixInfo = if ($vuln.FixedVersion) {
-                        "Version corregida disponible: $($vuln.FixedVersion)."
+                    $fixInfo = if ($fixedVer) {
+                        "Version corregida disponible: $fixedVer."
                     } else {
                         "Sin version corregida disponible aun — mantener monitoreado."
                     }
 
                     # Clasificar el tipo de vulnerabilidad segun CWE o palabras clave del titulo
-                    $tipoVuln = if ($vuln.CweIDs -and $vuln.CweIDs.Count -gt 0) {
+                    $tipoVuln = if ($cweList.Count -gt 0) {
                         $cweMap = @{
                             'CWE-79'  = 'Cross-Site Scripting (XSS)'
                             'CWE-89'  = 'Inyeccion SQL'
@@ -445,7 +562,7 @@ if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
                             'CWE-611' = 'Procesamiento inseguro de XML (XXE)'
                             'CWE-601' = 'Redireccionamiento abierto'
                         }
-                        $matched = $vuln.CweIDs | ForEach-Object { if ($cweMap.ContainsKey($_)) { $cweMap[$_] } else { $_ } }
+                        $matched = $cweList | ForEach-Object { if ($cweMap.ContainsKey($_)) { $cweMap[$_] } else { $_ } }
                         $matched -join ', '
                     } elseif ($trivTitle -match 'XSS|scripting') { 'Cross-Site Scripting (XSS)' }
                       elseif ($trivTitle -match 'inject') { 'Inyeccion de codigo' }
@@ -457,7 +574,7 @@ if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
                       else { 'Vulnerabilidad de seguridad' }
 
                     $trivImpacto = "Tipo: $tipoVuln. " +
-                                   "Paquete '$($vuln.PkgName)' v$($vuln.InstalledVersion) contiene $($vuln.VulnerabilityID)$cvssInfo$cweInfo. " +
+                                   "Paquete '$pkgName' v$instVer contiene ${vulnID}${cvssInfo}${cweInfo}. " +
                                    $fixInfo
 
                     # Impacto de negocio segun tipo de vulnerabilidad
@@ -469,27 +586,28 @@ if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
                         '*Path*'        { "Un atacante puede acceder a archivos del sistema de archivos fuera del directorio permitido." }
                         '*CSRF*'        { "Un atacante puede engañar al usuario autenticado para ejecutar acciones no autorizadas en su nombre." }
                         '*credencial*'  { "Credenciales o tokens pueden quedar expuestos, permitiendo acceso no autorizado al sistema." }
-                        default         { "La dependencia '$($vuln.PkgName)' con severidad $sevLabel puede ser explotada para comprometer la confidencialidad, integridad o disponibilidad critica del sistema REGINSA." }
+                        default         { "La dependencia '$pkgName' con severidad $sevLabel puede ser explotada para comprometer la confidencialidad, integridad o disponibilidad critica del sistema REGINSA." }
                     }
 
-                    $trivRec = if ($vuln.FixedVersion) {
-                        "Actualizar '$($vuln.PkgName)' de v$($vuln.InstalledVersion) a v$($vuln.FixedVersion) para corregir $($vuln.VulnerabilityID). Ejecutar: npm update $($vuln.PkgName) (o equivalente segun gestor de paquetes)."
+                    $trivRec = if ($fixedVer) {
+                        "Actualizar '$pkgName' de v$instVer a v$fixedVer para corregir $vulnID. Ejecutar: npm update $pkgName (o equivalente segun gestor de paquetes)."
                     } else {
-                        "No existe version corregida para $($vuln.VulnerabilityID). Evaluar reemplazo del paquete '$($vuln.PkgName)' o aplicar mitigacion en capa de aplicacion. Monitorear NVD/GitHub Advisory."
+                        "No existe version corregida para $vulnID. Evaluar reemplazo del paquete '$pkgName' o aplicar mitigacion en capa de aplicacion. Monitorear NVD/GitHub Advisory."
                     }
                     $trivEvid  = $TrivyJson.FullName.Replace($Root.Path, '.')
+                    $trivTarget = if ($result.PSObject.Properties['Target']) { $result.Target } else { '' }
                     $Hallazgos.Add(@{
                         id                    = New-ID
                         fecha_deteccion       = $FechaHoraTS
                         herramienta           = 'Trivy'
                         tipo_prueba           = 'Seguridad'
                         caracteristica_iso25010 = 'Seguridad'
-                        hallazgo              = "$($vuln.VulnerabilityID): $($vuln.PkgName)@$($vuln.InstalledVersion)"
+                        hallazgo              = "${vulnID}: ${pkgName}@${instVer}"
                         significado           = $trivSig
                         impacto_tecnico       = $trivImpacto
                         impacto_negocio       = $trivNegocio
                         severidad             = $sev
-                        componente_afectado   = "$($vuln.PkgName) — $($result.Target)"
+                        componente_afectado   = "$pkgName — $trivTarget"
                         responsable_sugerido  = 'DevOps'
                         recomendacion         = $trivRec
                         evidencia             = $trivEvid
@@ -498,9 +616,10 @@ if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
                         fecha_cierre          = ''
                     })
                     $TrivyCount++
+                    } catch { if ($Verbose) { Write-Warn "    Trivy vuln skip: $($_.Exception.Message)" } }
                 }
             }
-        } catch { if ($Verbose) { Write-Warn "  No se pudo parsear Trivy JSON" } }
+        } catch { if ($Verbose) { Write-Warn "  No se pudo parsear Trivy JSON: $($_.Exception.Message)" } else { Write-Warn "  Trivy parse error (usar -Verbose para detalle)" } }
     }
     if ($TrivyCount -gt 0) { Write-Ok "  Trivy: $TrivyCount hallazgos CRITICA/ALTA" }
     else { Write-Skip "  Trivy: sin CVEs criticos/altos (o sin reportes)" }
@@ -583,6 +702,316 @@ if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
     }
     if ($SemgrepCount -gt 0) { Write-Ok "  Semgrep: $SemgrepCount hallazgos" }
     else { Write-Skip "  Semgrep: sin hallazgos (o sin reportes)" }
+
+    # ── Bearer (SAST - SARIF) ──────────────────────────────────────────────
+    Write-Step "Extrayendo: Bearer"
+    $BearerSarif = Get-ChildItem -Path (Join-Path $Reportes 'security') -Filter 'bearer-results.sarif' -Recurse -ErrorAction SilentlyContinue |
+                   Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    $BearerCount = 0
+    if ($BearerSarif) {
+        try {
+            $data = Get-Content $BearerSarif.FullName -Raw | ConvertFrom-Json
+            foreach ($run in ($data.runs ?? @())) {
+                foreach ($result in ($run.results ?? @())) {
+                    $bearerLevel = $result.level ?? 'warning'
+                    $bearerSev   = switch ($bearerLevel) { 'error' { 'CRITICA' } 'warning' { 'ALTA' } default { 'MEDIA' } }
+                    $bearerRule  = $result.ruleId ?? ''
+                    $bearerMsg   = $result.message.text ?? ''
+                    $bearerUri   = ($result.locations | Select-Object -First 1).physicalLocation.artifactLocation.uri ?? ''
+                    $bearerLine  = ($result.locations | Select-Object -First 1).physicalLocation.region.startLine ?? 0
+                    $Hallazgos.Add(@{
+                        id                      = New-ID
+                        fecha_deteccion         = $FechaHoraTS
+                        herramienta             = 'Bearer'
+                        tipo_prueba             = 'Seguridad'
+                        caracteristica_iso25010 = 'Seguridad'
+                        hallazgo                = "[$bearerRule] $bearerMsg"
+                        significado             = "Bearer SAST detecto: $bearerMsg"
+                        impacto_tecnico         = "Archivo: $bearerUri -- Linea: $bearerLine"
+                        impacto_negocio         = 'Flujo de datos inseguro o exposicion de PII detectada en el codigo fuente.'
+                        severidad               = $bearerSev
+                        componente_afectado     = $bearerUri
+                        responsable_sugerido    = 'Equipo de Desarrollo'
+                        recomendacion           = "Aplicar el fix recomendado por la regla $bearerRule en Bearer."
+                        evidencia               = $BearerSarif.FullName.Replace($Root.Path, '.')
+                        estado                  = 'ABIERTO'
+                        sprint_objetivo         = ''
+                        fecha_cierre            = ''
+                    })
+                    $BearerCount++
+                }
+            }
+        } catch { if ($Verbose) { Write-Warn '  No se pudo parsear Bearer SARIF' } }
+    }
+    if ($BearerCount -gt 0) { Write-Ok "  Bearer: $BearerCount hallazgos" }
+    else { Write-Skip '  Bearer: sin hallazgos (o sin reportes)' }
+
+    # ── TruffleHog (secretos en git) ───────────────────────────────────────
+    Write-Step "Extrayendo: TruffleHog"
+    $TruffleJson = Get-ChildItem -Path (Join-Path $Reportes 'security') -Filter 'trufflehog-results.json' -Recurse -ErrorAction SilentlyContinue |
+                   Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    $TruffleCount = 0
+    if ($TruffleJson -and $TruffleJson.Length -gt 2) {
+        try {
+            # TruffleHog escribe JSONL (1 objeto JSON por linea) — NO un array JSON.
+            # Las lineas de tipo info/stats no tienen DetectorName y se omiten.
+            $lines = Get-Content $TruffleJson.FullName -Encoding UTF8
+            $items = foreach ($ln in $lines) {
+                $ln = $ln.Trim()
+                if (-not $ln) { continue }
+                try { $obj = $ln | ConvertFrom-Json; if ($obj.PSObject.Properties['DetectorName'] -or $obj.PSObject.Properties['detector_name']) { $obj } } catch { Write-Verbose "TruffleHog: linea JSONL invalida (omitida)" }
+            }
+            foreach ($item in @($items)) {
+                $thDetector = $item.DetectorName ?? $item.detector_name ?? 'Unknown'
+                $thVerified  = $item.Verified ?? $item.verified ?? $false
+                $thSev       = if ($thVerified) { 'CRITICA' } else { 'ALTA' }
+                $thFile      = $item.SourceMetadata.Data.Git.file ?? $item.SourceMetadata.Data.Filesystem.file ?? 'Desconocido'
+                $thLine      = $item.SourceMetadata.Data.Git.line ?? 0
+                $thCommit    = $item.SourceMetadata.Data.Git.commit ?? 'N/A'
+                $Hallazgos.Add(@{
+                    id                      = New-ID
+                    fecha_deteccion         = $FechaHoraTS
+                    herramienta             = 'TruffleHog'
+                    tipo_prueba             = 'Seguridad'
+                    caracteristica_iso25010 = 'Seguridad'
+                    hallazgo                = "Secreto verificado=${thVerified}: Tipo=$thDetector"
+                    significado             = "TruffleHog detecto un posible secreto de tipo '$thDetector'. Verificado: $thVerified. IMPORTANTE: El valor no se muestra por seguridad."
+                    impacto_tecnico         = "Archivo: $thFile -- Linea: $thLine -- Commit: $thCommit"
+                    impacto_negocio         = 'La exposicion de credenciales puede comprometer la seguridad del sistema y datos sensibles de REGINSA.'
+                    severidad               = $thSev
+                    componente_afectado     = $thFile
+                    responsable_sugerido    = 'DevOps/Seguridad'
+                    recomendacion           = '1) Revocar inmediatamente el secreto expuesto. 2) Usar variables de entorno o Azure Key Vault. 3) Limpiar historial git con git-filter-repo.'
+                    evidencia               = $TruffleJson.FullName.Replace($Root.Path, '.')
+                    estado                  = 'ABIERTO'
+                    sprint_objetivo         = ''
+                    fecha_cierre            = ''
+                })
+                $TruffleCount++
+            }
+        } catch { if ($Verbose) { Write-Warn '  No se pudo parsear TruffleHog JSON' } }
+    }
+    if ($TruffleCount -gt 0) { Write-Ok "  TruffleHog: $TruffleCount hallazgos" }
+    else { Write-Skip '  TruffleHog: sin secretos detectados (o sin reportes)' }
+
+    # ── Dependency-Check (SCA) ─────────────────────────────────────────────
+    Write-Step "Extrayendo: Dependency-Check"
+    $DepCheckJson = Get-ChildItem -Path (Join-Path $Reportes 'security') -Filter 'dependency-check-report.json' -Recurse -ErrorAction SilentlyContinue |
+                    Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    $DepCheckCount = 0
+    if ($DepCheckJson) {
+        try {
+            $data = Get-Content $DepCheckJson.FullName -Raw | ConvertFrom-Json
+            foreach ($dep in ($data.dependencies ?? @())) {
+                foreach ($vuln in ($dep.vulnerabilities ?? @())) {
+                    $dcSev = Map-Severity ($vuln.severity ?? 'MEDIUM')
+                    if ($dcSev -notin @('CRITICA','ALTA')) { continue }
+                    $dcPkg   = $dep.fileName ?? ($dep.packages | Select-Object -First 1).id ?? 'Desconocido'
+                    $dcCvss  = $vuln.cvssv3.baseScore ?? $vuln.cvssv2.score ?? ''
+                    $dcCvssInfo = if ($dcCvss) { " (CVSS $dcCvss)" } else { '' }
+                    $Hallazgos.Add(@{
+                        id                      = New-ID
+                        fecha_deteccion         = $FechaHoraTS
+                        herramienta             = 'Dependency-Check'
+                        tipo_prueba             = 'Seguridad'
+                        caracteristica_iso25010 = 'Seguridad'
+                        hallazgo                = "$($vuln.name): $dcPkg"
+                        significado             = "Dependency-Check detecto $($vuln.name)$dcCvssInfo en '$dcPkg'. $($vuln.description)"
+                        impacto_tecnico         = "Dependencia vulnerable: $dcPkg -- CVE: $($vuln.name)"
+                        impacto_negocio         = "La dependencia '$dcPkg' con vulnerabilidad critica/alta puede ser explotada para comprometer el sistema REGINSA."
+                        severidad               = $dcSev
+                        componente_afectado     = $dcPkg
+                        responsable_sugerido    = 'DevOps/Desarrollo'
+                        recomendacion           = "Actualizar la dependencia '$dcPkg' a una version que corrija $($vuln.name). Revisar referencias: $($vuln.references | Select-Object -First 1 | ForEach-Object { $_.url })."
+                        evidencia               = $DepCheckJson.FullName.Replace($Root.Path, '.')
+                        estado                  = 'ABIERTO'
+                        sprint_objetivo         = ''
+                        fecha_cierre            = ''
+                    })
+                    $DepCheckCount++
+                }
+            }
+        } catch { if ($Verbose) { Write-Warn '  No se pudo parsear Dependency-Check JSON' } }
+    }
+    if ($DepCheckCount -gt 0) { Write-Ok "  Dependency-Check: $DepCheckCount hallazgos CRITICA/ALTA" }
+    else { Write-Skip '  Dependency-Check: sin CVEs criticos/altos (o sin reportes)' }
+
+    # ── OSV (Open Source Vulnerabilities) ─────────────────────────────────
+    Write-Step "Extrayendo: OSV"
+    $OsvJson = Get-ChildItem -Path (Join-Path $Reportes 'security') -Filter 'osv-results.json' -Recurse -ErrorAction SilentlyContinue |
+               Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    $OsvCount = 0
+    if ($OsvJson) {
+        try {
+            $data = Get-Content $OsvJson.FullName -Raw | ConvertFrom-Json
+            foreach ($result in ($data.results ?? @())) {
+                foreach ($pkg in ($result.packages ?? @())) {
+                    foreach ($vuln in ($pkg.vulnerabilities ?? @())) {
+                        $osvSevRaw = $vuln.database_specific.severity ?? $vuln.affected[0].database_specific.severity ?? 'MEDIUM'
+                        $osvSev    = Map-Severity $osvSevRaw
+                        $osvPkg    = $pkg.package.name ?? 'Desconocido'
+                        $osvVer    = $pkg.package.version ?? ''
+                        $Hallazgos.Add(@{
+                            id                      = New-ID
+                            fecha_deteccion         = $FechaHoraTS
+                            herramienta             = 'OSV'
+                            tipo_prueba             = 'Seguridad'
+                            caracteristica_iso25010 = 'Seguridad'
+                            hallazgo                = "$($vuln.id): $osvPkg@$osvVer"
+                            significado             = "OSV detecto $($vuln.id) en '$osvPkg@$osvVer'. $($vuln.summary)"
+                            impacto_tecnico         = "Paquete: $osvPkg v$osvVer -- ID: $($vuln.id)"
+                            impacto_negocio         = "La vulnerabilidad $($vuln.id) en '$osvPkg' puede afectar la seguridad del sistema REGINSA."
+                            severidad               = $osvSev
+                            componente_afectado     = "$osvPkg@$osvVer"
+                            responsable_sugerido    = 'DevOps/Desarrollo'
+                            recomendacion           = "Actualizar '$osvPkg' a una version que corrija $($vuln.id). Consultar: https://osv.dev/vulnerability/$($vuln.id)"
+                            evidencia               = $OsvJson.FullName.Replace($Root.Path, '.')
+                            estado                  = 'ABIERTO'
+                            sprint_objetivo         = ''
+                            fecha_cierre            = ''
+                        })
+                        $OsvCount++
+                    }
+                }
+            }
+        } catch { if ($Verbose) { Write-Warn '  No se pudo parsear OSV JSON' } }
+    }
+    if ($OsvCount -gt 0) { Write-Ok "  OSV: $OsvCount hallazgos" }
+    else { Write-Skip '  OSV: sin vulnerabilidades detectadas (o sin reportes)' }
+
+    # ── RetireJS (SCA frontend) ────────────────────────────────────────────
+    Write-Step "Extrayendo: RetireJS"
+    $RetireJson = Get-ChildItem -Path (Join-Path $Reportes 'security') -Filter 'retire-results.json' -Recurse -ErrorAction SilentlyContinue |
+                  Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    $RetireCount = 0
+    if ($RetireJson) {
+        try {
+            $data = Get-Content $RetireJson.FullName -Raw | ConvertFrom-Json
+            $retireItems = if ($data -is [array]) { $data } elseif ($data.data) { $data.data } else { @() }
+            foreach ($item in $retireItems) {
+                $retireFile = $item.file ?? 'Desconocido'
+                foreach ($result in ($item.results ?? @())) {
+                    $retirePkg = $result.component ?? 'Desconocido'
+                    $retireVer = $result.version ?? ''
+                    foreach ($vuln in ($result.vulnerabilities ?? @())) {
+                        $retireSev = Map-Severity ($vuln.severity ?? 'medium')
+                        $retireCve = ($vuln.identifiers.CVE | Select-Object -First 1) ?? $vuln.identifiers.bug ?? ''
+                        $retireSum = $vuln.identifiers.summary ?? ''
+                        $Hallazgos.Add(@{
+                            id                      = New-ID
+                            fecha_deteccion         = $FechaHoraTS
+                            herramienta             = 'RetireJS'
+                            tipo_prueba             = 'Seguridad'
+                            caracteristica_iso25010 = 'Seguridad'
+                            hallazgo                = "$retirePkg@$retireVer -- $retireCve"
+                            significado             = "RetireJS detecto libreria frontend obsoleta con vulnerabilidad conocida. $retireSum"
+                            impacto_tecnico         = "Archivo: $retireFile -- Paquete: $retirePkg v$retireVer -- CVE: $retireCve"
+                            impacto_negocio         = "Libreria frontend vulnerable en '$retirePkg' puede ser explotada por atacantes en el navegador del usuario."
+                            severidad               = $retireSev
+                            componente_afectado     = "$retirePkg@$retireVer"
+                            responsable_sugerido    = 'Frontend'
+                            recomendacion           = "Actualizar '$retirePkg' de v$retireVer a una version que corrija $retireCve."
+                            evidencia               = $RetireJson.FullName.Replace($Root.Path, '.')
+                            estado                  = 'ABIERTO'
+                            sprint_objetivo         = ''
+                            fecha_cierre            = ''
+                        })
+                        $RetireCount++
+                    }
+                }
+            }
+        } catch { if ($Verbose) { Write-Warn '  No se pudo parsear RetireJS JSON' } }
+    }
+    if ($RetireCount -gt 0) { Write-Ok "  RetireJS: $RetireCount hallazgos" }
+    else { Write-Skip '  RetireJS: sin vulnerabilidades frontend (o sin reportes)' }
+
+    # ── Grype (SCA container/deps) ─────────────────────────────────────────
+    Write-Step "Extrayendo: Grype"
+    $GrypeJson = Get-ChildItem -Path (Join-Path $Reportes 'security') -Filter 'grype-results.json' -Recurse -ErrorAction SilentlyContinue |
+                 Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    $GrypeCount = 0
+    if ($GrypeJson -and $GrypeJson.Length -gt 10) {
+        try {
+            $data = Get-Content $GrypeJson.FullName -Raw | ConvertFrom-Json
+            foreach ($match in ($data.matches ?? @())) {
+                $grypeSev = Map-Severity ($match.vulnerability.severity ?? 'Unknown')
+                if ($grypeSev -notin @('CRITICA','ALTA')) { continue }
+                $grypeCve   = $match.vulnerability.id ?? ''
+                $grypePkg   = $match.artifact.name ?? 'Desconocido'
+                $grypeVer   = $match.artifact.version ?? ''
+                $grypeDesc  = $match.vulnerability.description ?? ''
+                $grypeFix   = ($match.vulnerability.fix.versions | Select-Object -First 1) ?? ''
+                $grypeFixInfo = if ($grypeFix) { "Version corregida: $grypeFix." } else { 'Sin version corregida disponible.' }
+                $Hallazgos.Add(@{
+                    id                      = New-ID
+                    fecha_deteccion         = $FechaHoraTS
+                    herramienta             = 'Grype'
+                    tipo_prueba             = 'Seguridad'
+                    caracteristica_iso25010 = 'Seguridad'
+                    hallazgo                = "${grypeCve}: $grypePkg@$grypeVer"
+                    significado             = "Grype detecto $grypeCve en '$grypePkg@$grypeVer'. $grypeDesc"
+                    impacto_tecnico         = "Paquete: $grypePkg v$grypeVer -- CVE: $grypeCve. $grypeFixInfo"
+                    impacto_negocio         = "La vulnerabilidad critica/alta $grypeCve en '$grypePkg' puede comprometer la seguridad del contenedor o dependencias del sistema REGINSA."
+                    severidad               = $grypeSev
+                    componente_afectado     = "$grypePkg@$grypeVer"
+                    responsable_sugerido    = 'DevOps'
+                    recomendacion           = if ($grypeFix) { "Actualizar '$grypePkg' de v$grypeVer a v$grypeFix para corregir $grypeCve." } else { "Monitorear $grypeCve en '$grypePkg'. Evaluar mitigacion alternativa." }
+                    evidencia               = $GrypeJson.FullName.Replace($Root.Path, '.')
+                    estado                  = 'ABIERTO'
+                    sprint_objetivo         = ''
+                    fecha_cierre            = ''
+                })
+                $GrypeCount++
+            }
+        } catch { if ($Verbose) { Write-Warn '  No se pudo parsear Grype JSON' } }
+    }
+    if ($GrypeCount -gt 0) { Write-Ok "  Grype: $GrypeCount hallazgos CRITICA/ALTA" }
+    else { Write-Skip '  Grype: sin CVEs criticos/altos (o sin reportes)' }
+
+    # ── Nuclei (DAST - JSONL) ──────────────────────────────────────────────
+    Write-Step "Extrayendo: Nuclei"
+    $NucleiJsonl = Get-ChildItem -Path (Join-Path $Reportes 'security') -Filter 'nuclei-report.jsonl' -Recurse -ErrorAction SilentlyContinue |
+                   Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    $NucleiCount = 0
+    if ($NucleiJsonl) {
+        try {
+            Get-Content $NucleiJsonl.FullName | ForEach-Object {
+                $line = $_.Trim()
+                if (-not $line) { return }
+                $item = $line | ConvertFrom-Json
+                $nucleiSevRaw = $item.info.severity ?? $item.'info'.severity ?? 'info'
+                if ($nucleiSevRaw -eq 'info') { return }
+                $nucleiSev   = Map-Severity $nucleiSevRaw
+                $nucleiName  = $item.info.name ?? $item.'template-id' ?? ''
+                $nucleiTmpl  = $item.'template-id' ?? ''
+                $nucleiHost  = $item.host ?? ''
+                $nucleiMatch = $item.'matched-at' ?? $nucleiHost
+                $nucleiType  = $item.type ?? ''
+                $Hallazgos.Add(@{
+                    id                      = New-ID
+                    fecha_deteccion         = $FechaHoraTS
+                    herramienta             = 'Nuclei'
+                    tipo_prueba             = 'Seguridad'
+                    caracteristica_iso25010 = 'Seguridad'
+                    hallazgo                = "[$nucleiTmpl] $nucleiName"
+                    significado             = "Nuclei DAST detecto '$nucleiName' (tipo: $nucleiType) en el host '$nucleiHost'."
+                    impacto_tecnico         = "Host: $nucleiHost -- URL afectada: $nucleiMatch -- Template: $nucleiTmpl"
+                    impacto_negocio         = "La vulnerabilidad detectada por Nuclei puede ser explotada remotamente en el sistema REGINSA."
+                    severidad               = $nucleiSev
+                    componente_afectado     = $nucleiHost
+                    responsable_sugerido    = 'DevOps/Backend'
+                    recomendacion           = "Revisar y corregir la vulnerabilidad '$nucleiName' identificada por el template $nucleiTmpl de Nuclei."
+                    evidencia               = $NucleiJsonl.FullName.Replace($Root.Path, '.')
+                    estado                  = 'ABIERTO'
+                    sprint_objetivo         = ''
+                    fecha_cierre            = ''
+                })
+                $NucleiCount++
+            }
+        } catch { if ($Verbose) { Write-Warn '  No se pudo parsear Nuclei JSONL' } }
+    }
+    if ($NucleiCount -gt 0) { Write-Ok "  Nuclei: $NucleiCount hallazgos" }
+    else { Write-Skip '  Nuclei: sin hallazgos (o sin reportes)' }
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -703,10 +1132,569 @@ if ($TodosTipos -or $TipoPrueba -contains 'Accesibilidad' -or $TipoPrueba -conta
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
+# HELPERS para parsers SARIF (Bearer / Checkov / CodeQL / Nuclei v2)
+# ══════════════════════════════════════════════════════════════════════════════
+function ConvertFrom-SarifLevel {
+    param([string]$Level, [string]$SecuritySev = '')
+    if ($SecuritySev) {
+        try {
+            $score = [double]$SecuritySev
+            if ($score -ge 9.0) { return 'CRITICA' }
+            if ($score -ge 7.0) { return 'ALTA'    }
+            if ($score -ge 4.0) { return 'MEDIA'   }
+            return 'BAJA'
+        } catch { Write-Verbose "ConvertFrom-SarifLevel: $($_.Exception.Message)" }
+    }
+    switch -Regex (($Level ?? '').ToLower()) {
+        'error|critical|blocker|high' { 'ALTA'   ; break }
+        'warning|major|medium'        { 'MEDIA'  ; break }
+        'note|info|minor|low'         { 'BAJA'   ; break }
+        default                       { 'MEDIA'  }
+    }
+}
+
+function Read-SarifResults {
+    <#
+      Devuelve hallazgos normalizados (PSCustomObject) desde un archivo SARIF.
+      Los detalles tool/herramienta los rellena el bloque consumidor.
+    #>
+    param([string]$Path)
+    $out = @()
+    if (-not (Test-Path $Path)) { return $out }
+    try {
+        $j = Get-Content $Path -Raw -Encoding UTF8 | ConvertFrom-Json -Depth 50
+    } catch { return $out }
+    if (-not $j -or -not $j.PSObject.Properties['runs']) { return $out }
+    foreach ($run in @($j.runs)) {
+        $rules = @{}
+        if ($run.PSObject.Properties['tool'] -and $run.tool.PSObject.Properties['driver']) {
+            $drv = $run.tool.driver
+            if ($drv.PSObject.Properties['rules'] -and $drv.rules) {
+                foreach ($r in @($drv.rules)) {
+                    $rid = if ($r.PSObject.Properties['id']) { $r.id } else { '' }
+                    if ($rid) { $rules[$rid] = $r }
+                }
+            }
+        }
+        if (-not $run.PSObject.Properties['results']) { continue }
+        foreach ($res in @($run.results)) {
+            try {
+                $ruleId = if ($res.PSObject.Properties['ruleId']) { $res.ruleId } else { '' }
+                $level  = if ($res.PSObject.Properties['level'])  { $res.level }  else { '' }
+                $msg    = ''
+                if ($res.PSObject.Properties['message'] -and $res.message) {
+                    if ($res.message.PSObject.Properties['text']) { $msg = $res.message.text }
+                }
+                $loc = ''
+                if ($res.PSObject.Properties['locations'] -and $res.locations) {
+                    $first = @($res.locations)[0]
+                    if ($first -and $first.PSObject.Properties['physicalLocation']) {
+                        $pl = $first.physicalLocation
+                        if ($pl.PSObject.Properties['artifactLocation'] -and $pl.artifactLocation.PSObject.Properties['uri']) {
+                            $loc = $pl.artifactLocation.uri
+                        }
+                        if ($pl.PSObject.Properties['region'] -and $pl.region.PSObject.Properties['startLine']) {
+                            $loc = "$loc`:$($pl.region.startLine)"
+                        }
+                    }
+                }
+                $secSev = ''
+                $shortDesc = ''
+                if ($rules.ContainsKey($ruleId)) {
+                    $r = $rules[$ruleId]
+                    if ($r.PSObject.Properties['properties'] -and $r.properties) {
+                        $p = $r.properties
+                        if ($p.PSObject.Properties['security-severity']) { $secSev = [string]$p.'security-severity' }
+                    }
+                    if ($r.PSObject.Properties['shortDescription'] -and $r.shortDescription.PSObject.Properties['text']) {
+                        $shortDesc = $r.shortDescription.text
+                    }
+                }
+                if ($res.PSObject.Properties['properties'] -and $res.properties -and $res.properties.PSObject.Properties['security-severity']) {
+                    $secSev = [string]$res.properties.'security-severity'
+                }
+                $out += [PSCustomObject]@{
+                    ruleId      = $ruleId
+                    level       = $level
+                    message     = $msg
+                    location    = $loc
+                    securitySev = $secSev
+                    shortDesc   = $shortDesc
+                }
+            } catch { continue }
+        }
+    }
+    return $out
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# BLOQUE 7 — BEARER (SAST · privacidad / datos sensibles · SARIF)
+# ══════════════════════════════════════════════════════════════════════════════
+if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
+    Write-Step "Extrayendo: Bearer (SAST privacidad)"
+    $files = Get-ChildItem -Path (Join-Path $Reportes 'security') -Filter 'bearer-results.sarif' -Recurse -ErrorAction SilentlyContinue |
+             Sort-Object LastWriteTime -Descending
+    $bCount = 0
+    foreach ($f in $files) {
+        $proj = Split-Path (Split-Path $f.FullName -Parent) -Leaf
+        foreach ($r in Read-SarifResults -Path $f.FullName) {
+            try {
+                $sev = ConvertFrom-SarifLevel -Level $r.level -SecuritySev $r.securitySev
+                $hallazgo = if ($r.shortDesc) { $r.shortDesc } else { "[$($r.ruleId)] $($r.message)" }
+                $Hallazgos.Add(@{
+                    id                      = New-ID
+                    fecha_deteccion         = $FechaHoraTS
+                    herramienta             = 'Bearer'
+                    tipo_prueba             = 'Seguridad'
+                    caracteristica_iso25010 = 'Seguridad'
+                    hallazgo                = ($hallazgo | Out-String).Trim()
+                    significado             = $r.message
+                    impacto_tecnico         = "Regla $($r.ruleId) en $($r.location)"
+                    impacto_negocio         = 'Posible exposicion de datos personales o credenciales sin proteccion adecuada.'
+                    severidad               = $sev
+                    componente_afectado     = if ($proj -and $proj -ne 'bearer') { $proj } else { $r.location }
+                    responsable_sugerido    = 'Backend/Frontend'
+                    recomendacion           = 'Revisar el flujo de datos sensibles y aplicar cifrado/validacion segun guia Bearer.'
+                    evidencia               = $f.FullName.Replace($Root.Path, '.')
+                    estado                  = 'ABIERTO'
+                    sprint_objetivo         = ''
+                    fecha_cierre            = ''
+                })
+                $bCount++
+            } catch { if ($Verbose) { Write-Warn "  Bearer item: $($_.Exception.Message)" } }
+        }
+    }
+    if ($bCount -gt 0) { Write-Ok "  Bearer: $bCount hallazgos" } else { Write-Skip "  Bearer: sin hallazgos o sin SARIF" }
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# BLOQUE 8 — CHECKOV (IaC · Dockerfile / GitHub Actions / Terraform · SARIF)
+# ══════════════════════════════════════════════════════════════════════════════
+if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
+    Write-Step "Extrayendo: Checkov (IaC)"
+    $files = Get-ChildItem -Path (Join-Path $Reportes 'security') -Recurse -Include 'results_sarif.sarif','checkov-results.sarif' -ErrorAction SilentlyContinue |
+             Sort-Object LastWriteTime -Descending
+    $cCount = 0
+    foreach ($f in $files) {
+        # asegurar que es de checkov (no de bearer)
+        if ($f.FullName -notmatch '[\\/]checkov[\\/]') { continue }
+        foreach ($r in Read-SarifResults -Path $f.FullName) {
+            try {
+                $sev = ConvertFrom-SarifLevel -Level $r.level -SecuritySev $r.securitySev
+                $Hallazgos.Add(@{
+                    id                      = New-ID
+                    fecha_deteccion         = $FechaHoraTS
+                    herramienta             = 'Checkov'
+                    tipo_prueba             = 'Seguridad'
+                    caracteristica_iso25010 = 'Seguridad / Mantenibilidad'
+                    hallazgo                = if ($r.shortDesc) { "[$($r.ruleId)] $($r.shortDesc)" } else { "[$($r.ruleId)] $($r.message)" }
+                    significado             = $r.message
+                    impacto_tecnico         = "Archivo: $($r.location)"
+                    impacto_negocio         = 'Mala practica de seguridad en infraestructura como codigo (IaC). Puede exponer secretos o crear despliegues inseguros.'
+                    severidad               = $sev
+                    componente_afectado     = $r.location
+                    responsable_sugerido    = 'DevOps'
+                    recomendacion           = 'Aplicar la guia oficial de Checkov para la regla y reescanear.'
+                    evidencia               = $f.FullName.Replace($Root.Path, '.')
+                    estado                  = 'ABIERTO'
+                    sprint_objetivo         = ''
+                    fecha_cierre            = ''
+                })
+                $cCount++
+            } catch { if ($Verbose) { Write-Warn "  Checkov item: $($_.Exception.Message)" } }
+        }
+    }
+    if ($cCount -gt 0) { Write-Ok "  Checkov: $cCount hallazgos" } else { Write-Skip "  Checkov: sin hallazgos o sin SARIF" }
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# BLOQUE 9 — CODEQL (SAST semantico · SARIF)
+# ══════════════════════════════════════════════════════════════════════════════
+if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
+    Write-Step "Extrayendo: CodeQL (SAST semantico)"
+    $files = Get-ChildItem -Path (Join-Path $Reportes 'security') -Recurse -Include 'codeql-*.sarif','*.codeql.sarif' -ErrorAction SilentlyContinue |
+             Sort-Object LastWriteTime -Descending
+    if (-not $files) {
+        $files = Get-ChildItem -Path (Join-Path $Reportes 'security') -Recurse -Filter '*.sarif' -ErrorAction SilentlyContinue |
+                 Where-Object { $_.FullName -match '[\\/]codeql[\\/]' }
+    }
+    $qCount = 0
+    foreach ($f in $files) {
+        foreach ($r in Read-SarifResults -Path $f.FullName) {
+            try {
+                $sev = ConvertFrom-SarifLevel -Level $r.level -SecuritySev $r.securitySev
+                $Hallazgos.Add(@{
+                    id                      = New-ID
+                    fecha_deteccion         = $FechaHoraTS
+                    herramienta             = 'CodeQL'
+                    tipo_prueba             = 'Seguridad'
+                    caracteristica_iso25010 = 'Seguridad'
+                    hallazgo                = if ($r.shortDesc) { "[$($r.ruleId)] $($r.shortDesc)" } else { "[$($r.ruleId)] $($r.message)" }
+                    significado             = $r.message
+                    impacto_tecnico         = "Ubicacion: $($r.location) | Regla: $($r.ruleId)"
+                    impacto_negocio         = 'Patron de codigo riesgoso detectado por analisis semantico. Posible vulnerabilidad explotable.'
+                    severidad               = $sev
+                    componente_afectado     = $r.location
+                    responsable_sugerido    = 'Desarrollador'
+                    recomendacion           = 'Revisar la sugerencia de CodeQL y refactorizar el codigo afectado.'
+                    evidencia               = $f.FullName.Replace($Root.Path, '.')
+                    estado                  = 'ABIERTO'
+                    sprint_objetivo         = ''
+                    fecha_cierre            = ''
+                })
+                $qCount++
+            } catch { if ($Verbose) { Write-Warn "  CodeQL item: $($_.Exception.Message)" } }
+        }
+    }
+    if ($qCount -gt 0) { Write-Ok "  CodeQL: $qCount hallazgos" } else { Write-Skip "  CodeQL: sin SARIF (no ejecutado todavia)" }
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# BLOQUE 10 — NIKTO (DAST · servidor web · XML / JSON / TXT)
+# ══════════════════════════════════════════════════════════════════════════════
+if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
+    Write-Step "Extrayendo: Nikto (DAST servidor web)"
+    $nDir = Get-ChildItem -Path (Join-Path $Reportes 'security') -Directory -Recurse -Filter 'nikto' -ErrorAction SilentlyContinue
+    $nCount = 0
+    $nSeen  = $false
+    foreach ($d in $nDir) {
+        # XML
+        $xmlFiles = Get-ChildItem -Path $d.FullName -Filter '*.xml' -ErrorAction SilentlyContinue
+        foreach ($xf in $xmlFiles) {
+            $nSeen = $true
+            try {
+                [xml]$x = Get-Content $xf.FullName -Raw
+                foreach ($it in @($x.niktoscan.scandetails.item)) {
+                    $desc = ($it.description ?? '').ToString().Trim()
+                    if (-not $desc) { continue }
+                    $sev = if ($desc -match 'CVE-|admin|injection|xss|sql|directory traversal') { 'ALTA' }
+                           elseif ($desc -match 'header|cookie|disclosure') { 'MEDIA' }
+                           else { 'BAJA' }
+                    $Hallazgos.Add(@{
+                        id = New-ID; fecha_deteccion = $FechaHoraTS
+                        herramienta = 'Nikto'; tipo_prueba = 'Seguridad'
+                        caracteristica_iso25010 = 'Seguridad'
+                        hallazgo = "[$($it.id ?? 'NIK')] $desc"
+                        significado = $desc
+                        impacto_tecnico = "URL: $($it.uri ?? '/') | Metodo: $($it.method ?? 'GET')"
+                        impacto_negocio = 'Servidor web expone configuracion o archivo que un atacante puede aprovechar.'
+                        severidad = $sev
+                        componente_afectado = ($x.niktoscan.scandetails.targethostname ?? 'web')
+                        responsable_sugerido = 'DevOps'
+                        recomendacion = 'Eliminar archivo expuesto o reforzar configuracion del servidor web.'
+                        evidencia = $xf.FullName.Replace($Root.Path, '.')
+                        estado = 'ABIERTO'; sprint_objetivo = ''; fecha_cierre = ''
+                    })
+                    $nCount++
+                }
+            } catch { if ($Verbose) { Write-Warn "  Nikto XML: $($_.Exception.Message)" } }
+        }
+        # JSON (formato -Format json)
+        $jsonFiles = Get-ChildItem -Path $d.FullName -Filter '*.json' -ErrorAction SilentlyContinue
+        foreach ($jf in $jsonFiles) {
+            $nSeen = $true
+            try {
+                $jr = Get-Content $jf.FullName -Raw -Encoding UTF8 | ConvertFrom-Json -Depth 30
+                $vulns = if ($jr.PSObject.Properties['vulnerabilities']) { $jr.vulnerabilities } else { @() }
+                foreach ($v in @($vulns)) {
+                    $msg = if ($v.PSObject.Properties['msg']) { $v.msg } elseif ($v.PSObject.Properties['message']) { $v.message } else { ($v | Out-String).Trim() }
+                    $sev = if ($msg -match 'CVE|admin|injection|xss|sql') { 'ALTA' } elseif ($msg -match 'header|cookie|disclosure') { 'MEDIA' } else { 'BAJA' }
+                    $Hallazgos.Add(@{
+                        id = New-ID; fecha_deteccion = $FechaHoraTS
+                        herramienta = 'Nikto'; tipo_prueba = 'Seguridad'
+                        caracteristica_iso25010 = 'Seguridad'
+                        hallazgo = "[$($v.id ?? 'NIK')] $msg"
+                        significado = $msg
+                        impacto_tecnico = "URL: $($v.url ?? '/')"
+                        impacto_negocio = 'Servidor web expone configuracion o archivo que un atacante puede aprovechar.'
+                        severidad = $sev
+                        componente_afectado = ($jr.host ?? 'web')
+                        responsable_sugerido = 'DevOps'
+                        recomendacion = 'Eliminar archivo expuesto o reforzar configuracion del servidor web.'
+                        evidencia = $jf.FullName.Replace($Root.Path, '.')
+                        estado = 'ABIERTO'; sprint_objetivo = ''; fecha_cierre = ''
+                    })
+                    $nCount++
+                }
+            } catch { if ($Verbose) { Write-Warn "  Nikto JSON: $($_.Exception.Message)" } }
+        }
+    }
+    if ($nCount -gt 0) { Write-Ok "  Nikto: $nCount hallazgos" }
+    elseif ($nSeen)    { Write-Skip "  Nikto: ejecutado sin hallazgos" }
+    else               { Write-Skip "  Nikto: no ejecutado" }
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# BLOQUE 11 — WAPITI (DAST · web · JSON)
+# ══════════════════════════════════════════════════════════════════════════════
+if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
+    Write-Step "Extrayendo: Wapiti (DAST web)"
+    $wDir = Get-ChildItem -Path (Join-Path $Reportes 'security') -Directory -Recurse -Filter 'wapiti' -ErrorAction SilentlyContinue
+    $wCount = 0; $wSeen = $false
+    foreach ($d in $wDir) {
+        $jsonFiles = Get-ChildItem -Path $d.FullName -Filter '*.json' -Recurse -ErrorAction SilentlyContinue
+        foreach ($jf in $jsonFiles) {
+            $wSeen = $true
+            try {
+                $jr = Get-Content $jf.FullName -Raw -Encoding UTF8 | ConvertFrom-Json -Depth 50
+                if (-not $jr.PSObject.Properties['vulnerabilities']) { continue }
+                $vulns = $jr.vulnerabilities
+                foreach ($cat in @($vulns.PSObject.Properties)) {
+                    foreach ($it in @($cat.Value)) {
+                        $level = if ($it.PSObject.Properties['level']) { [int]$it.level } else { 1 }
+                        $sev = switch ($level) { 4 {'CRITICA'} 3 {'ALTA'} 2 {'MEDIA'} default {'BAJA'} }
+                        $info = if ($it.PSObject.Properties['info']) { $it.info } else { '' }
+                        $Hallazgos.Add(@{
+                            id = New-ID; fecha_deteccion = $FechaHoraTS
+                            herramienta = 'Wapiti'; tipo_prueba = 'Seguridad'
+                            caracteristica_iso25010 = 'Seguridad'
+                            hallazgo = "[$($cat.Name)] $info"
+                            significado = $info
+                            impacto_tecnico = "URL: $($it.path ?? '/') | Parametro: $($it.parameter ?? '-') | Metodo: $($it.method ?? 'GET')"
+                            impacto_negocio = 'Wapiti probo payloads maliciosos y la app respondio de forma vulnerable.'
+                            severidad = $sev
+                            componente_afectado = $it.path
+                            responsable_sugerido = 'Desarrollador / DevOps'
+                            recomendacion = 'Reforzar validacion de entrada y aplicar parche del framework correspondiente.'
+                            evidencia = $jf.FullName.Replace($Root.Path, '.')
+                            estado = 'ABIERTO'; sprint_objetivo = ''; fecha_cierre = ''
+                        })
+                        $wCount++
+                    }
+                }
+            } catch { if ($Verbose) { Write-Warn "  Wapiti JSON: $($_.Exception.Message)" } }
+        }
+    }
+    if ($wCount -gt 0) { Write-Ok "  Wapiti: $wCount hallazgos" }
+    elseif ($wSeen)    { Write-Skip "  Wapiti: ejecutado sin hallazgos" }
+    else               { Write-Skip "  Wapiti: no ejecutado" }
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# BLOQUE 12 — RESTLER (Fuzzer de API REST)
+# ══════════════════════════════════════════════════════════════════════════════
+if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
+    Write-Step "Extrayendo: Restler (Fuzzer API)"
+    $rDir = Get-ChildItem -Path (Join-Path $Reportes 'security') -Directory -Recurse -Filter 'restler' -ErrorAction SilentlyContinue
+    $rCount = 0; $rSeen = $false
+    foreach ($d in $rDir) {
+        # Restler escribe bug_buckets/*.txt y testing_summary.json
+        $summary = Get-ChildItem -Path $d.FullName -Filter 'testing_summary.json' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($summary) {
+            $rSeen = $true
+            try {
+                $j = Get-Content $summary.FullName -Raw -Encoding UTF8 | ConvertFrom-Json -Depth 30
+                if ($j.PSObject.Properties['bug_buckets']) {
+                    foreach ($b in @($j.bug_buckets.PSObject.Properties)) {
+                        $count = [int]$b.Value
+                        if ($count -le 0) { continue }
+                        $sev = switch -Regex ($b.Name) {
+                            '500|InternalServerError|UseAfterFree|crash' { 'ALTA' }
+                            '400|payload'                                 { 'MEDIA' }
+                            default                                       { 'BAJA' }
+                        }
+                        $Hallazgos.Add(@{
+                            id = New-ID; fecha_deteccion = $FechaHoraTS
+                            herramienta = 'Restler'; tipo_prueba = 'Seguridad'
+                            caracteristica_iso25010 = 'Seguridad / Fiabilidad'
+                            hallazgo = "[$($b.Name)] $count incidentes"
+                            significado = "Restler genero $count peticiones malformadas que dispararon la condicion '$($b.Name)' en la API."
+                            impacto_tecnico = "Categoria: $($b.Name) | Total: $count"
+                            impacto_negocio = 'API responde de forma inestable a entradas inesperadas. Riesgo de DoS o exposicion de stack-traces.'
+                            severidad = $sev
+                            componente_afectado = 'API REST'
+                            responsable_sugerido = 'Backend'
+                            recomendacion = 'Reforzar validacion de payload y manejo de errores en el endpoint afectado.'
+                            evidencia = $summary.FullName.Replace($Root.Path, '.')
+                            estado = 'ABIERTO'; sprint_objetivo = ''; fecha_cierre = ''
+                        })
+                        $rCount++
+                    }
+                }
+            } catch { if ($Verbose) { Write-Warn "  Restler summary: $($_.Exception.Message)" } }
+        } else {
+            $bugTxts = Get-ChildItem -Path $d.FullName -Filter 'bug_buckets*.txt' -Recurse -ErrorAction SilentlyContinue
+            if ($bugTxts) { $rSeen = $true }
+            foreach ($bt in $bugTxts) {
+                $hits = (Select-String -Path $bt.FullName -Pattern '^Bug Hash' -ErrorAction SilentlyContinue).Count
+                if ($hits -le 0) { continue }
+                $Hallazgos.Add(@{
+                    id = New-ID; fecha_deteccion = $FechaHoraTS
+                    herramienta = 'Restler'; tipo_prueba = 'Seguridad'
+                    caracteristica_iso25010 = 'Seguridad / Fiabilidad'
+                    hallazgo = "[$($bt.BaseName)] $hits buckets de bug"
+                    significado = "Restler detecto $hits patrones distintos de respuestas inesperadas durante el fuzzing de API."
+                    impacto_tecnico = "Archivo: $($bt.Name)"
+                    impacto_negocio = 'API respondio de forma anomala bajo entradas malformadas. Riesgo de fallas en produccion.'
+                    severidad = 'MEDIA'
+                    componente_afectado = 'API REST'
+                    responsable_sugerido = 'Backend'
+                    recomendacion = 'Revisar bug_buckets y reforzar contratos de los endpoints involucrados.'
+                    evidencia = $bt.FullName.Replace($Root.Path, '.')
+                    estado = 'ABIERTO'; sprint_objetivo = ''; fecha_cierre = ''
+                })
+                $rCount++
+            }
+        }
+    }
+    if ($rCount -gt 0) { Write-Ok "  Restler: $rCount hallazgos" }
+    elseif ($rSeen)    { Write-Skip "  Restler: ejecutado sin hallazgos" }
+    else               { Write-Skip "  Restler: no ejecutado (solo swagger.json)" }
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# BLOQUE 13 — LYNIS (Hardening del SO)
+# ══════════════════════════════════════════════════════════════════════════════
+if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
+    Write-Step "Extrayendo: Lynis (hardening SO)"
+    $lDir = Get-ChildItem -Path (Join-Path $Reportes 'security') -Directory -Recurse -Filter 'lynis' -ErrorAction SilentlyContinue
+    $lCount = 0; $lSeen = $false
+    foreach ($d in $lDir) {
+        $datFiles = Get-ChildItem -Path $d.FullName -Include 'lynis-report.dat','*.dat','lynis*.log' -Recurse -ErrorAction SilentlyContinue
+        foreach ($f in $datFiles) {
+            $lSeen = $true
+            try {
+                $lines = Get-Content $f.FullName -Encoding UTF8
+                # Warnings / Suggestions: formato `warning[]=ID|texto|...` o `suggestion[]=ID|texto|...`
+                foreach ($ln in $lines) {
+                    if ($ln -match '^(warning|suggestion)\[\]=(.+)$') {
+                        $kind = $matches[1]
+                        $parts = $matches[2] -split '\|'
+                        $rid   = $parts[0]
+                        $txt   = if ($parts.Length -ge 2) { $parts[1] } else { $matches[2] }
+                        $sev   = if ($kind -eq 'warning') { 'ALTA' } else { 'MEDIA' }
+                        $Hallazgos.Add(@{
+                            id = New-ID; fecha_deteccion = $FechaHoraTS
+                            herramienta = 'Lynis'; tipo_prueba = 'Seguridad'
+                            caracteristica_iso25010 = 'Seguridad / Mantenibilidad'
+                            hallazgo = "[$rid] $txt"
+                            significado = $txt
+                            impacto_tecnico = "Tipo: $kind | Test: $rid"
+                            impacto_negocio = 'Configuracion de hardening del sistema operativo no cumple buenas practicas (CIS).'
+                            severidad = $sev
+                            componente_afectado = 'Sistema Operativo / Servidor'
+                            responsable_sugerido = 'Infraestructura'
+                            recomendacion = 'Aplicar la sugerencia oficial de Lynis para la regla indicada.'
+                            evidencia = $f.FullName.Replace($Root.Path, '.')
+                            estado = 'ABIERTO'; sprint_objetivo = ''; fecha_cierre = ''
+                        })
+                        $lCount++
+                    }
+                }
+            } catch { if ($Verbose) { Write-Warn "  Lynis: $($_.Exception.Message)" } }
+        }
+    }
+    if ($lCount -gt 0) { Write-Ok "  Lynis: $lCount hallazgos" }
+    elseif ($lSeen)    { Write-Skip "  Lynis: ejecutado sin findings" }
+    else               { Write-Skip "  Lynis: no ejecutado" }
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# BLOQUE FINAL — NMAP + VULNERS (registro informativo si no se ejecuto)
+# ══════════════════════════════════════════════════════════════════════════════
+if ($TodosTipos -or $TipoPrueba -contains 'Seguridad') {
+    Write-Step "Extrayendo: Nmap + Vulners NSE"
+    $NmapXml = Get-ChildItem -Path (Join-Path $Reportes 'security') -Filter 'nmap-report.xml' -Recurse -ErrorAction SilentlyContinue |
+               Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    $NmapCount = 0
+    if ($NmapXml) {
+        try {
+            [xml]$xml = Get-Content $NmapXml.FullName -Raw
+            foreach ($host_ in @($xml.nmaprun.host)) {
+                $hostAddr = ($host_.address | Where-Object { $_.addrtype -eq 'ipv4' } | Select-Object -First 1).addr
+                foreach ($port in @($host_.ports.port)) {
+                    foreach ($scr in @($port.script)) {
+                        if ($scr.id -eq 'vulners' -and $scr.output) {
+                            $lines = $scr.output -split "`n" | Where-Object { $_ -match 'CVE-' }
+                            foreach ($ln in $lines) {
+                                $cveMatch = [regex]::Match($ln, 'CVE-\d{4}-\d+')
+                                $scoreMatch = [regex]::Match($ln, '(\d+\.\d+)')
+                                $cve = if ($cveMatch.Success) { $cveMatch.Value } else { '' }
+                                $score = if ($scoreMatch.Success) { [double]$scoreMatch.Groups[1].Value } else { 0.0 }
+                                $sev = if ($score -ge 9.0) { 'CRITICA' }
+                                       elseif ($score -ge 7.0) { 'ALTA' }
+                                       elseif ($score -ge 4.0) { 'MEDIA' }
+                                       else { 'BAJA' }
+                                $Hallazgos.Add(@{
+                                    id                      = New-ID
+                                    fecha_deteccion         = $FechaHoraTS
+                                    herramienta             = 'Nmap + Vulners'
+                                    tipo_prueba             = 'Seguridad'
+                                    caracteristica_iso25010 = 'Seguridad'
+                                    hallazgo                = "$cve (CVSS $score) en $hostAddr puerto $($port.portid)/$($port.protocol)"
+                                    significado             = "Servicio $($port.service.name ?? '?') v$($port.service.version ?? '?') con CVE conocido segun base Vulners NSE."
+                                    impacto_tecnico         = "Host $hostAddr | Puerto $($port.portid)/$($port.protocol) | Servicio $($port.service.name ?? '?')"
+                                    impacto_negocio         = 'Servicio expuesto con CVE puede facilitar explotacion remota.'
+                                    severidad               = $sev
+                                    componente_afectado     = "$hostAddr`:$($port.portid)"
+                                    responsable_sugerido    = 'DevOps/Infraestructura'
+                                    recomendacion           = "Aplicar parche o actualizar version del servicio. Consultar https://nvd.nist.gov/vuln/detail/$cve"
+                                    evidencia               = $NmapXml.FullName.Replace($Root.Path, '.')
+                                    estado                  = 'ABIERTO'
+                                    sprint_objetivo         = ''
+                                    fecha_cierre            = ''
+                                })
+                                $NmapCount++
+                            }
+                        }
+                    }
+                }
+            }
+        } catch { if ($Verbose) { Write-Warn "  No se pudo parsear nmap-report.xml: $($_.Exception.Message)" } }
+    }
+    if ($NmapCount -gt 0) {
+        Write-Ok "  Nmap + Vulners: $NmapCount hallazgos"
+    } else {
+        # Registro informativo: la herramienta no se ejecuto o no encontro CVEs
+        $estadoNmap = if ($NmapXml) { 'EJECUTADO_SIN_HALLAZGOS' } else { 'NO_EJECUTADO' }
+        $msgNmap    = if ($NmapXml) {
+            'Nmap se ejecuto y no se detectaron CVEs conocidos en los servicios escaneados.'
+        } else {
+            'Escaneo Nmap + Vulners NSE OMITIDO en esta corrida (requiere flag -IncludeNetwork y autorizacion formal). Sin reporte nmap-report.xml.'
+        }
+        $Hallazgos.Add(@{
+            id                      = New-ID
+            fecha_deteccion         = $FechaHoraTS
+            herramienta             = 'Nmap + Vulners'
+            tipo_prueba             = 'Seguridad'
+            caracteristica_iso25010 = 'Seguridad'
+            hallazgo                = "Nmap + Vulners NSE: $estadoNmap"
+            significado             = $msgNmap
+            impacto_tecnico         = 'Sin datos de discovery de red ni correlacion CVE de servicios.'
+            impacto_negocio         = if ($NmapXml) { 'Sin hallazgos abiertos en esta categoria.' } else { 'No se valido la superficie de red. Riesgo residual no medido en esta categoria.' }
+            severidad               = 'INFORMATIVA'
+            componente_afectado     = $env:REGINSA_URL ?? 'reginsaqa.sunedu.gob.pe'
+            responsable_sugerido    = 'DevOps/Seguridad'
+            recomendacion           = if ($NmapXml) { 'Mantener escaneo periodico mensual.' } else { 'Coordinar autorizacion formal y ejecutar: npm run test:security:all:network' }
+            evidencia               = if ($NmapXml) { $NmapXml.FullName.Replace($Root.Path, '.') } else { 'N/A' }
+            estado                  = if ($NmapXml) { 'CERRADO' } else { 'NO_APLICA' }
+            sprint_objetivo         = ''
+            fecha_cierre            = ''
+        })
+        Write-Skip "  Nmap + Vulners: $estadoNmap (registro informativo agregado)"
+    }
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
 # GUARDAR JSON CONSOLIDADO
 # ══════════════════════════════════════════════════════════════════════════════
 Write-Host ""
 Write-Host "── Guardando consolidado ────────────────────────────────────────" -ForegroundColor Cyan
+
+# Enriquecer todos los hallazgos: el campo `significado` se vuelve mas explicito
+# para que el coordinador (no tecnico) entienda sin ver el codigo. Si ya existe
+# un significado tecnico, se conserva como prefijo y se anexa la explicacion simple.
+foreach ($h in $Hallazgos) {
+    $simple = Get-ExplicacionSimple -Herramienta $h.herramienta -Severidad $h.severidad
+    $sigOrig = ($h.significado ?? '').ToString().Trim()
+    if ([string]::IsNullOrWhiteSpace($sigOrig)) {
+        $h['significado'] = $simple
+    } elseif ($sigOrig -notmatch [regex]::Escape($simple.Substring(0, [Math]::Min(40, $simple.Length)))) {
+        $h['significado'] = "$sigOrig — $simple"
+    }
+    # Eliminar campo auxiliar si quedo de corridas previas
+    if ($h.ContainsKey('explicacion_simple')) { $h.Remove('explicacion_simple') | Out-Null }
+}
 
 $output = @{
     meta = @{
@@ -723,14 +1711,42 @@ $output = @{
             MEDIA   = @($Hallazgos | Where-Object { $_.severidad -eq 'MEDIA'   }).Count
             BAJA    = @($Hallazgos | Where-Object { $_.severidad -eq 'BAJA'    }).Count
         }
+        breakdown_por_herramienta = @(
+            $Hallazgos | Group-Object herramienta | ForEach-Object {
+                $items = $_.Group
+                [PSCustomObject]@{
+                    herramienta = $_.Name
+                    total       = $items.Count
+                    CRITICA     = @($items | Where-Object { $_.severidad -eq 'CRITICA' }).Count
+                    ALTA        = @($items | Where-Object { $_.severidad -eq 'ALTA' }).Count
+                    MEDIA       = @($items | Where-Object { $_.severidad -eq 'MEDIA' }).Count
+                    BAJA        = @($items | Where-Object { $_.severidad -eq 'BAJA' }).Count
+                }
+            } | Sort-Object { -([int]$_.CRITICA) }, { -([int]$_.ALTA) }
+        )
     }
     hallazgos = @($Hallazgos) | Sort-Object {
         switch ($_.severidad) { 'CRITICA' {0} 'ALTA' {1} 'MEDIA' {2} 'BAJA' {3} default {4} }
     } | ForEach-Object { [PSCustomObject]$_ }
 }
 
+# Renumerar IDs SECUENCIALMENTE despues del sort por severidad para evitar
+# que los IDs aparezcan desordenados (HAL-0067 antes de HAL-0030, etc).
+$idx = 1
+foreach ($h in $output.hallazgos) {
+    $h.id = "HAL-{0:D4}" -f $idx
+    $idx++
+}
+
 $output | ConvertTo-Json -Depth 10 | Set-Content -Path $Salida -Encoding UTF8
 Write-Ok "Guardado: $Salida"
+
+# Copiar también a la carpeta fechada para que JSON + Word + Excel queden juntos
+$DatedDir = Join-Path $InformesDir $FechaHoy
+$null     = New-Item -ItemType Directory -Force -Path $DatedDir
+$SalidaDated = Join-Path $DatedDir (Split-Path $Salida -Leaf)
+Copy-Item -Path $Salida -Destination $SalidaDated -Force
+Write-Ok "Copia fechada: $SalidaDated"
 
 # ══════════════════════════════════════════════════════════════════════════════
 # RESUMEN FINAL

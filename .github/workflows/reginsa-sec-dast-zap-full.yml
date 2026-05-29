@@ -1,0 +1,77 @@
+name: 🌐 REGINSA Sec — DAST ZAP Full + API Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "URL objetivo (default: secrets.REGINSA_URL)"
+        required: false
+        default: ""
+      scan_mode:
+        description: "Modo de escaneo (full=activo completo | api=scan con OpenAPI)"
+        required: false
+        default: full
+        type: choice
+        options:
+          - full
+          - api
+  schedule:
+    - cron: '0 5 * * 1'  # Lunes 5am UTC — antes que los demas scans
+
+# Diferencia vs reginsa-sec-dast-zap.yml (baseline):
+#   - full-scan: escaneo activo completo (incluye probes de ataque activos)
+#   - api-scan:  escaneo especifico de APIs REST/SOAP/GraphQL con spec OpenAPI
+# Norma: OWASP ASVS V4-V9, NIST SP 800-115, OWASP Top 10 2021
+
+permissions:
+  contents: read
+
+jobs:
+  zap-full-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      REGINSA_URL: ${{ github.event.inputs.target_url || secrets.REGINSA_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare security reports folder
+        run: mkdir -p reportes/security/zap-full
+
+      - name: Run OWASP ZAP full active scan
+        if: ${{ github.event.inputs.scan_mode != 'api' }}
+        run: |
+          docker run --rm \
+            -v "$PWD:/zap/wrk/:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-full-scan.py \
+              -t "$REGINSA_URL" \
+              -r "reportes/security/zap-full/zap-full-report.html" \
+              -J "reportes/security/zap-full/zap-full-report.json" \
+              -w "reportes/security/zap-full/zap-full-report.md" \
+              -a \
+              -m 10 \
+              || true
+
+      - name: Run OWASP ZAP API scan (OpenAPI/REST)
+        if: ${{ github.event.inputs.scan_mode == 'api' }}
+        run: |
+          docker run --rm \
+            -v "$PWD:/zap/wrk/:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-api-scan.py \
+              -t "$REGINSA_URL" \
+              -f openapi \
+              -r "reportes/security/zap-full/zap-api-report.html" \
+              -J "reportes/security/zap-full/zap-api-report.json" \
+              -w "reportes/security/zap-full/zap-api-report.md" \
+              || true
+
+      - name: Upload ZAP Full Scan report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-full-report-${{ github.run_number }}
+          path: reportes/security/zap-full/
+          if-no-files-found: warn

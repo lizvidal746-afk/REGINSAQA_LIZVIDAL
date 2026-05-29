@@ -1,0 +1,47 @@
+name: 🔧 REGINSA Sec — Infra Lynis System Hardening Audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 6'  # Sabado 6am UTC (semanal, no en dia de otros scans)
+
+# Lynis audita el hardening del sistema donde corre (runner CI o servidor).
+# Equivalente gratuito al modulo de hardening OS de Tenable Nessus.
+# Cubre: SSH config, permisos de archivos, parametros kernel, servicios
+# innecesarios, politicas de contrasenas, etc.
+# Norma: CIS Benchmarks, ISO/IEC 27001 A.12, NTP-ISO/IEC 12207
+
+permissions:
+  contents: read
+
+jobs:
+  lynis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare reports folder
+        run: mkdir -p reportes/security/lynis
+
+      - name: Run Lynis hardening audit
+        run: |
+          docker run --rm \
+            --pid host \
+            -v /:/hostfs:ro \
+            -v "$PWD/reportes/security/lynis:/output" \
+            cisofy/lynis:latest \
+            audit system \
+            --report-file /output/lynis-report.dat \
+            --log-file /output/lynis.log \
+            --no-colors \
+            --quiet \
+            || true
+
+      - name: Upload Lynis report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lynis-hardening-report-${{ github.run_number }}
+          path: reportes/security/lynis/
+          if-no-files-found: warn

@@ -1,0 +1,60 @@
+name: 🔍 REGINSA Sec — DAST Nikto Web Server Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "URL objetivo (default: secrets.REGINSA_URL)"
+        required: false
+        default: ""
+  schedule:
+    - cron: '0 7 * * 1'  # Lunes 7am UTC
+
+# Nikto complementa OWASP ZAP en: headers HTTP peligrosos, configuraciones
+# default del servidor web, versiones obsoletas de software expuesto.
+# Norma: OWASP Top 10 A05 (Misconf), A06 (Outdated), NIST SP 800-115
+
+permissions:
+  contents: read
+
+jobs:
+  nikto:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TARGET: ${{ github.event.inputs.target_url || secrets.REGINSA_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare reports folder
+        run: mkdir -p reportes/security/nikto
+
+      - name: Run Nikto scan (HTML output)
+        run: |
+          docker run --rm \
+            -v "$PWD/reportes/security/nikto:/output" \
+            sullo/nikto:latest \
+            -h "$TARGET" \
+            -Format htm \
+            -output /output/nikto-report.html \
+            -nointeractive \
+            || true
+
+      - name: Run Nikto scan (CSV output)
+        run: |
+          docker run --rm \
+            -v "$PWD/reportes/security/nikto:/output" \
+            sullo/nikto:latest \
+            -h "$TARGET" \
+            -Format csv \
+            -output /output/nikto-report.csv \
+            -nointeractive \
+            || true
+
+      - name: Upload Nikto report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nikto-dast-report-${{ github.run_number }}
+          path: reportes/security/nikto/
+          if-no-files-found: warn

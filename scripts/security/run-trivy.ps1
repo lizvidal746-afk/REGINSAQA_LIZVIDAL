@@ -59,12 +59,36 @@ $reportPath = "/report/trivy-report.json"
 
 Write-Host "Ejecutando Trivy filesystem scan sobre $projectPath"
 
+# Directorios a excluir (artefactos de testing/seguridad/IDE/build, no son código del producto)
+$skipDirs = @(
+  '.nuclei-templates',
+  'nuclei-templates',
+  'templates/nuclei',
+  'reportes',
+  'allure-report',
+  'allure-results',
+  'playwright-report',
+  'test-results',
+  'test-files',
+  'screenshots',
+  '.vscode',
+  '.idea',
+  'node_modules',
+  'dist',
+  'build',
+  'bin',
+  'obj',
+  'pipelines'
+) -join ','
+
 Write-Host "`n--- Resultados en consola (tabla) ---"
 docker run --rm `
   --mount "type=bind,source=$workspacePath,target=/workdir" `
   $trivyImage `
   fs $scanTarget `
   --severity HIGH,CRITICAL `
+  --skip-dirs $skipDirs `
+  --timeout 10m `
   --format table
 
 if ($LASTEXITCODE -ne 0) {
@@ -78,6 +102,8 @@ docker run --rm `
   $trivyImage `
   fs $scanTarget `
   --severity HIGH,CRITICAL `
+  --skip-dirs $skipDirs `
+  --timeout 10m `
   --format json `
   --output $reportPath
 
@@ -94,8 +120,13 @@ if ($reportInfo.Length -le 2) {
   throw "Trivy generó un reporte vacío o incompleto en $reportFile"
 }
 
+# Trivy v0.69+: vulnerabilidades en .Results[].Vulnerabilities[]
+# Algunos Results (config, secret) NO tienen propiedad Vulnerabilities — usar PSObject.Properties para StrictMode
 $reportJson = Get-Content $reportFile -Raw | ConvertFrom-Json
-$totalVulns = ($reportJson.Results | Where-Object { $_.Vulnerabilities } | ForEach-Object { $_.Vulnerabilities } | Measure-Object).Count
+$totalVulns = @($reportJson.Results |
+  Where-Object { $_.PSObject.Properties['Vulnerabilities'] -and $_.Vulnerabilities } |
+  ForEach-Object { $_.Vulnerabilities } |
+  Where-Object { $_ -ne $null }).Count
 
 Write-Host "Reporte JSON: $reportFile"
 

@@ -1,0 +1,62 @@
+﻿name: 📜 REGINSA Sec — SCA Retire.js JS Vulnerability Scan
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - package.json
+      - package-lock.json
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'  # Lunes 6am UTC
+  workflow_dispatch:
+
+# Retire.js es especifico para JS/TS: detecta librerias JS con CVEs conocidos
+# en package.json Y en archivos JS bundled/minificados (diferencia vs DepCheck).
+# Norma: OWASP Top 10 A06 (Vulnerable Components), CVSSv3.1
+
+permissions:
+  contents: read
+
+jobs:
+  retirejs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Retire.js
+        run: npm install -g retire
+
+      - name: Prepare reports folder
+        run: mkdir -p reportes/security/retirejs
+
+      - name: Run Retire.js scan
+        run: |
+          retire \
+            --path . \
+            --outputformat json \
+            --outputpath reportes/security/retirejs/retire-results.json \
+            --ignore node_modules/.cache \
+            || true
+
+      - name: Upload Retire.js report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: retirejs-sca-report-${{ github.run_number }}
+          path: reportes/security/retirejs/
+          if-no-files-found: warn

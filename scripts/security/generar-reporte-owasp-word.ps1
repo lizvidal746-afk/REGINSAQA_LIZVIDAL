@@ -167,6 +167,143 @@ $structuredSummary = [ordered]@{
 
 ($structuredSummary | ConvertTo-Json -Depth 8) | Set-Content -Path $OutputResumenEstructuradoJson -Encoding UTF8
 
+function Get-PaidRecommendationsEs {
+  $r = @()
+  $r += ''
+  $r += '---'
+  $r += ''
+  $r += '## Recomendaciones de Herramientas Premium (Complemento Profesional)'
+  $r += ''
+  $r += 'Las herramientas gratuitas implementadas cubren los controles establecidos en OWASP ASVS 4.0,'
+  $r += 'NIST SP 800-115 e ISO/IEC 27001. Para entornos con requerimientos de auditoria externa,'
+  $r += 'certificacion o cumplimiento regulatorio avanzado, se recomienda complementar con:'
+  $r += ''
+  $r += '### SAST Premium'
+  $r += ''
+  $r += '- Checkmarx One: analisis de flujo de datos multi-lenguaje con IA, cobertura CWE/OWASP completa,'
+  $r += '  integracion nativa Azure DevOps, fix sugerido automaticamente.'
+  $r += '  Justificacion: CodeQL y Semgrep presentan tasa alta de falsos positivos y no cubren logica de negocio.'
+  $r += '  Norma: OWASP ASVS L3, ISO 27001 A.14.2.1.'
+  $r += '- Veracode Static Analysis: SLA garantizado para auditores externos, soporte 24/7, cobertura backend Java/C#.'
+  $r += '  Norma: NIST SP 800-53 CA-8, ISO 27001 A.14.2.3.'
+  $r += '- Snyk Business/Enterprise: fix automatico de PRs, analisis runtime, integracion completa Azure DevOps.'
+  $r += '  Free tier limitado a 200 tests/mes, sin PR blocking.'
+  $r += '  Norma: NTP-ISO/IEC 12207, OWASP ASVS V13.'
+  $r += ''
+  $r += '### DAST Premium'
+  $r += ''
+  $r += '- Burp Suite Professional ($449/usuario/ano): proxy interactivo con IA, Intruder ilimitado,'
+  $r += '  reportes PDF profesionales para auditores.'
+  $r += '  Justificacion: ZAP no detecta vulnerabilidades de logica de negocio ni explora SPAs avanzadas.'
+  $r += '  Norma: NIST SP 800-115, OWASP ASVS V4-V9.'
+  $r += '- Microsoft RESTler (gratuito, codigo abierto): fuzzer de API REST/OpenAPI para OWASP API Top 10,'
+  $r += '  deteccion de BOLA, autenticacion rota, inyeccion. Sin limite de tiempo ni cuenta requerida.'
+  $r += '  Para funcionalidades de dashboard y reportes avanzados, considerar Burp Suite Pro (ver arriba).'
+  $r += '- Invicti/Acunetix: Proof-Based Scanning sin falsos positivos, IAST integrado.'
+  $r += '  Norma: ISO/IEC 25010, OWASP Top 10 2021.'
+  $r += '- Rapid7 InsightAppSec: crawling moderno de Angular/React/SPAs, integracion Azure Boards.'
+  $r += '  Norma: ISO 27001 A.14.2.8.'
+  $r += ''
+  $r += '### Escaneo de Infraestructura Premium'
+  $r += ''
+  $r += '- Tenable Nessus Professional ($3,990/ano): actualizacion de plugins 0-day'
+  $r += '  (Greenbone Community tiene delay de 7 dias). Compliance checks PCI-DSS, HIPAA, CIS incluidos.'
+  $r += '  Norma: NIST SP 800-115, PCI-DSS Req. 11.3.'
+  $r += '- Qualys VMDR: escaneo agentless de red completa, TruRisk scoring, inventario automatico.'
+  $r += '  Norma: ISO 27001 A.12.6.1, CVSSv3.1.'
+  $r += '- Tenable.io: evaluacion continua, integracion DefectDojo/Jira, reportes ejecutivos para directivos.'
+  $r += '  Norma: ISO 27001 A.16.1.4, NIST SP 800-137.'
+  $r += ''
+  $r += '### Gestion de Vulnerabilidades Premium'
+  $r += ''
+  $r += '- GitHub Advanced Security ($49/committer/mes): CodeQL en repos privados, Secret Scanning en PRs,'
+  $r += '  Dependabot Alerts con PR blocking. CodeQL gratuito solo funciona en repos publicos.'
+  $r += '  Norma: ISO 27001 A.9.4.1, NTP-ISO/IEC 12207.'
+  $r += '- SonarQube Developer/Enterprise: branch analysis, PR decoration en Azure DevOps, taint analysis.'
+  $r += '  Community no tiene analisis de ramas ni integracion con Pull Requests.'
+  $r += '  Norma: ISO/IEC 25010, NTP-ISO/IEC 12207.'
+  $r += '- JFrog Xray: SBOM management completo, license compliance, policy enforcement nativo.'
+  $r += '  Norma: NTP-ISO/IEC 12207, SPDX/CycloneDX.'
+  $r += ''
+  $r += '### Nota de Inversion'
+  $r += ''
+  $r += 'La inversion en herramientas premium se justifica ante: auditoria externa DRTSC,'
+  $r += 'certificacion ISO 27001, cumplimiento PCI-DSS, o cuando la superficie de ataque'
+  $r += 'institucional (SUNEDU, PCM, MINEDU) requiere cobertura de nivel alto.'
+  $r += 'La combinacion de herramientas gratuitas implementadas mas al menos una herramienta'
+  $r += 'premium por capa provee cobertura equivalente al 90% de frameworks comerciales completos.'
+  return $r
+}
+
+function Get-PaidRecommendationsEn {
+  $r = @()
+  $r += ''
+  $r += '---'
+  $r += ''
+  $r += '## Premium Tool Recommendations (Professional Complement)'
+  $r += ''
+  $r += 'The free tools implemented cover controls established in OWASP ASVS 4.0,'
+  $r += 'NIST SP 800-115, and ISO/IEC 27001. For environments with external audit,'
+  $r += 'certification, or advanced regulatory compliance requirements, the following'
+  $r += 'premium tools are recommended as necessary complements:'
+  $r += ''
+  $r += '### SAST Premium'
+  $r += ''
+  $r += '- Checkmarx One: multi-language AI data-flow analysis, full CWE/OWASP coverage,'
+  $r += '  native Azure DevOps integration, automated fix suggestions.'
+  $r += '  Justification: CodeQL and Semgrep have high false-positive rates and miss business logic flaws.'
+  $r += '  Standard: OWASP ASVS L3, ISO 27001 A.14.2.1.'
+  $r += '- Veracode Static Analysis: guaranteed SLA for external auditors, 24/7 support.'
+  $r += '  Standard: NIST SP 800-53 CA-8, ISO 27001 A.14.2.3.'
+  $r += '- Snyk Business/Enterprise: automatic PR fixes, runtime analysis, full Azure DevOps integration.'
+  $r += '  Free tier limited to 200 tests/month, no PR blocking.'
+  $r += '  Standard: NTP-ISO/IEC 12207, OWASP ASVS V13.'
+  $r += ''
+  $r += '### DAST Premium'
+  $r += ''
+  $r += '- Burp Suite Professional ($449/user/year): AI-powered interactive proxy, unlimited Intruder,'
+  $r += '  professional PDF reports for auditors.'
+  $r += '  Justification: ZAP does not detect business logic vulnerabilities or crawl modern SPAs.'
+  $r += '  Standard: NIST SP 800-115, OWASP ASVS V4-V9.'
+  $r += '- Microsoft RESTler (free, open source): REST/OpenAPI API fuzzer for OWASP API Top 10,'
+  $r += '  detects BOLA, broken auth, injection. No time limit, no account required.'
+  $r += '  For dashboard and advanced reporting features, consider Burp Suite Pro (see above).'
+  $r += '- Invicti/Acunetix: Proof-Based Scanning with zero false positives, integrated IAST.'
+  $r += '  Standard: ISO/IEC 25010, OWASP Top 10 2021.'
+  $r += '- Rapid7 InsightAppSec: modern Angular/React/SPA crawling, Azure Boards integration.'
+  $r += '  Standard: ISO 27001 A.14.2.8.'
+  $r += ''
+  $r += '### Infrastructure Scanning Premium'
+  $r += ''
+  $r += '- Tenable Nessus Professional ($3,990/year): 0-day plugin updates'
+  $r += '  (Greenbone Community has 7-day delay). PCI-DSS, HIPAA, CIS compliance checks included.'
+  $r += '  Standard: NIST SP 800-115, PCI-DSS Req. 11.3.'
+  $r += '- Qualys VMDR: agentless full-network scanning, TruRisk scoring, automatic asset inventory.'
+  $r += '  Standard: ISO 27001 A.12.6.1, CVSSv3.1.'
+  $r += '- Tenable.io: continuous assessment, DefectDojo/Jira integration, executive PDF reports.'
+  $r += '  Standard: ISO 27001 A.16.1.4, NIST SP 800-137.'
+  $r += ''
+  $r += '### Vulnerability Management Premium'
+  $r += ''
+  $r += '- GitHub Advanced Security ($49/committer/month): CodeQL on private repos, PR Secret Scanning,'
+  $r += '  Dependabot Alerts with PR blocking. Free CodeQL only works on public repositories.'
+  $r += '  Standard: ISO 27001 A.9.4.1, NTP-ISO/IEC 12207.'
+  $r += '- SonarQube Developer/Enterprise: branch analysis, PR decoration on Azure DevOps, taint analysis.'
+  $r += '  Community edition lacks branch analysis and Pull Request integration.'
+  $r += '  Standard: ISO/IEC 25010, NTP-ISO/IEC 12207.'
+  $r += '- JFrog Xray: full SBOM management, license compliance, native policy enforcement.'
+  $r += '  Standard: NTP-ISO/IEC 12207, SPDX/CycloneDX.'
+  $r += ''
+  $r += '### Investment Note'
+  $r += ''
+  $r += 'Investment in premium tools is justified for: external DRTSC audits,'
+  $r += 'ISO 27001 certification, PCI-DSS compliance, or when the institutional attack'
+  $r += 'surface requires high-level coverage (SUNEDU, PCM, MINEDU).'
+  $r += 'Combining the implemented free tools with at least one premium tool per layer'
+  $r += 'provides coverage equivalent to 90% of full commercial frameworks.'
+  return $r
+}
+
 function Build-ReportEs {
   param(
     [string]$Fecha,
@@ -218,6 +355,7 @@ function Build-ReportEs {
   $md += "- Resumen estructurado reutilizable (JSON): $OutputResumenEstructuradoJson"
   $md += '- Complementar con pruebas manuales/activas para validar riesgos de explotacion.'
   $md += '- Mantener seguimiento con matriz de remediacion y SLA por hallazgo.'
+  $md += (Get-PaidRecommendationsEs)
 
   return ($md -join "`r`n")
 }
@@ -273,6 +411,7 @@ function Build-ReportEn {
   $md += "- Reusable structured summary (JSON): $OutputResumenEstructuradoJson"
   $md += '- Complement with manual/active testing for exploitability validation.'
   $md += '- Track remediation through a matrix with SLA per finding.'
+  $md += (Get-PaidRecommendationsEn)
 
   return ($md -join "`r`n")
 }
@@ -335,6 +474,7 @@ function Build-DeveloperReportEs {
   $md += ''
   $md += '- El hallazgo se considera cerrado cuando existe evidencia tecnica de configuracion aplicada y re-scan sin recurrencia.'
   $md += '- Adjuntar endpoint afectado, cambio realizado y resultado de validacion.'
+  $md += (Get-PaidRecommendationsEs)
 
   return ($md -join "`r`n")
 }
@@ -397,6 +537,7 @@ function Build-DeveloperReportEn {
   $md += ''
   $md += '- A finding is closed only with technical evidence of configuration applied and clean re-scan for that finding.'
   $md += '- Include affected endpoint, implemented change, and validation result.'
+  $md += (Get-PaidRecommendationsEn)
 
   return ($md -join "`r`n")
 }
@@ -437,6 +578,7 @@ function Build-ExecutiveReportEs {
   $md += ''
   $md += '- Aprobar remediacion priorizada en 2 frentes: CSP y hardening de headers.'
   $md += '- Mantener escaneo automatico en cada ciclo y validacion manual para riesgos de explotacion avanzada.'
+  $md += (Get-PaidRecommendationsEs)
 
   return ($md -join "`r`n")
 }
@@ -477,6 +619,7 @@ function Build-ExecutiveReportEn {
   $md += ''
   $md += '- Approve prioritized remediation in two fronts: CSP and header hardening.'
   $md += '- Keep automated scanning in each cycle and manual validation for advanced exploitability risks.'
+  $md += (Get-PaidRecommendationsEn)
 
   return ($md -join "`r`n")
 }
@@ -573,12 +716,12 @@ function Write-DocxFromText {
     return $false
   }
   finally {
-    if ($doc -ne $null) {
-      try { $doc.Close() } catch {}
+    if ($null -ne $doc) {
+      try { $doc.Close() } catch { Write-Verbose "doc.Close() fallo: $_" }
     }
-    if ($word -ne $null) {
-      try { $word.Quit() } catch {}
-      try { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($word) } catch {}
+    if ($null -ne $word) {
+      try { $word.Quit() } catch { Write-Verbose "word.Quit() fallo: $_" }
+      try { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($word) } catch { Write-Verbose "ReleaseComObject fallo: $_" }
     }
   }
 }

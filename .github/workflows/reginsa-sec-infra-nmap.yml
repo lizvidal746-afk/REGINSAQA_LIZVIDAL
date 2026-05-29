@@ -1,0 +1,53 @@
+name: 🗺️ REGINSA Sec — Infra Nmap + Vulners CVE Discovery
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "IP, dominio o rango CIDR objetivo (ej: sunedu.gob.pe)"
+        required: true
+        default: ""
+      scan_ports:
+        description: "Puertos a escanear (ej: 80,443,8080 o 1-1000)"
+        required: false
+        default: "80,443,8080,8443,22,21,3306,5432,3389"
+
+# Equivalente gratuito a Tenable Nessus (discovery basico):
+# nmap -sV detecta versiones de servicios y el script NSE vulners
+# correlaciona automaticamente con base CVE/NVD.
+# Norma: NIST SP 800-115 (Discovery Phase), CVSSv3.1, CWE/NVD
+# NOTA: Solo ejecutar con autorizacion previa sobre targets institucionales.
+
+permissions:
+  contents: read
+
+jobs:
+  nmap-vulners:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare reports folder
+        run: mkdir -p reportes/security/nmap
+
+      - name: Run Nmap with Vulners NSE script
+        run: |
+          docker run --rm \
+            -v "$PWD/reportes/security/nmap:/output" \
+            instrumentisto/nmap:latest \
+            -sV \
+            --script vulners \
+            -p "${{ github.event.inputs.scan_ports }}" \
+            -oN /output/nmap-report.txt \
+            -oX /output/nmap-report.xml \
+            "${{ github.event.inputs.target }}" \
+            || true
+
+      - name: Upload Nmap report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nmap-vulners-report-${{ github.run_number }}
+          path: reportes/security/nmap/
+          if-no-files-found: warn

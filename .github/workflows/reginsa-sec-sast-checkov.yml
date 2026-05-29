@@ -1,0 +1,60 @@
+﻿name: 🏗️ REGINSA Sec — SAST Checkov IaC Scan
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile
+      - azure-pipelines.yml
+      - .github/workflows/**
+      - docker/**
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 7 * * 1'  # Lunes 7am UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checkov:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Checkov IaC scan
+        # Cubre: Dockerfile, GitHub Actions YAMLs, Azure Pipelines YAMLs
+        # Norma: CIS Benchmarks, NIST 800-190, OWASP Top 10 (IaC)
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: dockerfile,github_actions,azure_pipelines
+          output_format: sarif
+          output_file_path: checkov-results.sarif
+          soft_fail: true
+
+      - name: Upload Checkov SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: checkov-results.sarif
+          category: checkov-iac
+        continue-on-error: true
+
+      - name: Prepare artifact folder
+        if: always()
+        run: mkdir -p reportes/security/checkov && cp checkov-results.sarif reportes/security/checkov/ 2>/dev/null || true
+
+      - name: Upload Checkov report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkov-iac-report-${{ github.run_number }}
+          path: reportes/security/checkov/
+          if-no-files-found: warn

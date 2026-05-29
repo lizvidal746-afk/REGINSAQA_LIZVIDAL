@@ -69,19 +69,49 @@ on:
         required: false
         default: ""
       security_tool:
-        description: "Herramienta de seguridad (all|zap|nuclei|gitleaks|semgrep|trivy|depcheck|npm-audit)"
+        description: "Herramienta (all|sast|sca|dast|infra|individual tool)"
         required: false
         default: all
         type: choice
         options:
           - all
+          - sast
+          - sca
+          - dast
+          - infra
           - zap
           - nuclei
           - gitleaks
           - semgrep
           - trivy
           - depcheck
-          - npm-audit
+          - bearer
+          - checkov
+          - trufflehog
+          - nikto
+          - wapiti
+          - restler
+          - lynis
+          - osv
+          - retirejs
+          - grype
+          - codeql
+      include_sonar:
+        description: "Incluir SonarQube scan (requiere SONAR_TOKEN y SONAR_HOST_URL)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      include_network:
+        description: "Incluir Nmap+Vulners (requiere autorizacion formal)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 jobs:
   qa:
@@ -155,76 +185,68 @@ jobs:
                 04) pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/run-caso04-local.ps1 -K6Output "$K6_OUT" -K6Cantidad "${{ inputs.registros }}" -K6Vus "${{ inputs.k6_vus }}" -PerfDuration "${{ inputs.k6_perf_duration }}" -K6SleepSeconds "${{ inputs.k6_sleep_seconds }}" -K6ExpectRateLimit "${{ inputs.k6_expect_rate_limit }}" -K6EnforceOkRate "${{ inputs.k6_enforce_ok_rate }}" -GrafanaProjectId "${{ secrets.K6_CLOUD_PROJECT_ID }}" -GrafanaToken "${{ secrets.K6_CLOUD_TOKEN }}" ;;
                 *) echo "case_target invalido para k6: ${{ inputs.case_target }}"; exit 1 ;;
               esac ;;
-            security)
-              TOOL="${{ inputs.security_tool }}"
-              mkdir -p reportes/security
-
-              # --- Gitleaks ---
-              if [ "$TOOL" = "all" ] || [ "$TOOL" = "gitleaks" ]; then
-                echo "=== [SEC] Gitleaks — Secret Detection ==="
-                mkdir -p reportes/security/gitleaks
-                curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz -o /tmp/gitleaks.tar.gz
-                tar xzf /tmp/gitleaks.tar.gz -C /usr/local/bin/ gitleaks
-                gitleaks detect --source . --report-format json --report-path reportes/security/gitleaks/gitleaks-report.json --config .gitleaks.toml || true
-              fi
-
-              # --- Semgrep ---
-              if [ "$TOOL" = "all" ] || [ "$TOOL" = "semgrep" ]; then
-                echo "=== [SEC] Semgrep — SAST ==="
-                mkdir -p reportes/security/semgrep
-                pip3 install --quiet semgrep
-                semgrep scan --config auto --config p/owasp-top-ten --config p/typescript --config p/javascript --config p/secrets --json -o reportes/security/semgrep/semgrep-report.json . || true
-              fi
-
-              # --- npm audit ---
-              if [ "$TOOL" = "all" ] || [ "$TOOL" = "npm-audit" ] || [ "$TOOL" = "depcheck" ]; then
-                echo "=== [SEC] npm audit — SCA ==="
-                mkdir -p reportes/security/sca
-                npm audit --audit-level=high --json > reportes/security/sca/npm-audit.json || true
-              fi
-
-              # --- Dependency-Check ---
-              if [ "$TOOL" = "all" ] || [ "$TOOL" = "depcheck" ]; then
-                echo "=== [SEC] OWASP Dependency-Check — SCA ==="
-                mkdir -p reportes/security/dependency-check
-                docker run --rm -v "$(pwd):/src" -v "$(pwd)/reportes/security/dependency-check:/report" \
-                  owasp/dependency-check:latest --project "REGINSA-QA" --scan /src \
-                  --format HTML --format JSON --out /report --failOnCVSS 9 || true
-              fi
-
-              # --- Trivy ---
-              if [ "$TOOL" = "all" ] || [ "$TOOL" = "trivy" ]; then
-                echo "=== [SEC] Trivy — Container/Filesystem ==="
-                mkdir -p reportes/security/trivy
-                curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-                trivy fs . --severity HIGH,CRITICAL --format json --output reportes/security/trivy/trivy-fs-report.json || true
-              fi
-
-              # --- OWASP ZAP ---
-              if [ "$TOOL" = "all" ] || [ "$TOOL" = "zap" ]; then
-                echo "=== [SEC] OWASP ZAP — DAST ==="
-                pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/generar-reportes-owasp-fechados.ps1 -Target "${{ secrets.REGINSA_URL }}" -BaseDir "reportes/security"
-              fi
-
-              # --- Nuclei ---
-              if [ "$TOOL" = "all" ] || [ "$TOOL" = "nuclei" ]; then
-                echo "=== [SEC] Nuclei — DAST ==="
-                mkdir -p reportes/security/nuclei
-                docker run --rm -v "$(pwd)/reportes/security/nuclei:/output" \
-                  projectdiscovery/nuclei:latest \
-                  -u "${{ secrets.REGINSA_URL }}" \
-                  -severity critical,high,medium -exclude-tags dos \
-                  -jsonl -output /output/nuclei-report.jsonl \
-                  -sarif-export /output/nuclei-report.sarif || true
-              fi
-              ;;
-            sonar)
-              if [ -n "${{ inputs.sonar_host_url }}" ]; then
-                export SONAR_HOST_URL="${{ inputs.sonar_host_url }}"
-              fi
-              pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/escanear-repos-sonar.ps1 -Projects frontend,backend,enlinea
-              ;;
+            security|sonar) echo "[CI] handled by dedicated pwsh steps below" ;;
           esac
+
+      # ── Security: orquestador maestro (19 herramientas via run-all-security.ps1) ─────────
+      - name: Security scan
+        if: inputs.test_type == 'security'
+        shell: pwsh
+        env:
+          SONAR_TOKEN:    ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ inputs.sonar_host_url != '' && inputs.sonar_host_url || secrets.SONAR_HOST_URL }}
+          REGINSA_URL:    ${{ secrets.REGINSA_URL }}
+        run: |
+          $tool        = '${{ inputs.security_tool }}'
+          $date        = Get-Date -Format 'yyyy-MM-dd_HH-mm'
+          $inclSonar   = '${{ inputs.include_sonar }}'   -eq 'true'
+          $inclNetwork = '${{ inputs.include_network }}' -eq 'true'
+          $inclCodeQL  = $tool -in @('all','codeql','sast')
+
+          # Solo DAST necesita URL; si la herramienta es de tipo SAST/SCA/Infra, saltar DAST
+          $skipDast = $tool -in @('sast','gitleaks','semgrep','bearer','checkov',
+                                  'trufflehog','codeql','sca','trivy','depcheck',
+                                  'osv','retirejs','grype','infra','lynis')
+
+          $psArgs = @(
+            '-NoProfile', '-ExecutionPolicy', 'Bypass',
+            '-File', 'scripts/security/run-all-security.ps1',
+            '-Date', $date,
+            '-Target', ($env:REGINSA_URL ?? '')
+          )
+          if ($skipDast)    { $psArgs += '-SkipDast' }
+          if ($inclSonar)   { $psArgs += '-IncludeSonar' }
+          if ($inclCodeQL)  { $psArgs += '-IncludeCodeQL' }
+          if ($inclNetwork) { $psArgs += '-IncludeNetwork' }
+
+          Write-Host "[CI] pwsh $($psArgs -join ' ')" -ForegroundColor Cyan
+          & pwsh @psArgs
+          # No salir con error para que los artefactos siempre se publiquen
+          if ($LASTEXITCODE -ne 0) {
+            Write-Warning "[CI] Scan finalizo con exit $LASTEXITCODE (hallazgos criticos detectados)"
+          }
+
+      # ── SonarQube: escanear repos + generar reporte ejecutivo con timestamp ───────────────
+      - name: SonarQube scan
+        if: inputs.test_type == 'sonar'
+        shell: pwsh
+        env:
+          SONAR_TOKEN:    ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ inputs.sonar_host_url != '' && inputs.sonar_host_url || secrets.SONAR_HOST_URL }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:SONAR_HOST_URL)) {
+            Write-Error '[CI] SONAR_HOST_URL no configurado. Agrega el secret en Settings > Secrets > Actions.'
+            exit 1
+          }
+          if ([string]::IsNullOrWhiteSpace($env:SONAR_TOKEN)) {
+            Write-Error '[CI] SONAR_TOKEN no configurado.'
+            exit 1
+          }
+          # 1. Escanear repos con sonar-scanner
+          pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/escanear-repos-sonar.ps1 -Projects frontend,backend,enlinea
+          # 2. Generar reporte ejecutivo (ES+EN) con copia en reportes/informes/<stamp>/
+          pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/generar-reporte-sonar-local.ps1 `
+            -SonarHostUrl $env:SONAR_HOST_URL -SonarToken $env:SONAR_TOKEN
 
       - name: Upload reports
         uses: actions/upload-artifact@v4

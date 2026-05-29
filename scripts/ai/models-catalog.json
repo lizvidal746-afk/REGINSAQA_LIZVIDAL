@@ -1,0 +1,33 @@
+{
+  "_comment": "Catalogo curado de modelos Ollama recomendados para REGINSA. Editar para anadir/quitar modelos. update-ollama.ps1 lee este archivo.",
+  "ultima_revision": "2026-05-07",
+  "politica": "100% local, gratuito, on-prem (datos sensibles SUNEDU)",
+  "recomendados": [
+    {
+      "name": "llama3.1:8b",
+      "uso": "Narrativa ejecutiva en espanol",
+      "tamano_gb": 4.7,
+      "instalar": true,
+      "rol": "primary"
+    },
+    {
+      "name": "qwen2.5-coder:7b",
+      "uso": "Analisis de codigo Spring Boot / Angular",
+      "tamano_gb": 4.7,
+      "instalar": true,
+      "rol": "code"
+    },
+    {
+      "name": "deepseek-r1:8b",
+      "uso": "Razonamiento profundo de riesgos",
+      "tamano_gb": 5.2,
+      "instalar": true,
+      "rol": "reasoning"
+    }
+  ],
+  "candidatos_futuros": [
+    { "name": "phi4:14b",         "uso": "Compromiso calidad/peso", "tamano_gb": 9.1, "instalar": false },
+    { "name": "mistral-nemo:12b", "uso": "Multilingue espanol",     "tamano_gb": 7.0, "instalar": false },
+    { "name": "llama3.3:70b",     "uso": "Maxima calidad (req GPU)", "tamano_gb": 40.0, "instalar": false }
+  ]
+}

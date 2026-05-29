@@ -1,0 +1,54 @@
+﻿name: 🔎 REGINSA Sec — SAST Bearer Data Flow
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 7 * * 1'  # Lunes 7am UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bearer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Bearer SAST (data-flow + secrets + PII)
+        uses: bearer/bearer-action@v2
+        with:
+          format: sarif
+          output: bearer-results.sarif
+          scanner: secrets,sast
+          severity: critical,high,medium
+          # exit-code 0: no falla la build, solo reporta
+          exit-code: '0'
+
+      - name: Upload Bearer SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: bearer-results.sarif
+          category: bearer-sast
+        continue-on-error: true
+
+      - name: Prepare artifact folder
+        if: always()
+        run: mkdir -p reportes/security/bearer && cp bearer-results.sarif reportes/security/bearer/ 2>/dev/null || true
+
+      - name: Upload Bearer report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bearer-sast-report-${{ github.run_number }}
+          path: reportes/security/bearer/
+          if-no-files-found: warn

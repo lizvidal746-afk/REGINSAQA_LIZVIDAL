@@ -1,140 +1,105 @@
+# Azure Pipelines — Seguridad REGINSA (19 herramientas via run-all-security.ps1)
+# Entrypoint unico: scripts/security/run-all-security.ps1
+# SAST: Semgrep, Bearer, Gitleaks, TruffleHog, Checkov, (CodeQL opcional)
+# SCA:  OSV, Dependency-Check, RetireJS, Grype, Trivy
+# DAST: ZAP, Nuclei, Nikto, Wapiti, Restler
+# Infra: Lynis  | Red: Nmap+Vulners (solo con autorizacion)
+# SonarQube: pipeline separado azure-sonarqube-sync.yml
+
 trigger: none
 pr: none
 
+parameters:
+  - name: includeCodeQL
+    displayName: Incluir CodeQL (~20 min, requiere imagen Docker reginsa-codeql)
+    type: boolean
+    default: false
+  - name: includeSonar
+    displayName: Incluir SonarQube (requiere SONAR_TOKEN y SONAR_HOST_URL)
+    type: boolean
+    default: false
+  - name: skipDast
+    displayName: Omitir DAST (ZAP/Nuclei/Nikto/Wapiti/Restler) — ejecutar solo SAST+SCA
+    type: boolean
+    default: false
+  - name: includeNetwork
+    displayName: Incluir Nmap+Vulners (requiere autorizacion formal)
+    type: boolean
+    default: false
+
 variables:
-  - name: RUN_ZAP
-    value: 'false'
-  - name: RUN_NUCLEI
-    value: 'false'
-  - name: RUN_TRIVY
-    value: 'true'
+  REGINSA_URL:    $(REGINSA_URL_SECRET)
+  SONAR_HOST_URL: $(SONAR_HOST_URL_SECRET)
+  SONAR_TOKEN:    $(SONAR_TOKEN_SECRET)
 
 stages:
-  - stage: SecretDetection
-    displayName: "🔐 Secret Detection — Gitleaks"
+  - stage: SecurityScan
+    displayName: "Seguridad — 19 herramientas (SAST + SCA + Container + DAST + Infra)"
     jobs:
-      - job: Gitleaks
+      - job: RunAllSecurity
+        displayName: "run-all-security.ps1 (orquestador maestro)"
         pool:
           vmImage: 'ubuntu-latest'
+        timeoutInMinutes: 90
         steps:
           - checkout: self
             fetchDepth: 0
-          - script: |
-              curl -sSfL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_8.18.2_linux_x64.tar.gz | tar xz
-              ./gitleaks detect --source . --report-format json --report-path gitleaks-report.json --config .gitleaks.toml
-            displayName: Run Gitleaks
-          - task: PublishBuildArtifacts@1
-            condition: always()
-            inputs:
-              PathtoPublish: 'gitleaks-report.json'
-              ArtifactName: 'gitleaks-report'
 
-  - stage: SAST
-    displayName: "🔍 SAST — Semgrep"
-    dependsOn: SecretDetection
-    condition: succeededOrFailed()
-    jobs:
-      - job: Semgrep
-        pool:
-          vmImage: 'ubuntu-latest'
-        steps:
-          - checkout: self
-          - script: |
-              pip install semgrep
-              semgrep scan --config auto --config p/owasp-top-ten --config p/typescript --config p/javascript --config p/secrets --json -o semgrep-report.json . || true
-            displayName: Run Semgrep
-          - task: PublishBuildArtifacts@1
-            condition: always()
-            inputs:
-              PathtoPublish: 'semgrep-report.json'
-              ArtifactName: 'semgrep-report'
-
-  - stage: SCA
-    displayName: "📦 SCA — Dependency Check"
-    dependsOn: SAST
-    condition: succeededOrFailed()
-    jobs:
-      - job: DependencyCheck
-        pool:
-          vmImage: 'ubuntu-latest'
-        steps:
-          - checkout: self
           - task: NodeTool@0
             inputs:
               versionSpec: '20.x'
-          - script: npm ci
-            displayName: Install dependencies
-          - script: npm audit --audit-level=high --json > npm-audit.json || true
-            displayName: npm audit
-          - task: PublishBuildArtifacts@1
-            condition: always()
-            inputs:
-              PathtoPublish: 'npm-audit.json'
-              ArtifactName: 'npm-audit-report'
+            displayName: Setup Node.js 20
 
-  - stage: DAST
-    displayName: "🌐 DAST — OWASP ZAP"
-    dependsOn: SCA
-    condition: and(succeededOrFailed(), eq(variables['RUN_ZAP'], 'true'))
-    jobs:
-      - job: OwaspZap
-        pool:
-          vmImage: 'ubuntu-latest'
-        steps:
-          - checkout: self
-          - script: |
-              mkdir -p reportes/security
-              docker run --rm -v "$(pwd):/zap/wrk/:rw" ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t "$(REGINSA_URL)" -a -r "reportes/security/zap-baseline-report.html" -J "reportes/security/zap-baseline-report.json" -w "reportes/security/zap-baseline-report.md" -m 10
-            displayName: Run OWASP ZAP
+          - script: npm ci
+            displayName: Install npm dependencies
+
+          - task: PowerShell@2
+            displayName: "Run-All-Security (19 tools)"
+            inputs:
+              filePath: scripts/security/run-all-security.ps1
+              arguments: >
+                -Target "$(REGINSA_URL)"
+                ${{ if eq(parameters.skipDast, true) }}-SkipDast${{ end }}
+                ${{ if eq(parameters.includeCodeQL, true) }}-IncludeCodeQL${{ end }}
+                ${{ if eq(parameters.includeSonar, true) }}-IncludeSonar${{ end }}
+                ${{ if eq(parameters.includeNetwork, true) }}-IncludeNetwork${{ end }}
+              pwsh: true
+              failOnStderr: false
+            env:
+              SONAR_HOST_URL: $(SONAR_HOST_URL)
+              SONAR_TOKEN:    $(SONAR_TOKEN)
+              REGINSA_URL:    $(REGINSA_URL)
+
           - task: PublishBuildArtifacts@1
             condition: always()
+            displayName: Publicar reportes de seguridad
             inputs:
               PathtoPublish: 'reportes/security'
-              ArtifactName: 'zap-dast-report'
+              ArtifactName: 'security-reports'
 
-  - stage: Trivy
-    displayName: "🐳 Container Security — Trivy"
-    dependsOn: SCA
-    condition: and(succeededOrFailed(), eq(variables['RUN_TRIVY'], 'true'))
+  - stage: SonarReport
+    displayName: "Reporte ejecutivo SonarQube"
+    dependsOn: SecurityScan
+    condition: and(succeededOrFailed(), eq('${{ parameters.includeSonar }}', 'true'))
     jobs:
-      - job: TrivyScan
+      - job: SonarLocalReport
         pool:
           vmImage: 'ubuntu-latest'
         steps:
           - checkout: self
-          - script: |
-              curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-              mkdir -p reportes/security/trivy
-              trivy fs . --severity HIGH,CRITICAL --format table || true
-              trivy fs . --severity HIGH,CRITICAL --format json --output reportes/security/trivy/trivy-fs-report.json || true
-            displayName: Run Trivy filesystem scan
+          - task: PowerShell@2
+            displayName: Generar reporte ejecutivo SonarQube (ES+EN)
+            inputs:
+              filePath: scripts/security/generar-reporte-sonar-local.ps1
+              arguments: >
+                -SonarHostUrl "$(SONAR_HOST_URL)"
+                -SonarToken "$(SONAR_TOKEN)"
+              pwsh: true
+            env:
+              SONAR_HOST_URL: $(SONAR_HOST_URL)
+              SONAR_TOKEN:    $(SONAR_TOKEN)
           - task: PublishBuildArtifacts@1
             condition: always()
             inputs:
-              PathtoPublish: 'reportes/security/trivy'
-              ArtifactName: 'trivy-report'
-
-  - stage: Nuclei
-    displayName: "🔬 DAST — Nuclei"
-    dependsOn: DAST
-    condition: and(succeededOrFailed(), eq(variables['RUN_NUCLEI'], 'true'))
-    jobs:
-      - job: NucleiScan
-        pool:
-          vmImage: 'ubuntu-latest'
-        steps:
-          - checkout: self
-          - script: |
-              mkdir -p reportes/security/nuclei
-              docker run --rm -v "$(pwd)/reportes/security/nuclei:/output" \
-                projectdiscovery/nuclei:latest \
-                -u "$(REGINSA_URL)" \
-                -severity critical,high,medium -exclude-tags dos \
-                -jsonl -output /output/nuclei-report.jsonl \
-                -sarif-export /output/nuclei-report.sarif || true
-            displayName: Run Nuclei DAST scan
-          - task: PublishBuildArtifacts@1
-            condition: always()
-            inputs:
-              PathtoPublish: 'reportes/security/nuclei'
-              ArtifactName: 'nuclei-dast-report'
+              PathtoPublish: 'reportes'
+              ArtifactName: 'sonar-executive-reports'

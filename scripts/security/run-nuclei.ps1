@@ -53,21 +53,19 @@ $workspacePath = [System.IO.Path]::GetFullPath((Get-CurrentWorkspacePath))
 $outputPath    = Resolve-WorkspaceChildPath -BasePath $workspacePath -CandidatePath $OutputDir
 New-DirectoryIfMissing -Path $outputPath
 
-# Cache de templates (persistente entre ejecuciones)
-$templatesCache = Join-Path $workspacePath '.nuclei-templates'
-New-DirectoryIfMissing -Path $templatesCache
-
+# Cache de templates via Docker named volume (Docker gestiona permisos Linux)
+# NOTA: No se usa bind mount de carpeta Windows porque oculta los templates
+#       que vienen en la imagen y genera 'permission denied'.
 $jsonlFile = Join-Path $outputPath 'nuclei-report.jsonl'
 $sarifFile = Join-Path $outputPath 'nuclei-report.sarif'
 
-$dOutput    = ConvertTo-DockerPath $outputPath
-$dTemplates = ConvertTo-DockerPath $templatesCache
+$dOutput = ConvertTo-DockerPath $outputPath
 
 Write-Host "Target           : $Target"
 Write-Host "Severidades      : $Severity"
 Write-Host "Rate limit       : $RateLimit req/s"
 Write-Host "Timeout por req  : ${Timeout}s"
-Write-Host "Cache templates  : $templatesCache"
+Write-Host "Cache templates  : Docker named volume 'nuclei-templates'"
 Write-Host "Salida JSONL     : $jsonlFile"
 Write-Host "Salida SARIF     : $sarifFile"
 if (-not [string]::IsNullOrWhiteSpace($AuthToken)) {
@@ -78,7 +76,7 @@ if (-not [string]::IsNullOrWhiteSpace($AuthToken)) {
 $dockerArgs = @(
   'run', '--rm',
   '--volume', "${dOutput}:/output",
-  '--volume', "${dTemplates}:/root/nuclei-templates",
+  '--volume', 'nuclei-templates:/app/.nuclei-templates',
   'projectdiscovery/nuclei:latest',
   '-u', $Target,
   '-severity', $Severity,
@@ -90,13 +88,12 @@ $dockerArgs = @(
   '-stats'
 )
 
-# Actualizar templates si se solicita o si el cache esta vacio
-$cacheIsEmpty = (Get-ChildItem $templatesCache -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0
-if ($UpdateTemplates -or $cacheIsEmpty) {
+# Actualizar templates si se solicita (el named volume persiste entre ejecuciones)
+if ($UpdateTemplates) {
   Write-Host "`n-- Actualizando templates Nuclei..." -ForegroundColor Cyan
   $updateArgs = @(
     'run', '--rm',
-    '--volume', "${dTemplates}:/root/nuclei-templates",
+    '--volume', 'nuclei-templates:/app/.nuclei-templates',
     'projectdiscovery/nuclei:latest',
     '-update-templates'
   )
@@ -130,7 +127,7 @@ if (-not (Test-Path $jsonlFile)) {
 
 $lines = Get-Content $jsonlFile -ErrorAction SilentlyContinue
 if ($null -eq $lines -or ($lines | Measure-Object).Count -eq 0) {
-  Write-Host "`nHallazgos: 0 — No se encontraron vulnerabilidades." -ForegroundColor Green
+  Write-Host "`nHallazgos: 0 -- No se encontraron vulnerabilidades." -ForegroundColor Green
   return
 }
 
@@ -141,7 +138,7 @@ $lines | ForEach-Object {
     $sev   = if ($entry.info.severity) { $entry.info.severity.ToLower() } else { 'unknown' }
     if ($counts.ContainsKey($sev)) { $counts[$sev]++ } else { $counts['unknown']++ }
   } catch {
-    # Ignorar lineas malformadas
+    Write-Verbose "Linea JSONL malformada ignorada: $_"
   }
 }
 

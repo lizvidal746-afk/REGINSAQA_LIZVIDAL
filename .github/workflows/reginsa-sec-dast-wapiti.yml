@@ -1,0 +1,54 @@
+name: 🕷️ REGINSA Sec — DAST wapiti Web Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "URL objetivo (default: secrets.REGINSA_URL)"
+        required: false
+        default: ""
+  schedule:
+    - cron: '0 9 * * 1'  # Lunes 9am UTC
+
+# wapiti complementa OWASP ZAP en: SQL injection activo, XSS, XXE,
+# Path Traversal, SSRF, CRLF injection, Open Redirect.
+# No depende de proxy — hace crawl y ataque directamente.
+# Norma: OWASP Top 10 A01-A03, A06, NIST SP 800-115
+
+permissions:
+  contents: read
+
+jobs:
+  wapiti:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TARGET: ${{ github.event.inputs.target_url || secrets.REGINSA_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare reports folder
+        run: mkdir -p reportes/security/wapiti
+
+      - name: Run wapiti DAST scan
+        run: |
+          docker run --rm \
+            -v "$PWD/reportes/security/wapiti:/output" \
+            wapiti3/wapiti:latest \
+            -u "$TARGET" \
+            -o /output/wapiti-report.html \
+            -f html \
+            --scope page \
+            -m sql,xss,xxe,ssrf,shellshock,blindsql,crlf,redirect,nikto,permanentxss \
+            --max-links-per-page 50 \
+            --max-depth 3 \
+            --timeout 10 \
+            || true
+
+      - name: Upload wapiti report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wapiti-dast-report-${{ github.run_number }}
+          path: reportes/security/wapiti/
+          if-no-files-found: warn

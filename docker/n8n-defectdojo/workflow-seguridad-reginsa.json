@@ -1,0 +1,153 @@
+{
+  "name": "REGINSA - Seguridad: Detectar → Notificar → Seguimiento",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "seguridad-reginsa",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "wh-trigger",
+      "name": "Webhook Seguridad REGINSA",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Clasificar hallazgos del payload — 19 herramientas REGINSA\nconst data = $input.first().json;\n\nconst niveles = { CRITICA: 0, CRITICO: 0, ALTA: 1, ALTO: 1, MEDIA: 2, MEDIO: 2, BAJA: 3, BAJO: 3, INFO: 4 };\n\nconst resumen  = data.resumen || {};\nconst findings = (data.top_hallazgos || []).map(f => ({\n  severidad:   f.severidad   || 'INFO',\n  herramienta: f.herramienta || 'N/A',\n  hallazgo:    f.hallazgo    || '',\n  componente:  f.componente  || '',\n  categoria:   f.tipo_prueba || 'General'\n}));\n\nconst maxNivel = findings.reduce((min, f) => {\n  const n = niveles[f.severidad.toUpperCase()] ?? 4;\n  return n < min ? n : min;\n}, 4);\n\nconst nivelTexto = maxNivel === 0 ? 'CRITICO' : maxNivel === 1 ? 'ALTO' : maxNivel === 2 ? 'MEDIO' : 'BAJO';\nconst color = maxNivel === 0 ? 'attention' : maxNivel === 1 ? 'warning' : 'good';\nconst emoji = maxNivel === 0 ? '🚨' : maxNivel === 1 ? '⚠️' : '✅';\n\n// Tabla top 10 hallazgos\nconst filas = findings.slice(0, 10).map(f =>\n  `${f.severidad.padEnd(8)} | ${f.herramienta.padEnd(15)} | ${f.hallazgo.substring(0, 70)}`\n).join('\\n');\n\n// Resumen por categoria de herramientas\nconst herramientas = data.herramientas || [];\nconst cats = { sast: [], sca: [], dast: [], container: [], infra: [], network: [], 'code-quality': [] };\nfor (const h of herramientas) {\n  const cat = (h.categoria || 'otro').toLowerCase();\n  if (cats[cat]) cats[cat].push(h);\n}\nconst iconH = s => s === 'PASS' ? '✅' : s === 'WARN' ? '⚠️' : s === 'SKIP' ? '⏭️' : '❌';\nconst fmtCat = (label, arr) => arr.length ?\n  `**${label}**: ` + arr.map(h => `${iconH(h.estado)} ${h.herramienta.split('(')[0].trim()} (${h.duracion||'-'})`).join(', ') : '';\n\nconst resumenCats = [\n  fmtCat('SAST',          cats['sast']),\n  fmtCat('SCA',           cats['sca']),\n  fmtCat('Container',     cats['container']),\n  fmtCat('DAST',          cats['dast']),\n  fmtCat('Infra',         cats['infra']),\n  fmtCat('Network',       cats['network']),\n  fmtCat('Code Quality',  cats['code-quality']),\n].filter(Boolean).join('\\n');\n\n// Conteo PASS/WARN/SKIP\nconst totPass = herramientas.filter(h => h.estado === 'PASS').length;\nconst totWarn = herramientas.filter(h => h.estado === 'WARN').length;\nconst totSkip = herramientas.filter(h => h.estado === 'SKIP').length;\n\nreturn [{\n  json: {\n    ...data,\n    _meta: {\n      dispararAlerta:      data.disparar === true,\n      nivelMaximo:         nivelTexto,\n      color:               color,\n      emoji:               emoji,\n      totalCritico:        resumen.critico || 0,\n      totalAlto:           resumen.alto    || 0,\n      totalMedio:          resumen.medio   || 0,\n      totalGeneral:        resumen.total   || 0,\n      tablaHallazgos:      filas,\n      resumenCategorias:   resumenCats,\n      herramientasPASS:    totPass,\n      herramientasWARN:    totWarn,\n      herramientasSKIP:    totSkip,\n      dojoUrl:             data.defectdojo ? data.defectdojo.url : null\n    }\n  }\n}];\n"
+      },
+      "id": "code-clasificar",
+      "name": "Clasificar Hallazgos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-1",
+              "leftValue": "={{ $json._meta.dispararAlerta }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-alerta",
+      "name": "Tiene hallazgos criticos/altos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [760, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.TEAMS_WEBHOOK_URL || 'https://outlook.office.com/webhook/CONFIGURAR-URL-TEAMS' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"@type\": \"MessageCard\",\n  \"@context\": \"http://schema.org/extensions\",\n  \"themeColor\": \"{{ $json._meta.color === 'attention' ? 'FF0000' : $json._meta.color === 'warning' ? 'FFA500' : '00AA00' }}\",\n  \"summary\": \"{{ $json._meta.emoji }} REGINSA Security Alert - {{ $json.fecha }}\",\n  \"sections\": [\n    {\n      \"activityTitle\": \"{{ $json._meta.emoji }} Alerta Seguridad REGINSA — {{ $json._meta.nivelMaximo }}\",\n      \"activitySubtitle\": \"{{ $json.fecha }} | Proyecto: SI091-REGINSA (SUNEDU)\",\n      \"facts\": [\n        { \"name\": \"Total hallazgos\", \"value\": \"{{ $json._meta.totalGeneral }}\" },\n        { \"name\": \"Critico\",         \"value\": \"{{ $json._meta.totalCritico }}\" },\n        { \"name\": \"Alto\",            \"value\": \"{{ $json._meta.totalAlto }}\" },\n        { \"name\": \"Medio\",           \"value\": \"{{ $json._meta.totalMedio }}\" },\n        { \"name\": \"Herramientas\",    \"value\": \"✅ {{ $json._meta.herramientasPASS }} PASS | ⚠️ {{ $json._meta.herramientasWARN }} WARN | ⏭️ {{ $json._meta.herramientasSKIP }} SKIP\" },\n        { \"name\": \"DefectDojo\",      \"value\": \"{{ $json._meta.dojoUrl || 'N/A' }}\" }\n      ],\n      \"text\": \"**Top hallazgos:**\\n\\n```\\n{{ $json._meta.tablaHallazgos }}\\n```\"\n    },\n    {\n      \"activityTitle\": \"Estado por categoria\",\n      \"text\": \"{{ $json._meta.resumenCategorias }}\"\n    }\n  ],\n  \"potentialAction\": [\n    {\n      \"@type\": \"OpenUri\",\n      \"name\": \"Ver en DefectDojo\",\n      \"targets\": [{ \"os\": \"default\", \"uri\": \"{{ $json._meta.dojoUrl || 'http://localhost:8080' }}\" }]\n    }\n  ]\n}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "http-teams",
+      "name": "Notificar Teams",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1020, 160],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.SLACK_WEBHOOK_URL || 'https://hooks.slack.com/services/CONFIGURAR-URL-SLACK' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"{{ $json._meta.emoji }} *Alerta Seguridad REGINSA — {{ $json._meta.nivelMaximo }}* ({{ $json.fecha }})\\n>Total: {{ $json._meta.totalGeneral }} | Critico: {{ $json._meta.totalCritico }} | Alto: {{ $json._meta.totalAlto }}\\n>DefectDojo: {{ $json._meta.dojoUrl || 'N/A' }}\",\n  \"attachments\": [\n    {\n      \"color\": \"{{ $json._meta.color === 'attention' ? 'danger' : $json._meta.color === 'warning' ? 'warning' : 'good' }}\",\n      \"title\": \"Top Hallazgos\",\n      \"text\": \"{{ $json._meta.tablaHallazgos }}\"\n    }\n  ]\n}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "http-slack",
+      "name": "Notificar Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1020, 340],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'alerta_enviada', nivel: $('Clasificar Hallazgos').first().json._meta.nivelMaximo, total: $('Clasificar Hallazgos').first().json._meta.totalGeneral, fecha: $('Clasificar Hallazgos').first().json.fecha }) }}"
+      },
+      "id": "resp-alerta",
+      "name": "Responder - Alerta Enviada",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1280, 260]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'sin_alerta', nivel: $json._meta.nivelMaximo, total: $json._meta.totalGeneral, fecha: $json.fecha }) }}"
+      },
+      "id": "resp-ok",
+      "name": "Responder - Sin Alertas",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1020, 500]
+    }
+  ],
+  "connections": {
+    "Webhook Seguridad REGINSA": {
+      "main": [[{ "node": "Clasificar Hallazgos", "type": "main", "index": 0 }]]
+    },
+    "Clasificar Hallazgos": {
+      "main": [[{ "node": "Tiene hallazgos criticos/altos?", "type": "main", "index": 0 }]]
+    },
+    "Tiene hallazgos criticos/altos?": {
+      "main": [
+        [
+          { "node": "Notificar Teams", "type": "main", "index": 0 },
+          { "node": "Notificar Slack", "type": "main", "index": 0 }
+        ],
+        [{ "node": "Responder - Sin Alertas", "type": "main", "index": 0 }]
+      ]
+    },
+    "Notificar Teams": {
+      "main": [[{ "node": "Responder - Alerta Enviada", "type": "main", "index": 0 }]]
+    },
+    "Notificar Slack": {
+      "main": [[{ "node": "Responder - Alerta Enviada", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": ""
+  },
+  "id": "reginsa-security-workflow-v1",
+  "tags": [
+    { "id": "t1", "name": "seguridad" },
+    { "id": "t2", "name": "reginsa" },
+    { "id": "t3", "name": "sunedu" }
+  ]
+}

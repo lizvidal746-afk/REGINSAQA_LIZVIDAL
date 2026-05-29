@@ -1,0 +1,11 @@
+# =============================================================================
+# .trivyignore — REGINSA QA Framework
+# Lista vulnerabilidades aceptadas/falsos positivos por CVE-ID.
+# Las exclusiones por PATH se manejan con --skip-dirs en scripts/security/run-trivy.ps1
+#
+# Formato:
+#   CVE-AAAA-NNNN     # razón breve (sprint/decisión)
+#   GHSA-xxxx-xxxx-xxxx # razón breve
+# =============================================================================
+
+# (Vacío — agregar CVE-IDs aquí solo tras evaluación de riesgo documentada)

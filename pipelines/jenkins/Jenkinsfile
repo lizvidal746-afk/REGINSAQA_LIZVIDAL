@@ -15,7 +15,10 @@ pipeline {
     string(name: 'K6_VUS', defaultValue: '1', description: 'VUs k6')
     choice(name: 'K6_EXPECT_RATE_LIMIT', choices: ['1', '0'], description: 'Esperar rate limit')
     choice(name: 'K6_ENFORCE_OK_RATE', choices: ['0', '1'], description: 'Exigir ok_rate')
-    choice(name: 'SECURITY_TOOL', choices: ['all', 'zap', 'nuclei', 'gitleaks', 'semgrep', 'trivy', 'depcheck', 'npm-audit'], description: 'Herramienta de seguridad a ejecutar')
+    choice(name: 'SECURITY_TOOL', choices: ['all', 'sast', 'sca', 'dast', 'infra', 'zap', 'nuclei', 'gitleaks', 'semgrep', 'trivy', 'depcheck', 'bearer', 'checkov', 'trufflehog', 'osv', 'retirejs', 'grype', 'lynis', 'codeql'], description: 'Herramienta de seguridad (19 herramientas via run-all-security.ps1)')
+    booleanParam(name: 'INCLUDE_CODEQL', defaultValue: false, description: 'Activar CodeQL (~20 min)')
+    booleanParam(name: 'INCLUDE_SONAR', defaultValue: false, description: 'Activar SonarQube (requiere sonar-token)')
+    booleanParam(name: 'SKIP_DAST', defaultValue: false, description: 'Omitir DAST (ZAP/Nuclei/Nikto/Wapiti/Restler)')
   }
 
   environment {
@@ -79,76 +82,20 @@ pipeline {
               error("CASE_TARGET inválido para TEST_TYPE=k6: ${params.CASE_TARGET}")
             }
           } else if (params.TEST_TYPE == 'security') {
-            def tool = params.SECURITY_TOOL
-
-            // --- Gitleaks ---
-            if (tool == 'all' || tool == 'gitleaks') {
-              sh '''
-                echo "=== [SEC] Gitleaks — Secret Detection ==="
-                mkdir -p reportes/security/gitleaks
-                curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz -o /tmp/gitleaks.tar.gz
-                tar xzf /tmp/gitleaks.tar.gz -C /usr/local/bin/ gitleaks
-                gitleaks detect --source . --report-format json --report-path reportes/security/gitleaks/gitleaks-report.json --config .gitleaks.toml || true
-              '''
-            }
-
-            // --- Semgrep ---
-            if (tool == 'all' || tool == 'semgrep') {
-              sh '''
-                echo "=== [SEC] Semgrep — SAST ==="
-                mkdir -p reportes/security/semgrep
-                pip3 install --quiet semgrep || pip install --quiet semgrep
-                semgrep scan --config auto --config p/owasp-top-ten --config p/typescript --config p/javascript --config p/secrets --json -o reportes/security/semgrep/semgrep-report.json . || true
-              '''
-            }
-
-            // --- npm audit ---
-            if (tool == 'all' || tool == 'npm-audit' || tool == 'depcheck') {
-              sh '''
-                echo "=== [SEC] npm audit — SCA ==="
-                mkdir -p reportes/security/sca
-                npm audit --audit-level=high --json > reportes/security/sca/npm-audit.json || true
-              '''
-            }
-
-            // --- Dependency-Check ---
-            if (tool == 'all' || tool == 'depcheck') {
-              sh '''
-                echo "=== [SEC] OWASP Dependency-Check — SCA ==="
-                mkdir -p reportes/security/dependency-check
-                docker run --rm -v "$(pwd):/src" -v "$(pwd)/reportes/security/dependency-check:/report" \
-                  owasp/dependency-check:latest --project "REGINSA-QA" --scan /src \
-                  --format HTML --format JSON --out /report --failOnCVSS 9 || true
-              '''
-            }
-
-            // --- Trivy ---
-            if (tool == 'all' || tool == 'trivy') {
-              sh '''
-                echo "=== [SEC] Trivy — Container/Filesystem ==="
-                mkdir -p reportes/security/trivy
-                curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-                trivy fs . --severity HIGH,CRITICAL --format json --output reportes/security/trivy/trivy-fs-report.json || true
-              '''
-            }
-
-            // --- OWASP ZAP ---
-            if (tool == 'all' || tool == 'zap') {
-              sh 'echo "=== [SEC] OWASP ZAP — DAST ==="'
-              sh "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/security/generar-reportes-owasp-fechados.ps1 -Target \"\${REGINSA_URL}\" -BaseDir \"reportes/security\""
-            }
-
-            // --- Nuclei ---
-            if (tool == 'all' || tool == 'nuclei') {
+            // Orquestador maestro: 19 herramientas via run-all-security.ps1
+            withCredentials([
+              string(credentialsId: 'reginsa-url',    variable: 'REGINSA_URL'),
+              string(credentialsId: 'sonar-token',    variable: 'SONAR_TOKEN'),
+              string(credentialsId: 'sonar-host-url', variable: 'SONAR_HOST_URL')
+            ]) {
+              def skipDast   = params.SKIP_DAST       ? '-SkipDast'    : ''
+              def inclCodeQL = params.INCLUDE_CODEQL  ? '-IncludeCodeQL' : ''
+              def inclSonar  = params.INCLUDE_SONAR   ? '-IncludeSonar'  : ''
               sh """
-                echo "=== [SEC] Nuclei — DAST ==="
-                mkdir -p reportes/security/nuclei
-                docker run --rm -v "\$(pwd)/reportes/security/nuclei:/output" \
-                  projectdiscovery/nuclei:latest \
-                  -u "\${REGINSA_URL}" \
-                  -severity critical,high,medium -exclude-tags dos \
-                  -jsonl -output /output/nuclei-report.jsonl \
-                  -sarif-export /output/nuclei-report.sarif || true
+                pwsh -NoProfile -ExecutionPolicy Bypass \\
+                  -File scripts/security/run-all-security.ps1 \\
+                  -Target "\${REGINSA_URL}" \\
+                  ${skipDast} ${inclCodeQL} ${inclSonar} || true
               """
             }
           }
@@ -157,22 +104,22 @@ pipeline {
     }
 
     stage('SonarQube Scan') {
-      when {
-        expression { params.TEST_TYPE == 'sonar' }
-      }
+      when { expression { params.TEST_TYPE == 'sonar' } }
       steps {
-        script {
-          // Requiere Jenkins con acceso a SonarQube local (localhost:9000)
-          // Configurar en Jenkins: Manage Jenkins > Configure System > SonarQube servers
-          // Agregar credenciales SONAR_TOKEN en Jenkins credentials store
-          withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
-            env.SONAR_TOKEN = SONAR_TOKEN
-          }
+        withCredentials([
+          string(credentialsId: 'sonar-token',    variable: 'SONAR_TOKEN'),
+          string(credentialsId: 'sonar-host-url', variable: 'SONAR_HOST_URL')
+        ]) {
           sh '''
-            pwsh -NoProfile -ExecutionPolicy Bypass \
-              -File scripts/security/escanear-repos-sonar.ps1 \
-              -Projects frontend,backend,enlinea \
-              -SonarHostUrl "${SONAR_HOST_URL:-http://localhost:9000}"
+            pwsh -NoProfile -ExecutionPolicy Bypass \\
+              -File scripts/security/escanear-repos-sonar.ps1 \\
+              -Projects frontend,backend,enlinea \\
+              -SonarHostUrl "${SONAR_HOST_URL:-http://localhost:9000}" \\
+              -SonarToken "${SONAR_TOKEN}"
+            pwsh -NoProfile -ExecutionPolicy Bypass \\
+              -File scripts/security/generar-reporte-sonar-local.ps1 \\
+              -SonarHostUrl "${SONAR_HOST_URL:-http://localhost:9000}" \\
+              -SonarToken "${SONAR_TOKEN}"
           '''
         }
       }

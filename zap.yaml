@@ -3,6 +3,7 @@ env:
   - excludePaths: []
     name: baseline
     urls:
+    - https://reginsaqa.sunedu.gob.pe/#/home
     - https://reginsaqa.sunedu.gob.pe/
   parameters:
     failOnError: true
@@ -27,21 +28,21 @@ jobs:
 - parameters:
     reportDescription: ''
     reportDir: /zap/wrk/
-    reportFile: reportes/security/zap-qa-2026-04-02/zap-baseline-report.html
+    reportFile: reportes/security/2026-05-08_14-16/dast/zap/zap-baseline-report.html
     reportTitle: ZAP Scanning Report
     template: traditional-html
   type: report
 - parameters:
     reportDescription: ''
     reportDir: /zap/wrk/
-    reportFile: reportes/security/zap-qa-2026-04-02/zap-baseline-report.md
+    reportFile: reportes/security/2026-05-08_14-16/dast/zap/zap-baseline-report.md
     reportTitle: ZAP Scanning Report
     template: traditional-md
   type: report
 - parameters:
     reportDescription: ''
     reportDir: /zap/wrk/
-    reportFile: reportes/security/zap-qa-2026-04-02/zap-baseline-report.json
+    reportFile: reportes/security/2026-05-08_14-16/dast/zap/zap-baseline-report.json
     reportTitle: ZAP Scanning Report
     template: traditional-json
   type: report

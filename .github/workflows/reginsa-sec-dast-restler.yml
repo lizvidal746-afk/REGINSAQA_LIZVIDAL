@@ -1,0 +1,83 @@
+name: 🔬 REGINSA Sec — DAST RESTler API Fuzzer (Microsoft)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "URL base de la API REST (default: secrets.REGINSA_URL)"
+        required: false
+        default: ""
+      time_budget:
+        description: "Tiempo maximo en horas (ej: 1)"
+        required: false
+        default: "1"
+  schedule:
+    - cron: '0 8 * * 1'  # Lunes 8am UTC
+
+# RESTler: fuzzer REST API stateful de Microsoft Research — 100% gratuito, open source, sin cuenta.
+# No requiere registro, no tiene trial, no tiene limite de uso.
+# Detecta: BOLA (A01), Auth (A02), Broken Object Property (A03), SSRF (A06),
+# Security Misconfig (A07), Injection (A08) — OWASP API Top 10 2023.
+# Genera gramatica desde OpenAPI/Swagger spec y ejecuta secuencias de requests.
+# Norma: OWASP API Top 10 2023, OWASP ASVS V11, NIST SP 800-115
+# Repo oficial: https://github.com/microsoft/restler-fuzzer
+
+permissions:
+  contents: read
+
+jobs:
+  restler:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      TARGET: ${{ github.event.inputs.target_url || secrets.REGINSA_URL }}
+      TIME_BUDGET: ${{ github.event.inputs.time_budget || '1' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare reports folder
+        run: mkdir -p reportes/security/restler
+
+      - name: Pull RESTler Docker image
+        run: docker pull mcr.microsoft.com/restler/restler:latest || true
+
+      - name: Discover OpenAPI spec from target
+        run: |
+          curl -sf "${TARGET}/swagger.json"   -o reportes/security/restler/swagger.json 2>/dev/null \
+          || curl -sf "${TARGET}/api-docs"    -o reportes/security/restler/swagger.json 2>/dev/null \
+          || curl -sf "${TARGET}/openapi.json" -o reportes/security/restler/swagger.json 2>/dev/null \
+          || echo '{"openapi":"3.0.0","info":{"title":"REGINSA API","version":"1.0"},"paths":{}}' \
+             > reportes/security/restler/swagger.json
+          echo "OpenAPI spec size: $(wc -c < reportes/security/restler/swagger.json) bytes"
+
+      - name: RESTler compile grammar
+        run: |
+          docker run --rm \
+            -v "$PWD/reportes/security/restler:/workdir" \
+            mcr.microsoft.com/restler/restler:latest \
+            compile --api_spec /workdir/swagger.json \
+            || true
+
+      - name: RESTler fuzz-lean (quick OWASP API Top 10 test)
+        run: |
+          HOST=$(echo "$TARGET" | sed 's|https\?://||' | cut -d'/' -f1 | cut -d':' -f1)
+          PORT=443
+          echo "Host: $HOST | Port: $PORT | Budget: ${TIME_BUDGET}h"
+          docker run --rm \
+            -v "$PWD/reportes/security/restler:/workdir" \
+            mcr.microsoft.com/restler/restler:latest \
+            fuzz-lean \
+            --target_ip "$HOST" \
+            --target_port "$PORT" \
+            --api_spec_path /workdir/swagger.json \
+            --time_budget "$TIME_BUDGET" \
+            --results_dir /workdir/results \
+            || true
+
+      - name: Upload RESTler report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: restler-api-report-${{ github.run_number }}
+          path: reportes/security/restler/
+          if-no-files-found: warn

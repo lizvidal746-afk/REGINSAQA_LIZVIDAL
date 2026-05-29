@@ -1,0 +1,10 @@
+# Configuracion de Checkov para el proyecto QA Automation REGINSA
+# Referencia: https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html
+
+skip-check:
+  # CKV_GHA_7: "workflow_dispatch inputs MUST be empty"
+  # MOTIVO: Los workflows de REGINSA usan inputs de workflow_dispatch por diseño
+  # (workers, repeat_each, cantidad, k6_output, etc.) para permitir ejecucion
+  # manual parametrizada desde GitHub Actions UI. Es un requisito funcional
+  # intencional, no un riesgo de seguridad en este contexto.
+  - CKV_GHA_7

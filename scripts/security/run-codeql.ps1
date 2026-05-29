@@ -1,48 +1,45 @@
-# Ejecuta CodeQL SAST via Docker (sin instalacion local de CodeQL CLI)
-# Imagen construida desde docker/codeql/Dockerfile
-# Lenguajes: javascript-typescript
-# Genera reporte SARIF compatible con GitHub Code Scanning
+# ══════════════════════════════════════════════════════════════════════════════
+# CodeQL SAST -- ejecucion via CLI nativa (sin Docker)
+# Requiere: codeql.exe en PATH (D:\tools\CodeQL recomendado)
+# Lenguajes soportados: csharp, javascript (Angular/TypeScript), python, java
+# Genera SARIF v2.1.0 compatible con GitHub Code Scanning y nuestro extractor
+# ══════════════════════════════════════════════════════════════════════════════
 param(
   [string]$ProjectDir = ".",
-  [string]$OutputDir  = "reportes/security/codeql",
-  [string]$Language   = "javascript-typescript",
-  [string]$QuerySuite = "javascript-security-extended.qls",
-  [string]$ImageTag   = "reginsa-codeql"
+  [string]$OutputDir  = "reportes/security/sast/codeql",
+  [ValidateSet('csharp','javascript','python','java','go','ruby','cpp')]
+  [string]$Language   = "javascript",
+  [string]$QuerySuite = ""   # vacio => security-extended.qls del lenguaje
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $commonFunctions = Join-Path (Split-Path -Parent $PSScriptRoot) 'common/functions.ps1'
-if (Test-Path $commonFunctions) {
-  . $commonFunctions
-}
+if (Test-Path $commonFunctions) { . $commonFunctions }
 
 function Resolve-WorkspaceChildPath {
-  param(
-    [Parameter(Mandatory = $true)]
-    [string]$BasePath,
-    [Parameter(Mandatory = $true)]
-    [string]$CandidatePath
-  )
+  param([string]$BasePath, [string]$CandidatePath)
   if ([System.IO.Path]::IsPathRooted($CandidatePath)) {
     return [System.IO.Path]::GetFullPath($CandidatePath)
   }
   return [System.IO.Path]::GetFullPath((Join-Path $BasePath $CandidatePath))
 }
 
-# Convierte ruta Windows a formato Docker bind-mount: C:\foo -> /c/foo
-function ConvertTo-DockerPath {
-  param([string]$WinPath)
-  $p = $WinPath -replace '\\', '/'
-  if ($p -match '^([A-Za-z]):(.*)') {
-    return '/' + $Matches[1].ToLower() + $Matches[2]
-  }
-  return $p
-}
-
 # ─── Prerrequisitos ───────────────────────────────────────────────────────────
-Assert-DockerAvailable
+$codeqlCmd = Get-Command codeql -ErrorAction SilentlyContinue
+if (-not $codeqlCmd) {
+  # Fallback: ruta canonica de instalacion
+  $fallback = 'D:\tools\CodeQL\codeql.exe'
+  if (Test-Path $fallback) {
+    $codeqlExe = $fallback
+    Write-Host "-- CodeQL no esta en PATH; usando $fallback" -ForegroundColor Yellow
+  } else {
+    throw "CodeQL CLI no encontrado. Instala desde https://github.com/github/codeql-cli-binaries/releases y agrega al PATH (o coloca en D:\tools\CodeQL\)."
+  }
+} else {
+  $codeqlExe = $codeqlCmd.Source
+}
 
 $workspacePath = [System.IO.Path]::GetFullPath((Get-CurrentWorkspacePath))
 $projectPath   = Resolve-WorkspaceChildPath -BasePath $workspacePath -CandidatePath $ProjectDir
@@ -51,84 +48,71 @@ $outputPath    = Resolve-WorkspaceChildPath -BasePath $workspacePath -CandidateP
 Test-PathExistence -Path $projectPath -Message "El directorio de proyecto '$ProjectDir' no existe."
 New-DirectoryIfMissing -Path $outputPath
 
-# Directorio de cache de packs CodeQL (evita redescargar en cada ejecucion)
-$codeqlCache = Join-Path $workspacePath '.codeql-cache'
-New-DirectoryIfMissing -Path $codeqlCache
-
-$sarifFile = Join-Path $outputPath 'codeql-report.sarif'
-$dbPath    = Join-Path $outputPath 'codeql-db'
-
-# ─── 0. Construir imagen si no existe ────────────────────────────────────────
-$imageExists = docker image inspect $ImageTag 2>&1 | Select-String '"Id"'
-if (-not $imageExists) {
-  Write-Host "-- Construyendo imagen Docker '$ImageTag' (una sola vez)..." -ForegroundColor Cyan
-  $dockerfileDir = Join-Path $workspacePath 'docker/codeql'
-  & docker build -t $ImageTag $dockerfileDir
-  if ($LASTEXITCODE -ne 0) {
-    throw "Fallo la construccion de la imagen Docker '$ImageTag'. Codigo de salida: $LASTEXITCODE"
-  }
-} else {
-  Write-Host "-- Imagen '$ImageTag' disponible en cache local." -ForegroundColor Green
+# Suite por defecto (oficial GitHub, gratuita): security-extended.qls
+if ([string]::IsNullOrWhiteSpace($QuerySuite)) {
+  $QuerySuite = "codeql/${Language}-queries:codeql-suites/${Language}-security-extended.qls"
 }
 
-# Paths Docker (bind mounts)
-$dProject = ConvertTo-DockerPath $projectPath
-$dOutput  = ConvertTo-DockerPath $outputPath
-$dCache   = ConvertTo-DockerPath $codeqlCache
+$sarifFile = Join-Path $outputPath "codeql-${Language}.sarif"
+$dbPath    = Join-Path $env:TEMP ("codeql-db-{0}-{1}" -f $Language, ([guid]::NewGuid().ToString('N').Substring(0,8)))
 
 Write-Host ""
-Write-Host "Proyecto : $projectPath"
-Write-Host "Lenguaje : $Language"
-Write-Host "Queries  : $QuerySuite"
-Write-Host "Salida   : $sarifFile"
+Write-Host "CodeQL CLI : $codeqlExe" -ForegroundColor DarkGray
+Write-Host "Proyecto   : $projectPath"
+Write-Host "Lenguaje   : $Language"
+Write-Host "Suite      : $QuerySuite"
+Write-Host "DB temp    : $dbPath"
+Write-Host "Salida     : $sarifFile"
 
-# ─── 1. Crear base de datos CodeQL ───────────────────────────────────────────
-Write-Host "`n--- [1/2] Creando base de datos CodeQL ---" -ForegroundColor Cyan
-
-# Eliminar DB previa dentro del output (Docker la crea desde cero)
-if (Test-Path $dbPath) {
-  Remove-Item -Recurse -Force $dbPath
+# ─── 0. Asegurar pack de queries descargado (idempotente, ~30s primera vez) ──
+$packName = "codeql/${Language}-queries"
+Write-Host "`n--- [0/2] Verificando pack '$packName' ---" -ForegroundColor Cyan
+& $codeqlExe pack download $packName 2>&1 | Out-String | Write-Host
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "  WARN: No se pudo descargar/actualizar el pack (¿proxy?). Se intentara con cache local." -ForegroundColor Yellow
 }
 
-& docker run --rm `
-  --volume "${dProject}:/workspace:ro" `
-  --volume "${dOutput}:/output" `
-  --volume "${dCache}:/root/.codeql" `
-  $ImageTag `
-  database create /output/codeql-db `
-  "--language=$Language" `
-  --source-root=/workspace `
-  --overwrite
+# ─── 1. Crear base de datos CodeQL ───────────────────────────────────────────
+Write-Host "`n--- [1/2] Creando base de datos CodeQL ($Language) ---" -ForegroundColor Cyan
 
+# Para csharp/java sin compilacion: build-mode=none (no requiere msbuild ni dotnet)
+$dbCreateArgs = @(
+  'database', 'create', $dbPath,
+  "--language=$Language",
+  "--source-root=$projectPath",
+  '--overwrite'
+)
+if ($Language -in @('csharp','java','cpp','go')) {
+  $dbCreateArgs += '--build-mode=none'
+}
+
+& $codeqlExe @dbCreateArgs
 if ($LASTEXITCODE -ne 0) {
-  throw "Fallo la creacion de la base de datos CodeQL. Codigo de salida: $LASTEXITCODE"
+  throw "Fallo creacion de DB CodeQL ($Language). Codigo: $LASTEXITCODE"
 }
 
 # ─── 2. Analizar base de datos ───────────────────────────────────────────────
-Write-Host "`n--- [2/2] Ejecutando analisis CodeQL ---" -ForegroundColor Cyan
+Write-Host "`n--- [2/2] Analizando con suite $QuerySuite ---" -ForegroundColor Cyan
 
-& docker run --rm `
-  --volume "${dOutput}:/output" `
-  --volume "${dCache}:/root/.codeql" `
-  $ImageTag `
-  database analyze /output/codeql-db `
-  $QuerySuite `
+& $codeqlExe database analyze $dbPath $QuerySuite `
   --format=sarifv2.1.0 `
-  --output=/output/codeql-report.sarif `
+  --output=$sarifFile `
   --download
 
 if ($LASTEXITCODE -ne 0) {
-  throw "Fallo el analisis CodeQL. Codigo de salida: $LASTEXITCODE"
+  # Limpieza antes de error
+  if (Test-Path $dbPath) { Remove-Item -Recurse -Force $dbPath -ErrorAction SilentlyContinue }
+  throw "Fallo analisis CodeQL ($Language). Codigo: $LASTEXITCODE"
 }
 
-# Limpiar base de datos temporal (ocupa varios GB)
+# Limpieza DB temporal (puede ocupar varios GB)
 if (Test-Path $dbPath) {
-  Remove-Item -Recurse -Force $dbPath
-  Write-Host "-- Base de datos temporal eliminada." -ForegroundColor DarkGray
+  Remove-Item -Recurse -Force $dbPath -ErrorAction SilentlyContinue
+  Write-Host "-- DB temporal eliminada: $dbPath" -ForegroundColor DarkGray
 }
 
 if (-not (Test-Path $sarifFile)) {
-  throw "CodeQL finalizo sin generar el SARIF esperado en $sarifFile"
+  throw "CodeQL finalizo sin generar SARIF en $sarifFile"
 }
 
 # ─── Resumen ──────────────────────────────────────────────────────────────────
@@ -148,7 +132,6 @@ if ($totalResults -gt 0) {
   Write-Host "  error   : $($bySeverity['error'])"   -ForegroundColor Red
   Write-Host "  warning : $($bySeverity['warning'])" -ForegroundColor Yellow
   Write-Host "  note    : $($bySeverity['note'])"    -ForegroundColor DarkGray
-  Write-Host "Revisa el reporte SARIF para ver el detalle." -ForegroundColor Yellow
 } else {
-  Write-Host "No se encontraron hallazgos con las reglas configuradas." -ForegroundColor Green
+  Write-Host "Sin hallazgos en la suite configurada." -ForegroundColor Green
 }

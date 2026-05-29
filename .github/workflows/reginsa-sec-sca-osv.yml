@@ -1,0 +1,53 @@
+﻿name: 🔒 REGINSA Sec — SCA OSV-Scanner (Google)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - package.json
+      - package-lock.json
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'  # Lunes 6am UTC
+  workflow_dispatch:
+
+# OSV-Scanner usa la base de datos OSV (Open Source Vulnerabilities) de Google.
+# Complementa OWASP Dependency-Check (que usa NVD) porque OSV se actualiza
+# mas rapido y cubre CVEs que NVD tarda en registrar.
+# Norma: CVSSv3.1, CWE/NVD, NTP-ISO/IEC 12207
+
+permissions:
+  contents: read
+
+jobs:
+  osv-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare reports folder
+        run: mkdir -p reportes/security/osv
+
+      - name: Run OSV-Scanner
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            ghcr.io/google/osv-scanner:latest \
+            --output=/workspace/reportes/security/osv/osv-results.json \
+            --format=json \
+            /workspace
+        continue-on-error: true
+
+      - name: Upload OSV report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: osv-scan-report-${{ github.run_number }}
+          path: reportes/security/osv/
+          if-no-files-found: warn
