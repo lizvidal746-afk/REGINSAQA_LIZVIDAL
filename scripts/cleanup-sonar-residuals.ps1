@@ -3,10 +3,11 @@
   Elimina artefactos residuales de SonarQube Scanner de los repos clonados.
 
 .DESCRIPTION
-  El scanner crea .scannerwork/ en el directorio desde donde se ejecuta.
-  Todos los escaneos deben ejecutarse desde REGINSA (centralizado).
-  Este script limpia .scannerwork/ de repos clonados donde no deberia estar.
-  Tambien elimina si091reginsabackend/ mal ubicado en la raiz de REGINSA.
+  El scanner puede dejar carpetas .sonarqube/ o .scannerwork/ dentro de los
+  repos clonados cuando se ejecuta desde sus directorios de trabajo.
+  Los reportes finales deben salir al workspace principal (reportes/), no a los
+  clones de SI091_REGINSA_*.
+  Este script limpia esos residuos para mantener los subrepos intactos.
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File scripts/cleanup-sonar-residuals.ps1
@@ -14,13 +15,22 @@
 
 $root = Split-Path -Parent $PSScriptRoot  # D:\SUNEDU\AUTOMATIZACION\REGINSA
 
-$targets = @(
-  @{ Path = Join-Path $root 'SI091_REGINSA_FRONTEND-1\.scannerwork'; Label = 'FRONTEND-1 .scannerwork' }
-  @{ Path = Join-Path $root 'SI091_REGINSA_BACKEND\.scannerwork';    Label = 'BACKEND .scannerwork' }
-  @{ Path = Join-Path $root 'SI091_REGINSA_ENLINEA\.scannerwork';    Label = 'ENLINEA .scannerwork' }
-  @{ Path = Join-Path $root 'SI091_REGINSA_CONFIG\.scannerwork';     Label = 'CONFIG .scannerwork' }
-  @{ Path = Join-Path $root 'si091reginsabackend';                   Label = 'Carpeta residual si091reginsabackend (raiz)' }
+$repoNames = @(
+  'SI091_REGINSA_FRONTEND-1',
+  'SI091_REGINSA_BACKEND',
+  'SI091_REGINSA_ENLINEA',
+  'SI091_REGINSA_CONFIG'
 )
+
+$targets = foreach ($repoName in $repoNames) {
+  $repoRoot = Join-Path $root $repoName
+  foreach ($residual in @('.sonarqube', '.scannerwork')) {
+    @{
+      Path  = Join-Path $repoRoot $residual
+      Label = "$repoName $residual"
+    }
+  }
+}
 
 $removed = 0
 $skipped = 0
@@ -42,10 +52,16 @@ foreach ($t in $targets) {
 
 Write-Host "`nResumen: $removed eliminados, $skipped ya limpios." -ForegroundColor Cyan
 
-# Verificar que .scannerwork centralizado sigue en REGINSA raiz
-$central = Join-Path $root '.scannerwork'
-if (Test-Path $central) {
-  Write-Host "[INFO] .scannerwork centralizado OK: $central" -ForegroundColor DarkCyan
+# Verificar que los residuos fueron limpiados y que el workspace queda libre
+$centralSonar = Join-Path $root '.sonarqube'
+$centralScan  = Join-Path $root '.scannerwork'
+if (Test-Path $centralSonar) {
+  Write-Host "[INFO] .sonarqube centralizado detectado en la raiz: $centralSonar" -ForegroundColor DarkCyan
 } else {
-  Write-Host "[INFO] .scannerwork centralizado no existe aun (se creara al ejecutar sonar-scanner)" -ForegroundColor Yellow
+  Write-Host "[INFO] .sonarqube centralizado no existe en la raiz" -ForegroundColor DarkGray
+}
+if (Test-Path $centralScan) {
+  Write-Host "[INFO] .scannerwork centralizado detectado en la raiz: $centralScan" -ForegroundColor DarkCyan
+} else {
+  Write-Host "[INFO] .scannerwork centralizado no existe en la raiz" -ForegroundColor DarkGray
 }
