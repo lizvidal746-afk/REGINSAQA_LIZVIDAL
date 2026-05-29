@@ -4,6 +4,15 @@ test-results/
 allure-results/
 allure-report/
 
+# Reporteria y evidencias generadas por ejecuciones
+reportes/*
+!reportes/.gitkeep
+!reportes/historico/
+reportes/historico/*
+!reportes/historico/.gitkeep
+!reportes/prompts/
+!reportes/prompts/**
+
 # Archivos con credenciales reales — NUNCA subir al repositorio
 credentials-temp.txt
 test-env.txt
@@ -11,11 +20,21 @@ pasos-limpieza-git.txt
 .env
 .env.k6.local
 reportes/.grafana-secrets.json
+REGINSA_K6_STRESS/.env
+REGINSA_K6_STRESS/tokens.json
 
 # Archivos temporales de ejecucion
 .tmp-*.log
 .tmp-*.exit
 .scannerwork/
+.sonarqube/
+**/.scannerwork/
+**/.sonarqube/
+
+# Caches y bases locales de herramientas de seguridad
+.nuclei-templates/
+dc-data/
+REGINSA_K6_STRESS/reports/
 
 # Build outputs
 dist/

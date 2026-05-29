@@ -1,6 +1,0 @@
-[Playwright] Navegando a https://reginsaqa.sunedu.gob.pe
-[Playwright] Clic en boton "Acceder Ahora"
-[Playwright] Buscando campo usuario en: https://punkuloginv2qa.sunedu.gob.pe/Home/LoginSeguroV2?param=eyJ1c2VyU3lzdGVtSWQiOiJhODIxMWJhOS1kMGMxLTRmN2UtODUzYy01MmUxYjFjNjg2Y2UiLCJiaWVudmVuaWRhVXJsIjoiaHR0cDovL3JlZ2luc2FxYS5zdW5lZHUuZ29iLnBlLyMvaG9tZSIsInJldHVyblVybCI6Imh0dHA6Ly9yZWdpbnNhcWEuc3VuZWR1LmdvYi5wZS8jL2F1dGgvdmVyaWZpY2F0aW9uIiwiY29kZSI6IjhRd0tDU01NS1QifQ==
-[Playwright] Llenando usuario: lizvidal
-[Playwright] Enviando formulario de login...
-[Playwright] Esperando TOKEN_JWT de Punku...
