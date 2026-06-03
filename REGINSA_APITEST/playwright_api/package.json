@@ -1,0 +1,19 @@
+{
+  "name": "reginsa-playwright-api",
+  "version": "1.0.0",
+  "description": "Suite de API Testing aislada y portable para REGINSA",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test --config=playwright.api.config.ts",
+    "test:smoke": "playwright test --config=playwright.api.config.ts --project=api-smoke",
+    "test:regression": "playwright test --config=playwright.api.config.ts --project=api-regression",
+    "migrate:postman": "node ../tools/postman-migrator.js",
+    "migrate:postman:dry": "node ../tools/postman-migrator.js --dry-run"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
+    "typescript": "^5.0.0"
+  }
+}

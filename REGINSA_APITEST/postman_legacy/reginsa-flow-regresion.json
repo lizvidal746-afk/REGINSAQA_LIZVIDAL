@@ -1,0 +1,167 @@
+{
+  "id": "reginsa-flow-regresion-2026",
+  "name": "REGINSA - Flujo de Regresión Completo",
+  "created_at": "2026-03-16T00:00:00.000Z",
+  "updated_at": "2026-03-16T00:00:00.000Z",
+  "revision": 1,
+  "flows_settings": {
+    "execution_interval": 0,
+    "on_error": "stop"
+  },
+  "_postman_flow_note": "Para importar en Postman Desktop: File > Import > seleccionar este archivo. Requiere Postman v10+ con Flows habilitado.",
+  "spec": {
+    "schema": "https://schema.postman.com/json/collection/v2.1.0/draft-07/flow.json",
+    "data": [
+      {
+        "id": "start",
+        "type": "start",
+        "data": { "label": "Inicio - Regresión REGINSA" },
+        "position": { "x": 50, "y": 300 }
+      },
+      {
+        "id": "auth-block",
+        "type": "send-request",
+        "data": {
+          "label": "Auth/Punku",
+          "collection": "reginsa-master.collection.json",
+          "request": "01.1) Auth/Login",
+          "environment": "reginsa-shared.environment.json"
+        },
+        "position": { "x": 250, "y": 300 }
+      },
+      {
+        "id": "check-token",
+        "type": "condition",
+        "data": {
+          "label": "¿Token obtenido?",
+          "condition": "{{token}} != ''"
+        },
+        "position": { "x": 500, "y": 300 }
+      },
+      {
+        "id": "caso01-crear",
+        "type": "send-request",
+        "data": {
+          "label": "C01: Entidad/Crear",
+          "collection": "reginsa-master.collection.json",
+          "request": "01.2) Entidad/Crear - Éxito"
+        },
+        "position": { "x": 750, "y": 150 }
+      },
+      {
+        "id": "caso01-dup-ruc",
+        "type": "send-request",
+        "data": {
+          "label": "C01: Validar RUC duplicado",
+          "collection": "reginsa-master.collection.json",
+          "request": "01.3) Entidad/Crear - RUC duplicado"
+        },
+        "position": { "x": 1000, "y": 150 }
+      },
+      {
+        "id": "caso02-infraccion",
+        "type": "send-request",
+        "data": {
+          "label": "C02: Infraccion/Listar",
+          "collection": "reginsa-master.collection.json",
+          "request": "02.2) Infraccion/Listar"
+        },
+        "position": { "x": 750, "y": 300 }
+      },
+      {
+        "id": "caso02-cabecera",
+        "type": "send-request",
+        "data": {
+          "label": "C02: Crear Cabecera",
+          "collection": "reginsa-master.collection.json",
+          "request": "02.3) CabeceraInfraccionSancion/Crear"
+        },
+        "position": { "x": 1000, "y": 300 }
+      },
+      {
+        "id": "caso02-detalle",
+        "type": "send-request",
+        "data": {
+          "label": "C02: Crear Detalle",
+          "collection": "reginsa-master.collection.json",
+          "request": "02.5) DetalleInfraccionSancion/Crear"
+        },
+        "position": { "x": 1250, "y": 300 }
+      },
+      {
+        "id": "caso03-listar",
+        "type": "send-request",
+        "data": {
+          "label": "C03: Listar Cabeceras (sin sanciones)",
+          "collection": "reginsa-master.collection.json",
+          "request": "03.2) CabeceraInfraccionSancion/Listar (sin sanciones)"
+        },
+        "position": { "x": 750, "y": 450 }
+      },
+      {
+        "id": "caso03-reconsidera",
+        "type": "send-request",
+        "data": {
+          "label": "C03: Guardar Reconsideración",
+          "collection": "reginsa-master.collection.json",
+          "request": "03.3) Reconsideracion/GuardarCabecera"
+        },
+        "position": { "x": 1000, "y": 450 }
+      },
+      {
+        "id": "caso04-listar",
+        "type": "send-request",
+        "data": {
+          "label": "C04: Listar Detalles (con sanciones)",
+          "collection": "reginsa-master.collection.json",
+          "request": "04.2) DetalleInfraccionSancion/Listar (con sanciones)"
+        },
+        "position": { "x": 750, "y": 600 }
+      },
+      {
+        "id": "caso04-actualizar",
+        "type": "send-request",
+        "data": {
+          "label": "C04: Actualizar Reconsideración",
+          "collection": "reginsa-master.collection.json",
+          "request": "04.3) DetalleInfraccionSancion/ActualizarReconsideracion"
+        },
+        "position": { "x": 1000, "y": 600 }
+      },
+      {
+        "id": "caso04-confirmar",
+        "type": "send-request",
+        "data": {
+          "label": "C04: Confirmar Detalle",
+          "collection": "reginsa-master.collection.json",
+          "request": "04.4) DetalleInfraccionSancion/Confirmar"
+        },
+        "position": { "x": 1250, "y": 600 }
+      },
+      {
+        "id": "end",
+        "type": "output",
+        "data": { "label": "Regresión Completa ✓" },
+        "position": { "x": 1500, "y": 375 }
+      }
+    ],
+    "connections": [
+      { "from": { "blockId": "start",           "portId": "out" }, "to": { "blockId": "auth-block",      "portId": "in" } },
+      { "from": { "blockId": "auth-block",      "portId": "out" }, "to": { "blockId": "check-token",     "portId": "in" } },
+      { "from": { "blockId": "check-token",     "portId": "true" }, "to": { "blockId": "caso01-crear",   "portId": "in" } },
+      { "from": { "blockId": "check-token",     "portId": "true" }, "to": { "blockId": "caso02-infraccion","portId": "in" } },
+      { "from": { "blockId": "check-token",     "portId": "true" }, "to": { "blockId": "caso03-listar",  "portId": "in" } },
+      { "from": { "blockId": "check-token",     "portId": "true" }, "to": { "blockId": "caso04-listar",  "portId": "in" } },
+      { "from": { "blockId": "caso01-crear",    "portId": "out" }, "to": { "blockId": "caso01-dup-ruc",  "portId": "in" } },
+      { "from": { "blockId": "caso02-infraccion","portId": "out"}, "to": { "blockId": "caso02-cabecera", "portId": "in" } },
+      { "from": { "blockId": "caso02-cabecera", "portId": "out" }, "to": { "blockId": "caso02-detalle",  "portId": "in" } },
+      { "from": { "blockId": "caso03-listar",   "portId": "out" }, "to": { "blockId": "caso03-reconsidera","portId": "in" } },
+      { "from": { "blockId": "caso04-listar",   "portId": "out" }, "to": { "blockId": "caso04-actualizar","portId": "in" } },
+      { "from": { "blockId": "caso04-actualizar","portId": "out"}, "to": { "blockId": "caso04-confirmar","portId": "in" } },
+      { "from": { "blockId": "caso01-dup-ruc",  "portId": "out" }, "to": { "blockId": "end",             "portId": "in" } },
+      { "from": { "blockId": "caso02-detalle",  "portId": "out" }, "to": { "blockId": "end",             "portId": "in" } },
+      { "from": { "blockId": "caso03-reconsidera","portId":"out"}, "to": { "blockId": "end",             "portId": "in" } },
+      { "from": { "blockId": "caso04-confirmar","portId": "out" }, "to": { "blockId": "end",             "portId": "in" } }
+    ]
+  }
+}

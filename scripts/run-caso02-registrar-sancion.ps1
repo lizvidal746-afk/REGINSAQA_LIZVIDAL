@@ -173,7 +173,7 @@ $k6CantidadFinal = [Math]::Max(1, $K6Cantidad)
 $k6VusFinal = [Math]::Max(1, $K6Vus)
 $k6SleepFinal = if ($K6SleepSeconds -ge 0) { [string]$K6SleepSeconds } else { '0' }
 
-Write-Output '=== RUN CASO 00 LOGIN K6 ==='
+Write-Output '=== RUN CASO 02 REGISTRAR SANCION K6 ==='
 
 $tokenJwt = ''
 if ($UserMode -eq 'pool') {
@@ -187,7 +187,7 @@ if ($UserMode -eq 'pool') {
   if ($tokens.Count -eq 0) {
     throw 'UserMode=pool no encontró credenciales REGINSA_USER_n/REGINSA_PASS_n válidas.'
   }
-  $env:K6_AUTH_HEADERS = $tokenPoolHeader = ($tokens -join ',')
+  $tokenPoolHeader = ($tokens -join ',')
   $tokenJwt = $tokens[0].Substring(7)
   Write-Output "UserMode=pool | Tokens=$($tokens.Count) | Cantidad=$k6CantidadFinal | VUs=$k6VusFinal | Output=$K6Output"
 } else {
@@ -242,7 +242,7 @@ if (-not [string]::IsNullOrWhiteSpace($cloudToken)) {
 
 $k6Args = @(
   'run',
-  'REGINSA_K6_STRESS/cases/caso00_login.js',
+  'REGINSA_K6_STRESS/cases/caso02_registrar_sancion.js',
   '--env', "BASE_URL=$baseApiFinal",
   '--env', "K6_CANTIDAD=$k6CantidadFinal",
   '--env', "K6_VUS=$k6VusFinal",
@@ -253,7 +253,7 @@ $k6Args = @(
   '--env', "K6_EXPECT_RATE_LIMIT=$($env:K6_EXPECT_RATE_LIMIT)",
   '--env', "K6_ENFORCE_OK_RATE=$($env:K6_ENFORCE_OK_RATE)",
   '--env', "K6_AUTH_HEADER=Bearer $tokenJwt",
-  '--summary-export', 'reportes/k6-caso00-login-summary.json'
+  '--summary-export', 'reportes/k6-caso02-registrar-sancion-summary.json'
 )
 if (-not [string]::IsNullOrWhiteSpace($tokenPoolHeader)) {
   $k6Args += @('--env', "K6_AUTH_HEADERS=$tokenPoolHeader")
@@ -265,7 +265,7 @@ if ($K6Output -eq 'cloud') {
   }
   $k6Args = @(
     'run', '-o', 'cloud',
-    'REGINSA_K6_STRESS/cases/caso00_login.js',
+    'REGINSA_K6_STRESS/cases/caso02_registrar_sancion.js',
     '--env', "BASE_URL=$baseApiFinal",
     '--env', "K6_CANTIDAD=$k6CantidadFinal",
     '--env', "K6_VUS=$k6VusFinal",
@@ -277,7 +277,7 @@ if ($K6Output -eq 'cloud') {
     '--env', "K6_EXPECT_RATE_LIMIT=$($env:K6_EXPECT_RATE_LIMIT)",
     '--env', "K6_ENFORCE_OK_RATE=$($env:K6_ENFORCE_OK_RATE)",
     '--env', "K6_AUTH_HEADER=Bearer $tokenJwt",
-    '--summary-export', 'reportes/k6-caso00-login-summary.json'
+    '--summary-export', 'reportes/k6-caso02-registrar-sancion-summary.json'
   )
   if (-not [string]::IsNullOrWhiteSpace($tokenPoolHeader)) {
     $k6Args += @('--env', "K6_AUTH_HEADERS=$tokenPoolHeader")
@@ -293,7 +293,7 @@ $displayArgs = @($k6Args | ForEach-Object {
 Write-Output "`n> k6 $($displayArgs -join ' ')"
 & k6 @k6Args
 if ($LASTEXITCODE -ne 0) {
-  throw "Fallo: Caso 00 login k6 (exit=$LASTEXITCODE)"
+  throw "Fallo: CASO 02 REGISTRAR SANCION k6 (exit=$LASTEXITCODE)"
 }
 
 Write-Output "`nProceso completado."

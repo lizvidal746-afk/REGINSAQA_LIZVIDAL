@@ -1,0 +1,9 @@
+# Trivy Ignore File
+# Usado para excluir falsos positivos o vulnerabilidades en dependencias de desarrollo 
+# que no tienen impacto en el pipeline de CI/CD.
+
+# IMPORTANTE: Cada exclusión debe tener un comentario justificando la decisión.
+
+# Ejemplos (descomentar y adaptar cuando Trivy detecte falsos positivos):
+# CVE-2023-XXXXX  # Afecta a un sub-paquete de eslint. No se ejecuta en runtime.
+# CVE-2022-XXXXX  # Vulnerabilidad en librería de tests local. Sin superficie de ataque.

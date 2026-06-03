@@ -1,0 +1,16 @@
+{
+  "name": "reginsa-playwright-ui",
+  "version": "1.0.0",
+  "description": "Suite de Pruebas UI con Playwright para REGINSA",
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test --project=ui-smoke",
+    "test:regression": "playwright test --project=ui-regression",
+    "test:ui": "playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "typescript": "^5.5.0",
+    "dotenv": "^16.4.5"
+  }
+}

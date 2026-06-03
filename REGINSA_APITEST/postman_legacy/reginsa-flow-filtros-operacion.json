@@ -1,0 +1,121 @@
+{
+  "id": "reginsa-flow-filtros-2026",
+  "name": "REGINSA - Flujo Filtros y Busquedas",
+  "created_at": "2026-03-17T00:00:00.000Z",
+  "updated_at": "2026-03-17T00:00:00.000Z",
+  "revision": 1,
+  "flows_settings": {
+    "execution_interval": 0,
+    "on_error": "stop"
+  },
+  "_postman_flow_note": "Importar en Postman Desktop (v10+): File > Import > seleccionar este JSON. Usa reginsa-master.collection.json y reginsa-shared.environment.json.",
+  "spec": {
+    "schema": "https://schema.postman.com/json/collection/v2.1.0/draft-07/flow.json",
+    "data": [
+      {
+        "id": "start",
+        "type": "start",
+        "data": { "label": "Inicio" },
+        "position": { "x": 50, "y": 220 }
+      },
+      {
+        "id": "auth",
+        "type": "send-request",
+        "data": {
+          "label": "Auth Punku",
+          "collection": "reginsa-master.collection.json",
+          "request": "05.1) Auth/Punku",
+          "environment": "reginsa-shared.environment.json"
+        },
+        "position": { "x": 250, "y": 220 }
+      },
+      {
+        "id": "admins",
+        "type": "send-request",
+        "data": {
+          "label": "Administrado: filtrar (RUC)",
+          "collection": "reginsa-master.collection.json",
+          "request": "06.1) Entidad/Listar - Búsqueda por RUC"
+        },
+        "position": { "x": 500, "y": 100 }
+      },
+      {
+        "id": "admins_clear",
+        "type": "send-request",
+        "data": {
+          "label": "Administrado: limpiar filtros",
+          "collection": "reginsa-master.collection.json",
+          "request": "06.3) Entidad/Listar - Limpiar filtros"
+        },
+        "position": { "x": 750, "y": 100 }
+      },
+      {
+        "id": "infractor_filters",
+        "type": "send-request",
+        "data": {
+          "label": "Infractor: filtrar",
+          "collection": "reginsa-master.collection.json",
+          "request": "05.3) CabeceraInfraccionSancion/ListarPaginado - Con filtros"
+        },
+        "position": { "x": 500, "y": 260 }
+      },
+      {
+        "id": "infractor_clear",
+        "type": "send-request",
+        "data": {
+          "label": "Infractor: limpiar filtros",
+          "collection": "reginsa-master.collection.json",
+          "request": "05.4) CabeceraInfraccionSancion/ListarPaginado - Limpiar filtros"
+        },
+        "position": { "x": 750, "y": 260 }
+      },
+      {
+        "id": "eliminar_admin",
+        "type": "send-request",
+        "data": {
+          "label": "Eliminar (1/2): administrado",
+          "collection": "reginsa-master.collection.json",
+          "request": "06.4) Entidad/Eliminar - Eliminar administrado"
+        },
+        "position": { "x": 1000, "y": 180 }
+      },
+      {
+        "id": "eliminar_expediente",
+        "type": "send-request",
+        "data": {
+          "label": "Eliminar (2/2): expediente",
+          "collection": "reginsa-master.collection.json",
+          "request": "07.2) CabeceraInfraccionSancion/Eliminar - Eliminar expediente"
+        },
+        "position": { "x": 1250, "y": 180 }
+      },
+      {
+        "id": "ocultar_expediente",
+        "type": "send-request",
+        "data": {
+          "label": "Ocultar expediente",
+          "collection": "reginsa-master.collection.json",
+          "request": "07.3) CabeceraInfraccionSancion/Ocultar - Ocultar expediente"
+        },
+        "position": { "x": 1500, "y": 180 }
+      },
+      {
+        "id": "end",
+        "type": "output",
+        "data": { "label": "Flujo operativo completado" },
+        "position": { "x": 1750, "y": 180 }
+      }
+    ],
+    "connections": [
+      { "from": { "blockId": "start", "portId": "out" }, "to": { "blockId": "auth", "portId": "in" } },
+      { "from": { "blockId": "auth", "portId": "out" }, "to": { "blockId": "admins", "portId": "in" } },
+      { "from": { "blockId": "admins", "portId": "out" }, "to": { "blockId": "admins_clear", "portId": "in" } },
+      { "from": { "blockId": "admins_clear", "portId": "out" }, "to": { "blockId": "infractor_filters", "portId": "in" } },
+      { "from": { "blockId": "infractor_filters", "portId": "out" }, "to": { "blockId": "infractor_clear", "portId": "in" } },
+      { "from": { "blockId": "infractor_clear", "portId": "out" }, "to": { "blockId": "eliminar_admin", "portId": "in" } },
+      { "from": { "blockId": "eliminar_admin", "portId": "out" }, "to": { "blockId": "eliminar_expediente", "portId": "in" } },
+      { "from": { "blockId": "eliminar_expediente", "portId": "out" }, "to": { "blockId": "ocultar_expediente", "portId": "in" } },
+      { "from": { "blockId": "ocultar_expediente", "portId": "out" }, "to": { "blockId": "end", "portId": "in" } }
+    ]
+  }
+}

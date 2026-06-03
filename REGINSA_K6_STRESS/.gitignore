@@ -1,0 +1,28 @@
+# Dependencias locales del subproyecto
+node_modules/
+
+# Credenciales, tokens y entorno real
+.env
+.env.local
+tokens.json
+
+# Resultados/evidencias generadas por ejecuciones
+reports/
+*.log
+*.tmp
+*.exit
+perf-*.json
+metrics_for_ai.json
+ai-insights.json
+*_AUDITORIA_*.html
+*_AUDITORIA_*.xlsx
+*_INFORME_TDR_*.docx
+PLAN_DE_PRUEBAS_RENDIMIENTO_REGINSA_*.xlsx
+PLANTILLA_EVIDENCIA_PROFESIONAL_REGINSA.docx
+
+# Grabaciones locales de Playwright/codegen con datos reales
+nuevo*_profesional.js
+
+# Caches de herramientas
+.cache/
+.tmp/

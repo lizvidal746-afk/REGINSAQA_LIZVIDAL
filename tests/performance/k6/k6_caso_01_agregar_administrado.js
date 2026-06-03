@@ -158,6 +158,24 @@ function collectAuthCredentials() {
 
 const AUTH_CREDENTIALS = collectAuthCredentials();
 
+const TOKENS = (() => {
+  const list = [];
+  const explicitPool = String(__ENV.K6_AUTH_HEADERS || '').trim();
+  if (explicitPool) {
+    return explicitPool
+      .split(/[;,]/)
+      .map((item) => normalizeAuth(item))
+      .filter((item) => item.length > 0);
+  }
+  for (let i = 1; i <= 20; i++) {
+    const candidate = normalizeAuth(__ENV[`TOKEN${i}`]);
+    if (candidate) list.push(candidate);
+  }
+  const fallbackToken = normalizeAuth(__ENV.TOKEN);
+  if (fallbackToken) list.push(fallbackToken);
+  return list;
+})();
+
 function credentialForVu() {
   if (AUTH_CREDENTIALS.length === 0) return null;
   const idx = Math.max(0, (__VU || 1) - 1) % AUTH_CREDENTIALS.length;
@@ -387,32 +405,8 @@ function authHeaders() {
     };
   }
 
-  const explicitPool = String(__ENV.K6_AUTH_HEADERS || '').trim();
-  if (explicitPool) {
-    const tokens = explicitPool
-      .split(/[;,]/)
-      .map((item) => normalizeAuth(item))
-      .filter((item) => item.length > 0);
-
-    if (tokens.length > 0) {
-      const token = tokens[((__VU || 1) - 1) % tokens.length];
-      return {
-        'Content-Type': 'application/json',
-        Authorization: token
-      };
-    }
-  }
-
-  const tokenList = [];
-  for (let i = 1; i <= 20; i++) {
-    const candidate = normalizeAuth(__ENV[`TOKEN${i}`]);
-    if (candidate) tokenList.push(candidate);
-  }
-  const fallbackToken = normalizeAuth(__ENV.TOKEN);
-  if (fallbackToken) tokenList.push(fallbackToken);
-
-  if (tokenList.length > 0) {
-    const token = tokenList[((__VU || 1) - 1) % tokenList.length];
+  if (TOKENS.length > 0) {
+    const token = TOKENS[((__VU || 1) - 1) % TOKENS.length];
     return {
       'Content-Type': 'application/json',
       Authorization: token
@@ -444,25 +438,31 @@ function mark429(response) {
 }
 
 function buildCreatePayload(row) {
-  const ruc = String(row.ruc || '').trim();
-  const razonSocial = String(row.razonSocial || '').trim();
-  const nombreComercial = String(row.nombreComercial || row.razonSocial || '').trim();
+  // Ensure a unique RUC per VU/iteration to avoid collisions.
+  // If the dataset provides a RUC, keep it; otherwise generate one.
+  const baseRuc = String(row.ruc || '').trim();
+  const uniqueRuc = baseRuc || `20${String(__VU || 0).padStart(2, '0')}${String(__ITER || 0).padStart(5, '0')}${Date.now() % 1000}`;
+  // Ensure razonSocial is unique as well – append VU/iteration.
+  const baseRazon = String(row.razonSocial || '').trim();
+  const uniqueRazon = baseRazon || `Empresa VU${__VU}_IT${__ITER}`;
+  const nombreComercial = String(row.nombreComercial || uniqueRazon).trim();
   const estadoNumber = Number.isFinite(Number(row.estado)) ? Number(row.estado) : 1;
 
   if (!COMPAT_PAYLOAD_MODE) {
     return {
-      ruc,
-      razonSocial,
+      ruc: uniqueRuc,
+      razonSocial: uniqueRazon,
       nombreComercial,
       estado: estadoNumber
     };
   }
 
+  // Compat mode – include both original and camel‑case fields.
   return {
-    ruc,
-    Ruc: ruc,
-    razonSocial,
-    RazonSocial: razonSocial,
+    ruc: uniqueRuc,
+    Ruc: uniqueRuc,
+    razonSocial: uniqueRazon,
+    RazonSocial: uniqueRazon,
     nombreComercial,
     NombreComercial: nombreComercial,
     estado: estadoNumber,

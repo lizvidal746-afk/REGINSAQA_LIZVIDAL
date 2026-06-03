@@ -1,0 +1,141 @@
+name: REGINSA API Tests CI
+
+on:
+  schedule:
+    # Ejecutar todos los días a las 2:00 AM (UTC)
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Entorno a probar'
+        required: true
+        default: 'qa'
+
+# BLOQUE 1 — PERMISOS MÍNIMOS (Principle of Least Privilege)
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  actions: none
+  packages: none
+  id-token: none
+  security-events: write
+
+jobs:
+  # BLOQUE 2 — SAST CON TRIVY
+  security-scan:
+    name: "🔒 SAST — Trivy Dependency Scan"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout código fuente
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Cache de base de datos Trivy
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            trivy-db-${{ runner.os }}-
+
+      - name: Escanear dependencias con Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "REGINSA_APITEST/"
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "library"
+          trivyignores: ".trivyignore"
+
+      - name: Subir resultados SARIF a GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
+          category: "trivy-dependency-scan"
+
+  api-regression-tests:
+    name: "🧪 Playwright API Tests"
+    needs: security-scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      # BLOQUE 3 — ENMASCARAMIENTO DE SECRETOS
+      - name: "🔐 Enmascarar secretos sensibles en logs"
+        env:
+          N8N_TOKEN: ${{ secrets.N8N_WEBHOOK_TOKEN }}
+          PUNKU_PASS: ${{ secrets.REGINSA_PASS_1 }}
+          PUNKU_USER: ${{ secrets.REGINSA_USER_1 }}
+        run: |
+          echo "::add-mask::$N8N_TOKEN"
+          echo "::add-mask::$PUNKU_PASS"
+          echo "::add-mask::$PUNKU_USER"
+          echo "::add-mask::Bearer"
+          echo "✅ Secretos enmascarados correctamente"
+
+      - name: "🧹 Sanitizar entorno de ejecución de Playwright"
+        run: |
+          echo "DEBUG=" >> $GITHUB_ENV
+          echo "PLAYWRIGHT_BROWSERS_PATH=0" >> $GITHUB_ENV
+          
+          if [ -z "${{ secrets.N8N_WEBHOOK_TOKEN }}" ]; then
+            echo "::error::Secret N8N_WEBHOOK_TOKEN no está configurado en el repositorio"
+            exit 1
+          fi
+          if [ -z "${{ secrets.REGINSA_PASS_1 }}" ]; then
+            echo "::error::Secret REGINSA_PASS_1 no está configurado en el repositorio"
+            exit 1
+          fi
+
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependencias de Playwright
+        working-directory: ./REGINSA_APITEST/playwright_api
+        run: npm ci
+
+      - name: Instalar navegadores de Playwright (Dependencias del SO)
+        working-directory: ./REGINSA_APITEST/playwright_api
+        run: npx playwright install --with-deps
+
+      - name: Ejecutar Pruebas de API de Regresión
+        working-directory: ./REGINSA_APITEST/playwright_api
+        run: npx playwright test --config=playwright.api.config.ts --project=api-regression
+        env:
+          REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
+          REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
+          REGINSA_BASE_URL: ${{ secrets.REGINSA_BASE_URL || 'https://reginsaqa.sunedu.gob.pe' }}
+          REGINSA_API_BASE_URL: ${{ secrets.REGINSA_API_BASE_URL || 'https://reginsaapiqa.sunedu.gob.pe/api' }}
+          N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
+          N8N_WEBHOOK_TOKEN: ${{ secrets.N8N_WEBHOOK_TOKEN }}
+
+      - name: Subir Reporte HTML de Playwright
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: ./REGINSA_APITEST/playwright_api/playwright-report/
+          retention-days: 15
+
+      - name: Subir Plan de Pruebas Excel
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: plan-de-pruebas-api
+          path: ./REGINSA_APITEST/PLAN_DE_PRUEBAS_API_REGINSA.xlsx
+          retention-days: 15

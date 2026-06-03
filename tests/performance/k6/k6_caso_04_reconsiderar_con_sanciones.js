@@ -318,20 +318,17 @@ function tokenActual() {
   const ps1Token = RUNNER_TOKEN;
   if (ps1Token && !invalidTokens.has(ps1Token)) {
     lastAuthTokenUsed = ps1Token;
-    console.log(`[caso04] [OK] Usando TOKEN del runner: ${ps1Token.substring(0, 20)}...`);
     return ps1Token;
   }
 
   const staticToken = TOKENS[(__VU - 1) % TOKENS.length] || TOKENS[0] || '';
   if (staticToken && !invalidTokens.has(staticToken)) {
     lastAuthTokenUsed = staticToken;
-    console.log(`[caso04] [OK] Usando token estatico: ${staticToken.substring(0, 20)}...`);
     return staticToken;
   }
 
   if (runtimeToken && !invalidTokens.has(runtimeToken)) {
     lastAuthTokenUsed = runtimeToken;
-    console.log(`[caso04] [OK] Reutilizando token login: ${runtimeToken.substring(0, 20)}...`);
     return runtimeToken;
   }
 

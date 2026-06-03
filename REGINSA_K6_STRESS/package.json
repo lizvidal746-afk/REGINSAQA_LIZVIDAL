@@ -1,0 +1,57 @@
+{
+  "name": "reginsa-k6-stress",
+  "version": "1.0.0",
+  "description": "Local K6 performance testing engine for REGINSA, modeled after SI058_WSGT.",
+  "scripts": {
+    "smoke:caso00": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='smoke'; $env:TEST_CASE_ID='CP-REG-00'; powershell -File tools/run-k6.ps1 scripts/caso00_login.js\"",
+    "smoke:caso01": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='smoke'; $env:TEST_CASE_ID='CP-REG-01'; powershell -File tools/run-k6.ps1 scripts/caso01_agregar_administrado.js\"",
+    "smoke:caso02": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='smoke'; $env:TEST_CASE_ID='CP-REG-02'; powershell -File tools/run-k6.ps1 scripts/caso02_registrar_sancion.js\"",
+    "smoke:caso04": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='smoke'; $env:TEST_CASE_ID='CP-REG-04'; powershell -File tools/run-k6.ps1 scripts/caso04_reconsiderar_con_sanciones.js\"",
+    
+    "load:caso01": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='load'; $env:TEST_CASE_ID='CP-REG-01'; powershell -File tools/run-k6.ps1 scripts/caso01_agregar_administrado.js\"",
+    "load:caso02": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='load'; $env:TEST_CASE_ID='CP-REG-02'; powershell -File tools/run-k6.ps1 scripts/caso02_registrar_sancion.js\"",
+    "load:caso04": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='load'; $env:TEST_CASE_ID='CP-REG-04'; powershell -File tools/run-k6.ps1 scripts/caso04_reconsiderar_con_sanciones.js\"",
+    
+    "stress:caso01": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='stress'; $env:TEST_CASE_ID='CP-REG-01'; powershell -File tools/run-k6.ps1 scripts/caso01_agregar_administrado.js\"",
+    "stress:caso02": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='stress'; $env:TEST_CASE_ID='CP-REG-03'; powershell -File tools/run-k6.ps1 scripts/caso02_registrar_sancion.js\"",
+    "stress:caso04": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='stress'; $env:TEST_CASE_ID='CP-REG-04'; powershell -File tools/run-k6.ps1 scripts/caso04_reconsiderar_con_sanciones.js\"",
+    
+    "spike:caso01": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='spike'; $env:TEST_CASE_ID='CP-REG-01'; powershell -File tools/run-k6.ps1 scripts/caso01_agregar_administrado.js\"",
+    "spike:caso02": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='spike'; $env:TEST_CASE_ID='CP-REG-02'; powershell -File tools/run-k6.ps1 scripts/caso02_registrar_sancion.js\"",
+    "spike:caso04": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='spike'; $env:TEST_CASE_ID='CP-REG-04'; powershell -File tools/run-k6.ps1 scripts/caso04_reconsiderar_con_sanciones.js\"",
+    
+    "soak:caso01": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='soak'; $env:TEST_CASE_ID='CP-REG-01'; powershell -File tools/run-k6.ps1 scripts/caso01_agregar_administrado.js\"",
+    "soak:caso02": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='soak'; $env:TEST_CASE_ID='CP-REG-08'; powershell -File tools/run-k6.ps1 scripts/caso02_registrar_sancion.js\"",
+    "soak:caso04": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='soak'; $env:TEST_CASE_ID='CP-REG-04'; powershell -File tools/run-k6.ps1 scripts/caso04_reconsiderar_con_sanciones.js\"",
+    
+    "collapse:caso01": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='collapse'; $env:TEST_CASE_ID='CP-REG-01'; powershell -File tools/run-k6.ps1 scripts/caso01_agregar_administrado.js\"",
+    "collapse:caso02": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='collapse'; $env:TEST_CASE_ID='CP-REG-06'; powershell -File tools/run-k6.ps1 scripts/caso02_registrar_sancion.js\"",
+    "collapse:caso04": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='collapse'; $env:TEST_CASE_ID='CP-REG-04'; powershell -File tools/run-k6.ps1 scripts/caso04_reconsiderar_con_sanciones.js\"",
+    
+    "attack:caso01": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='attack'; $env:TEST_CASE_ID='CP-REG-01'; powershell -File tools/run-k6.ps1 scripts/caso01_agregar_administrado.js\"",
+    "attack:caso02": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='attack'; $env:TEST_CASE_ID='CP-REG-03'; powershell -File tools/run-k6.ps1 scripts/caso02_registrar_sancion.js\"",
+    "attack:caso04": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='attack'; $env:TEST_CASE_ID='CP-REG-04'; powershell -File tools/run-k6.ps1 scripts/caso04_reconsiderar_con_sanciones.js\"",
+    "oneshot:caso01": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='one_shot'; $env:TEST_CASE_ID='CP-REG-01'; powershell -File tools/run-k6.ps1 scripts/caso01_agregar_administrado.js\"",
+    "oneshot:caso02": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='one_shot'; $env:TEST_CASE_ID='CP-REG-02'; powershell -File tools/run-k6.ps1 scripts/caso02_registrar_sancion.js\"",
+    "oneshot:caso04": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='one_shot'; $env:TEST_CASE_ID='CP-REG-04'; powershell -File tools/run-k6.ps1 scripts/caso04_reconsiderar_con_sanciones.js\"",
+    
+    "audit:caso01": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='multi_ip_audit'; $env:TEST_CASE_ID='CP-REG-01'; powershell -File tools/run-k6.ps1 scripts/caso01_agregar_administrado.js\"",
+    "audit:caso02": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='multi_ip_audit'; $env:TEST_CASE_ID='CP-REG-02'; powershell -File tools/run-k6.ps1 scripts/caso02_registrar_sancion.js\"",
+    "audit:caso04": "powershell -ExecutionPolicy Bypass -Command \"$env:SCENARIO='multi_ip_audit'; $env:TEST_CASE_ID='CP-REG-04'; powershell -File tools/run-k6.ps1 scripts/caso04_reconsiderar_con_sanciones.js\"",
+    "pool:k6:caso01": "node tools/generar-k6-caso01-dataset.js",
+    "pool:k6:caso01:init": "node tools/generar-caso01-pool-reginsa.js",
+    "pool:k6:caso01:fresh": "node tools/generar-k6-caso01-dataset.js --strategy=fresh",
+    "pool:k6:caso01:mixed": "node tools/generar-k6-caso01-dataset.js --strategy=mixed",
+    
+    "report:all": "node tools/generar-excel.js && node tools/generar-word.js && node tools/generar-plantilla-evidencia.js && node tools/generar-plan-excel.js"
+  },
+  "devDependencies": {
+    "k6": "^0.0.0",
+    "exceljs": "^4.4.0",
+    "docx": "^8.2.0",
+    "@biomejs/biome": "^1.5.0"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}
