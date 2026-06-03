@@ -1,0 +1,21 @@
+{
+  "sanciones": {
+    "expediente": "FA 01 Exp N° 1234-2024",
+    "resolucion": "FA 01 Res N° 5678-2024",
+    "fechaResolucion": "02/06/2024",
+    "rutaDocumento": "REGINSA_APITEST/postman_legacy/PLAN_DE_PRUEBAS_API_REGINSA.xlsx",
+    "medidasCorrectivas": [
+      "Medida correctiva 1",
+      "Medida correctiva 2",
+      "Medida correctiva 3"
+    ],
+    "hechoInfractor": "Hecho infractor de prueba",
+    "tiposMoneda": ["SOLES", "UIT"],
+    "tiposTiempo": ["Año", "Mes", "Día"],
+    "sanciones": [
+      { "nombre": "Multa simple", "multa": true, "suspension": false, "cancelacion": false, "usarUIT": false, "monto": "1500" },
+      { "nombre": "Suspensión", "multa": false, "suspension": true, "cancelacion": false, "tipoTiempo": "Mes", "cantidadTiempo": 3 },
+      { "nombre": "Multa + Suspensión", "multa": true, "suspension": true, "cancelacion": false, "usarUIT": true, "monto": "5", "tipoTiempo": "Año", "cantidadTiempo": 1 }
+    ]
+  }
+}

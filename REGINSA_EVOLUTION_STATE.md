@@ -49,6 +49,12 @@ Este archivo es la fuente de verdad unificada para la sincronización de tareas 
 - [x] Crear estructura Page Object Model (POM) con `POManager.ts` (Factory Pattern).
 - [x] Implementar `BasePage`, `LoginPage` y `HomePage`.
 - [x] Crear test de humo UI (`home.smoke.spec.ts`).
+- [x] Implementar `SancionesPage` (página principal del módulo).
+- [x] Implementar `FormularioSancionPage` (formulario principal de registro).
+- [x] Implementar `ModalAgregarSancionPage` (modal para agregar detalle de sanción).
+- [x] Actualizar `POManager` para incluir todas las nuevas páginas.
+- [x] Crear archivo de datos de prueba (`fixtures/test-data.json`).
+- [x] Crear prueba E2E completa de registrar sanción (`tests/sanciones.e2e.spec.ts`).
 
 ---
 
@@ -81,8 +87,13 @@ Este archivo es la fuente de verdad unificada para la sincronización de tareas 
   * [REGINSA_PF/playwright_ui/pages/base.page.ts](file:///d:/SUNEDU/AUTOMATIZACION/REGINSA/REGINSA_PF/playwright_ui/pages/base.page.ts)
   * [REGINSA_PF/playwright_ui/pages/login.page.ts](file:///d:/SUNEDU/AUTOMATIZACION/REGINSA/REGINSA_PF/playwright_ui/pages/login.page.ts)
   * [REGINSA_PF/playwright_ui/pages/home.page.ts](file:///d:/SUNEDU/AUTOMATIZACION/REGINSA/REGINSA_PF/playwright_ui/pages/home.page.ts)
+  * [REGINSA_PF/playwright_ui/pages/sanciones.page.ts](file:///d:/SUNEDU/AUTOMATIZACION/REGINSA/REGINSA_PF/playwright_ui/pages/sanciones.page.ts)
+  * [REGINSA_PF/playwright_ui/pages/formulario-sancion.page.ts](file:///d:/SUNEDU/AUTOMATIZACION/REGINSA/REGINSA_PF/playwright_ui/pages/formulario-sancion.page.ts)
+  * [REGINSA_PF/playwright_ui/pages/modal-agregar-sancion.page.ts](file:///d:/SUNEDU/AUTOMATIZACION/REGINSA/REGINSA_PF/playwright_ui/pages/modal-agregar-sancion.page.ts)
   * [REGINSA_PF/playwright_ui/tests/auth.setup.ts](file:///d:/SUNEDU/AUTOMATIZACION/REGINSA/REGINSA_PF/playwright_ui/tests/auth.setup.ts)
   * [REGINSA_PF/playwright_ui/tests/home.smoke.spec.ts](file:///d:/SUNEDU/AUTOMATIZACION/REGINSA/REGINSA_PF/playwright_ui/tests/home.smoke.spec.ts)
+  * [REGINSA_PF/playwright_ui/tests/sanciones.e2e.spec.ts](file:///d:/SUNEDU/AUTOMATIZACION/REGINSA/REGINSA_PF/playwright_ui/tests/sanciones.e2e.spec.ts)
+  * [REGINSA_PF/playwright_ui/fixtures/test-data.json](file:///d:/SUNEDU/AUTOMATIZACION/REGINSA/REGINSA_PF/playwright_ui/fixtures/test-data.json)
   * [REGINSA_PF/playwright_ui/.env.example](file:///d:/SUNEDU/AUTOMATIZACION/REGINSA/REGINSA_PF/playwright_ui/.env.example)
 
 ---
@@ -96,3 +107,13 @@ Este archivo es la fuente de verdad unificada para la sincronización de tareas 
 > 4. El entorno de Playwright UI está completamente configurado en `REGINSA_PF/playwright_ui`. Usa `npm run test:smoke` para ejecutar los tests de humo y `npm run test:regression` para ejecutar todas las pruebas.
 > 5. Se implementó el POManager con Factory Pattern para instanciar las páginas sin esfuerzo.
 > 6. El `auth.setup.ts` se ejecuta automáticamente antes de las pruebas y guarda el `storageState` en `.auth/user.json` para reutilizar la sesión de Punku.
+> 7. Se agregaron 3 nuevas páginas para el flujo de "Registrar Sanción":
+>    - `SancionesPage`: Página principal del módulo
+>    - `FormularioSancionPage`: Formulario principal de registro
+>    - `ModalAgregarSancionPage`: Modal para agregar detalle de sanción
+> 8. Todos los métodos de las páginas devuelven `this` para permitir encadenamiento (Fluent Pattern).
+> 9. Se creó una prueba E2E completa: `tests/sanciones.e2e.spec.ts`.
+> 10. Los datos duros de la prueba se extrajeron al archivo `fixtures/test-data.json` para mantenimiento fácil.
+> 11. La prueba E2E usa `test.use({ storageState: '.auth/user.json' })` para reutilizar la sesión.
+> 12. La prueba usa `test.step()` para segmentar el flujo y hacerla más legible.
+> 13. La prueba usa aserciones web-first (expect(locator).toBeVisible()).

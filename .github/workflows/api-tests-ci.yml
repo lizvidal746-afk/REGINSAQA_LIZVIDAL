@@ -1,9 +1,9 @@
 name: REGINSA API Tests CI
 
 on:
-  schedule:
-    # Ejecutar todos los días a las 2:00 AM (UTC)
-    - cron: '0 2 * * *'
+  # schedule:
+    # Ejecutar todos los días a las 2:00 AM (UTC) - DESACTIVADO TEMPORALMENTE (MODO FREE)
+    # - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
       environment:

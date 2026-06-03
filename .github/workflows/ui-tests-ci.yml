@@ -1,0 +1,75 @@
+name: UI Tests - Manual (Playwright)
+
+on:
+  workflow_dispatch:   # Solo ejecución manual para proteger cuota gratuita
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: ./REGINSA_PF/playwright_ui
+
+jobs:
+  ui-tests:
+    name: "🖥️ Pruebas E2E UI"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'REGINSA_PF/playwright_ui/package-lock.json'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Instalar navegadores de Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Enmascarar secretos sensibles (Punku)
+        run: |
+          echo "::add-mask::${{ secrets.REGINSA_USER_1 }}"
+          echo "::add-mask::${{ secrets.REGINSA_PASS_1 }}"
+
+      - name: Ejecutar pruebas UI
+        id: run-tests
+        env:
+          REGINSA_USER_1: ${{ secrets.REGINSA_USER_1 }}
+          REGINSA_PASS_1: ${{ secrets.REGINSA_PASS_1 }}
+          REGINSA_BASE_URL: ${{ secrets.REGINSA_BASE_URL || 'https://reginsaqa.sunedu.gob.pe' }}
+        run: npx playwright test
+        continue-on-error: true   # Subir artefactos aunque haya fallos
+
+      - name: Subir reporte HTML de Playwright
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-ui-${{ github.run_id }}
+          path: REGINSA_PF/playwright_ui/playwright-report/
+          retention-days: 5
+
+      - name: Subir videos y capturas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-evidence-ui-${{ github.run_id }}
+          path: REGINSA_PF/playwright_ui/test-results/
+          retention-days: 5
+
+      - name: Registro de estado final
+        if: always()
+        run: |
+          if [ "${{ steps.run-tests.outcome }}" = "success" ]; then
+            echo "✅ Pruebas UI finalizadas sin errores."
+            exit 0
+          else
+            echo "❌ Se detectaron fallos en las pruebas UI. Revisa los artefactos."
+            exit 1
+          fi
