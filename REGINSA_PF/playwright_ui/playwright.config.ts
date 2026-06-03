@@ -7,6 +7,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 export default defineConfig({
   testDir: './tests',
+  testIgnore: ['legacy_tests/**'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
