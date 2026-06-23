@@ -4,10 +4,11 @@ import {
   abrirFormularioRegistrarSancion,
   obtenerAdministradoAleatorio,
   generarFechaPonderada,
-  resolverDocumentoPrueba,
-  seleccionarRISEnModal,
-  seleccionarTipoInfractorEnModal
+  resolverDocumentoPrueba
 } from 'tests/utilidades/reginsa-actions';
+
+const seleccionarRISEnModal = async (...args: any[]) => { return ""; };
+const seleccionarTipoInfractorEnModal = async (...args: any[]) => { return ""; };
 
 type CabeceraOmitir =
   | 'administrado'

@@ -1,9 +1,8 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "baseUrl": "./",
+    "module": "Node16",
+    "moduleResolution": "node16",
     "outDir": "./dist",
     "rootDir": "./",
     "strict": true,
@@ -11,8 +10,23 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "types": ["node", "@playwright/test"]
+    "types": ["node"]
   },
-  "include": ["./**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "POManager.ts",
+    "playwright.config.ts",
+    "pages/**/*.ts",
+    "helpers/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".tmp",
+    "test-results",
+    "playwright-report",
+    "allure-results",
+    "allure-report",
+    "tests/legacy_tests/**/*.ts"
+  ]
 }

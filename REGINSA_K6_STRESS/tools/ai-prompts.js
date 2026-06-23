@@ -7,6 +7,15 @@ function buildUserPrompt(metrics) {
   const statusCodes = metrics.status_codes || [];
   const counters = metrics.custom_counters || {};
   const ips = metrics.ip_summary || [];
+  const records = metrics.records_validation || {};
+
+  // Calcular validación de registros si no viene en el payload
+  const vusCount = tc.vus_max || 9;
+  const iterationsPerVu = 4;
+  const expectedRecords = records.expected || (vusCount * iterationsPerVu);
+  const createdRecords = records.created || counters.reginsa_created_records || 0;
+  const recordsDiscrepancy = expectedRecords - createdRecords;
+  const recordsMatch = recordsDiscrepancy === 0;
 
   return `Analiza estas métricas de rendimiento SI058:
 
@@ -18,6 +27,15 @@ Contexto:
 - IP origen: ${tc.source_ip}
 - SLO p95: ${tc.slo_latency_ms}ms
 - SLO error rate: ${(tc.slo_error_rate * 100).toFixed(2)}%
+
+Validación de Registros (CRÍTICO para multi_ip_audit):
+- VUs configurados: ${vusCount}
+- Iteraciones por VU: ${iterationsPerVu}
+- Registros esperados: ${expectedRecords} (VUs × Iteraciones)
+- Registros creados: ${createdRecords}
+- Discrepancia: ${recordsDiscrepancy > 0 ? `Faltan ${recordsDiscrepancy} registros` : (recordsDiscrepancy < 0 ? `Hay ${Math.abs(recordsDiscrepancy)} registros de más` : 'Coinciden exactamente')}
+- Estado validación: ${recordsMatch ? '✔ COINCIDE' : '✖ DISCREPANCIA'}
+${!recordsMatch ? '- ALERTA: Los registros creados no coinciden con los esperados. Investigar errores en el flujo de creación.' : ''}
 
 Métricas globales:
 - Total requests: ${gm.total_requests}
@@ -93,6 +111,15 @@ Esquema requerido:
     "precondiciones_faltantes": ["string"],
     "criterios_abort": ["string"],
     "evidencia_esperada": ["string"]
+  },
+  "validacion_registros": {
+    "registros_esperados": number,
+    "registros_creados": number,
+    "discrepancia": number,
+    "estado": "coincide | discrepancia",
+    "impacto_analisis": "string",
+    "posibles_causas": ["string"],
+    "recomendacion": "string"
   },
   "mejora_plan_pruebas": {
     "cobertura_faltante": ["string"],

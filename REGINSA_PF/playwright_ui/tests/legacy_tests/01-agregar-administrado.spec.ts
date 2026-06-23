@@ -2,7 +2,20 @@
 import { test, Page, expect, TestInfo } from '@playwright/test';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as XLSX from 'xlsx';
+const XLSX: any = (() => {
+  try {
+    return require('xlsx');
+  } catch {
+    return {
+      readFile: () => {
+        throw new Error('Dependencia opcional xlsx no instalada. Use TSV/JSON o instale xlsx para leer Excel.');
+      },
+      utils: {
+        sheet_to_json: () => []
+      }
+    };
+  }
+})();
 import {
   iniciarSesionYNavegar,
   obtenerCredencial,

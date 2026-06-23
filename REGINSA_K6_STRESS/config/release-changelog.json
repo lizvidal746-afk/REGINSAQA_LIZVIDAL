@@ -1,0 +1,270 @@
+[
+  {
+    "version": "2.1",
+    "fechaEvaluacion": "2026-06-10",
+    "paseAnterior": "v2.0",
+    "paseActual": "v2.1",
+    "responsableQA": "Liz Vidal",
+    "endpoints": [
+      {
+        "nombre": "Listar Infracciones",
+        "caso": "Caso 02",
+        "antes": {
+          "metodo": "POST",
+          "url": "/api/Infraccion/Listar",
+          "contentType": "application/json",
+          "body": "{ \"idRis\": 1 }",
+          "respuesta": "{ oData: [ {...} ] }"
+        },
+        "ahora": {
+          "metodo": "GET",
+          "url": "/api/Infraccion/Listar?idRis=1",
+          "contentType": "N/A",
+          "body": "N/A (query param)",
+          "respuesta": "{ oData: [ {...} ] }"
+        },
+        "estadoK6": "CORREGIDO",
+        "estadoPlaywright": "SIN CAMBIOS",
+        "impacto": "Cambio de metodo HTTP de POST a GET. K6 actualizado para usar GET con query param."
+      },
+      {
+        "nombre": "Crear Cabecera + Medida + Detalle (FUSIONADO)",
+        "caso": "Caso 02",
+        "antes": {
+          "metodo": "POST x3 llamadas separadas",
+          "url": "/api/CabeceraInfraccionSancion/Crear + /api/MedidaCorrectiva/Crear + /api/DetalleInfraccionSancion/Crear",
+          "contentType": "application/json",
+          "body": "3 peticiones separadas con sus respectivos payloads",
+          "respuesta": "{ oData: { idCabeceraInfraccionSancion: 123 } }"
+        },
+        "ahora": {
+          "metodo": "POST (1 sola llamada transaccional)",
+          "url": "/api/CabeceraInfraccionSancion/CrearConDetalles",
+          "contentType": "multipart/form-data o JSON (por confirmar payload exacto)",
+          "body": "Payload unificado con cabecera + medidas + detalles en una sola transaccion",
+          "respuesta": "{ bSuccess: true, oData: { RESULTADO: 2954, MENSAJE_ERROR: '...', LINEA_ERROR: 0 } }"
+        },
+        "estadoK6": "CORREGIDO",
+        "estadoPlaywright": "CORREGIDO — POM adaptado al nuevo campo RESULTADO",
+        "impacto": "CAMBIO ARQUITECTONICO MAYOR. Los 3 endpoints anteriores se fusionaron en uno solo transaccional. Esto corrige el defecto de expedientes huerfanos (race condition). K6 reescrito a una sola llamada.",
+        "mejoras_v21": "Verificado en Phase 2: 35/36 registros persistidos (97.2% tasa). 0 expedientes huerfanos detectados. Mejora confirmada."
+      },
+      {
+        "nombre": "Listar Paginado Cabecera (Validacion Post-Guardado)",
+        "caso": "Caso 02",
+        "antes": { "metodo": "POST", "url": "/api/CabeceraInfraccionSancion/ListarPaginado", "contentType": "application/json", "body": "{ nPageNumber, nPageSize, filtroGeneral }", "respuesta": "{ oData: { Results: [...] } }" },
+        "ahora": { "metodo": "POST", "url": "/api/CabeceraInfraccionSancion/ListarPaginado", "contentType": "application/json", "body": "{ nPageNumber, nPageSize, filtroGeneral }", "respuesta": "{ oData: { Results: [...] } }" },
+        "estadoK6": "SIN CAMBIOS",
+        "estadoPlaywright": "SIN CAMBIOS",
+        "impacto": "No se detectaron cambios."
+      },
+      {
+        "nombre": "Crear Administrado",
+        "caso": "Caso 01",
+        "antes": { "metodo": "POST", "url": "/api/Entidad/Crear", "contentType": "application/json", "body": "{ Ruc, RazonSocial, ... }", "respuesta": "{ bSuccess: true, oData: { IdEntidad: ... } }" },
+        "ahora": { "metodo": "POST", "url": "/api/Entidad/Crear", "contentType": "application/json", "body": "{ Ruc, RazonSocial, ... }", "respuesta": "{ bSuccess: true, oData: { IdEntidad: ... } }" },
+        "estadoK6": "OK",
+        "estadoPlaywright": "CORREGIDO — POM adaptado al boton iconografico de Nuevo Administrado y a Entidad/ListarPaginado",
+        "impacto": "Backend estable (0% error en K6). UI actualizada."
+      },
+      {
+        "nombre": "Crear Reconsideracion",
+        "caso": "Caso 04",
+        "antes": { "metodo": "POST", "url": "/api/Reconsideracion/Crear", "contentType": "multipart/form-data", "body": "{ Numero, Fecha, Archivo }", "respuesta": "{ bSuccess: true }" },
+        "ahora": { "metodo": "POST", "url": "/api/Reconsideracion/Crear", "contentType": "multipart/form-data", "body": "{ Numero, Fecha, Archivo }", "respuesta": "{ bSuccess: true }" },
+        "estadoK6": "EN VALIDACION",
+        "estadoPlaywright": "CORREGIDO (locator de checkbox oculto reparado)",
+        "impacto": "Pruebas corriendo. Locator POM de UI corregido usando selectores mas estrictos (pseudo-clases :not([type='checkbox']))."
+      }
+    ],
+    "defectos": [
+      {
+        "id": "DEF-001",
+        "nombre": "Expedientes sin sanciones (Registros Huerfanos)",
+        "descripcion": "En pase anterior K6 bajo concurrencia alta dejaba cabeceras sin detalle de sancion. El nuevo endpoint CrearConDetalles es una sola transaccion atomica que ha corregido esto.",
+        "estadoUI": "CORREGIDO por cambio arquitectonico (validado en Phase 2: 0 huerfanos en 35 registros creados)",
+        "estadoK6": "CORREGIDO (confirmado con test K6)",
+        "prioridad": "CRITICA",
+        "paseAnterior": "ABIERTO",
+        "paseActual": "CERRADO",
+        "fechaCierre": "2026-06-10"
+      },
+      {
+        "id": "DEF-UI-01",
+        "nombre": "Boton 'Nuevo Administrado' inubicable",
+        "descripcion": "Playwright no encontraba el boton para crear entidad en Caso 01 porque la UI lo renderiza como boton iconografico sin texto accesible.",
+        "estadoUI": "CORREGIDO (POM actualizado y CP-REG-01 verificado)",
+        "estadoK6": "N/A (backend estable)",
+        "prioridad": "MEDIA",
+        "paseAnterior": "ABIERTO",
+        "paseActual": "CERRADO",
+        "fechaCierre": "2026-06-09"
+      },
+      {
+        "id": "DEF-UI-02",
+        "nombre": "waitForLoadState('networkidle') bloquea bajo alta concurrencia",
+        "descripcion": "Angular/PrimeNG mantiene polling HTTP activo. Con 9 workers simultaneos, la red jamas alcanza estado 'idle', causando timeouts de 120s en pasos: Abrir Formulario, Llenar Expediente, Subir Documento, Agregar Medida y Agregar Sancion. Detalle: W4R4, W2R2, W6R6 fallaron en 'Abrir formulario'; W1R1 y W8R23 fallaron en 'Guardar formulario'.",
+        "estadoUI": "CORREGIDO (2026-06-10) — Reemplazado por esperas dirigidas a elementos especificos en sanciones.page.ts y formulario-sancion.page.ts",
+        "estadoK6": "N/A",
+        "prioridad": "ALTA",
+        "paseAnterior": "ABIERTO",
+        "paseActual": "CORREGIDO — pendiente validar en siguiente ejecucion",
+        "archivosModificados": [
+          "pages/sanciones.page.ts — abrirFormularioRegistrarSancion()",
+          "pages/formulario-sancion.page.ts — llenarNumeroExpediente(), subirDocumento(), agregarMedidaCorrectiva(), clickAgregarSancion()"
+        ],
+        "causaRaiz": "waitForLoadState('networkidle') incompatible con Angular SPA bajo alta concurrencia"
+      },
+      {
+        "id": "DEF-UI-03",
+        "nombre": "Interceptor API pierde respuesta de CrearConDetalles bajo latencia alta",
+        "descripcion": "El interceptor page.on('response') era registrado DENTRO del constructor de la Promise, lo que en JavaScript puede generar un tick de diferencia con respecto al click. Bajo baja latencia del servidor (respuesta < 50ms), la respuesta podia llegar antes de que el listener estuviera activo.",
+        "estadoUI": "CORREGIDO (2026-06-10) — Interceptor registrado ANTES del click en guardarFormulario(). Timeout ampliado de 30s a 45s.",
+        "estadoK6": "N/A",
+        "prioridad": "ALTA",
+        "paseAnterior": "ABIERTO",
+        "paseActual": "CORREGIDO — pendiente validar en siguiente ejecucion",
+        "archivosModificados": [
+          "pages/formulario-sancion.page.ts — guardarFormulario()"
+        ],
+        "causaRaiz": "Race condition entre registro de listener y click al boton Guardar"
+      }
+    ]
+  },
+  {
+    "version": "2.0",
+    "fechaEvaluacion": "2026-06-09",
+    "paseAnterior": "v1.0",
+    "paseActual": "v2.0",
+    "responsableQA": "Liz Vidal",
+    "endpoints": [
+      {
+        "nombre": "Listar Infracciones",
+        "caso": "Caso 02",
+        "antes": {
+          "metodo": "POST",
+          "url": "/api/Infraccion/Listar",
+          "contentType": "application/json",
+          "body": "{ \"idRis\": 1 }",
+          "respuesta": "{ oData: [ {...} ] }"
+        },
+        "ahora": {
+          "metodo": "GET",
+          "url": "/api/Infraccion/Listar?idRis=1",
+          "contentType": "N/A",
+          "body": "N/A (query param)",
+          "respuesta": "{ oData: [ {...} ] }"
+        },
+        "estadoK6": "CORREGIDO",
+        "estadoPlaywright": "SIN CAMBIOS",
+        "impacto": "Cambio de metodo HTTP de POST a GET. K6 actualizado para usar GET con query param."
+      },
+      {
+        "nombre": "Crear Cabecera + Medida + Detalle (FUSIONADO)",
+        "caso": "Caso 02",
+        "antes": {
+          "metodo": "POST x3 llamadas separadas",
+          "url": "/api/CabeceraInfraccionSancion/Crear + /api/MedidaCorrectiva/Crear + /api/DetalleInfraccionSancion/Crear",
+          "contentType": "application/json",
+          "body": "3 peticiones separadas con sus respectivos payloads",
+          "respuesta": "{ oData: { idCabeceraInfraccionSancion: 123 } }"
+        },
+        "ahora": {
+          "metodo": "POST (1 sola llamada transaccional)",
+          "url": "/api/CabeceraInfraccionSancion/CrearConDetalles",
+          "contentType": "multipart/form-data o JSON (por confirmar payload exacto)",
+          "body": "Payload unificado con cabecera + medidas + detalles en una sola transaccion",
+          "respuesta": "{ bSuccess: true, oData: { RESULTADO: 2954, MENSAJE_ERROR: '...', LINEA_ERROR: 0 } }"
+        },
+        "estadoK6": "CORREGIDO",
+        "estadoPlaywright": "CORREGIDO — POM adaptado al nuevo campo RESULTADO",
+        "impacto": "CAMBIO ARQUITECTONICO MAYOR. Los 3 endpoints anteriores se fusionaron en uno solo transaccional. Esto corrige el defecto de expedientes huerfanos (race condition). K6 reescrito a una sola llamada."
+      },
+      {
+        "nombre": "Listar Paginado Cabecera (Validacion Post-Guardado)",
+        "caso": "Caso 02",
+        "antes": {
+          "metodo": "POST",
+          "url": "/api/CabeceraInfraccionSancion/ListarPaginado",
+          "contentType": "application/json",
+          "body": "{ nPageNumber, nPageSize, filtroGeneral }",
+          "respuesta": "{ oData: { Results: [...] } }"
+        },
+        "ahora": {
+          "metodo": "POST",
+          "url": "/api/CabeceraInfraccionSancion/ListarPaginado",
+          "contentType": "application/json",
+          "body": "{ nPageNumber, nPageSize, filtroGeneral }",
+          "respuesta": "{ oData: { Results: [...] } }"
+        },
+        "estadoK6": "SIN CAMBIOS",
+        "estadoPlaywright": "SIN CAMBIOS",
+        "impacto": "No se detectaron cambios."
+      },
+      {
+        "nombre": "Crear Administrado",
+        "caso": "Caso 01",
+        "antes": {
+          "metodo": "POST",
+          "url": "/api/Entidad/Crear",
+          "contentType": "application/json",
+          "body": "{ Ruc, RazonSocial, ... }",
+          "respuesta": "{ bSuccess: true, oData: { IdEntidad: ... } }"
+        },
+        "ahora": {
+          "metodo": "POST",
+          "url": "/api/Entidad/Crear",
+          "contentType": "application/json",
+          "body": "{ Ruc, RazonSocial, ... }",
+          "respuesta": "{ bSuccess: true, oData: { IdEntidad: ... } }"
+        },
+        "estadoK6": "OK",
+        "estadoPlaywright": "CORREGIDO — POM adaptado al boton iconografico de Nuevo Administrado y a Entidad/ListarPaginado",
+        "impacto": "Backend stable (0% error en K6). UI actualizada: el boton de creacion ya no expone texto accesible ni clase pi-plus, y la validacion de persistencia usa POST /api/Entidad/ListarPaginado como la pantalla."
+      },
+      {
+        "nombre": "Crear Reconsideracion",
+        "caso": "Caso 04",
+        "antes": {
+          "metodo": "POST",
+          "url": "/api/Reconsideracion/Crear",
+          "contentType": "multipart/form-data",
+          "body": "{ Numero, Fecha, Archivo }",
+          "respuesta": "{ bSuccess: true }"
+        },
+        "ahora": {
+          "metodo": "POST",
+          "url": "/api/Reconsideracion/Crear",
+          "contentType": "multipart/form-data",
+          "body": "{ Numero, Fecha, Archivo }",
+          "respuesta": "{ bSuccess: true }"
+        },
+        "estadoK6": "EN VALIDACION",
+        "estadoPlaywright": "CORREGIDO (locator de checkbox oculto reparado)",
+        "impacto": "Pruebas corriendo. Locator POM de UI corregido usando selectores mas estrictos (pseudo-clases :not([type='checkbox']))."
+      }
+    ],
+    "defectos": [
+      {
+        "id": "DEF-001",
+        "nombre": "Expedientes sin sanciones (Registros Huerfanos)",
+        "descripcion": "En pase anterior K6 bajo concurrencia alta dejaba cabeceras sin detalle de sancion. El nuevo endpoint CrearConDetalles es una sola transaccion atomica que ha corregido esto.",
+        "estadoUI": "CORREGIDO por cambio arquitectonico (validado)",
+        "estadoK6": "CORREGIDO (confirmado con test K6)",
+        "prioridad": "CRITICA",
+        "paseAnterior": "ABIERTO",
+        "paseActual": "CERRADO"
+      },
+      {
+        "id": "DEF-UI-01",
+        "nombre": "Boton 'Nuevo Administrado' inubicable",
+        "descripcion": "Playwright no encontraba el boton para crear entidad en Caso 01 porque la UI lo renderiza como boton iconografico sin texto accesible. Ademas, la validacion post-guardado usaba Entidad/Listar y se actualizo a Entidad/ListarPaginado.",
+        "estadoUI": "CORREGIDO (POM actualizado y CP-REG-01 verificado)",
+        "estadoK6": "N/A (backend stable)",
+        "prioridad": "MEDIA",
+        "paseAnterior": "ABIERTO",
+        "paseActual": "CERRADO"
+      }
+    ]
+  }
+]

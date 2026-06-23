@@ -1,91 +1,152 @@
 // src/services/sancion.js
+// v2.0 — Adaptado al nuevo endpoint unificado CabeceraInfraccionSancion/CrearConDetalles
+// Cambio arquitectónico del pase v2.0: las 3 llamadas separadas se fusionaron en una sola.
+
 import http from 'k6/http';
 import { sleep } from 'k6';
-import { apiRequest, getSourceIp, isFunctionalSuccessResponse, recordResponseMetrics } from '../api/client.js';
+import { apiRequest, getSourceIp, recordResponseMetrics } from '../api/client.js';
 import { getAuthHeaders } from '../api/auth.js';
 import { config } from '../config/index.js';
 import { createdRecordsCounter } from '../../lib/metrics.js';
 
+/**
+ * Listar infracciones disponibles por RIS.
+ * v2.0: Cambió de POST con body JSON a GET con query param.
+ */
 export function listarInfracciones(idRis) {
-  return apiRequest('POST', '/Infraccion/Listar', { idRis }, {
+  return apiRequest('GET', `/Infraccion/Listar?idRis=${idRis}`, null, {
     headers: getAuthHeaders(),
     tags: { name: 'Infraccion/Listar', endpoint: 'infraccion_listar' }
   });
 }
 
-export function crearCabecera(payload) {
-  // ⚠️ CabeceraInfraccionSancion/Crear requiere multipart/form-data, NO JSON.
-  // Se envía el objeto plano sin Content-Type para que K6 lo codifique como form-data.
-  // Esto coincide con el modo form_pascal del script de referencia.
-  const url = `${config.baseUrl}/CabeceraInfraccionSancion/Crear`;
+/**
+ * Crear cabecera + medidas + detalles en una sola llamada transaccional.
+ * v2.0: Reemplaza los 3 endpoints anteriores:
+ *   - CabeceraInfraccionSancion/Crear     (ELIMINADO)
+ *   - MedidaCorrectiva/Crear              (ELIMINADO)
+ *   - DetalleInfraccionSancion/Crear      (ELIMINADO)
+ *
+ * Payload: multipart/form-data con notación de array indexado.
+ * Respuesta: { bSuccess, oData: { RESULTADO: <id>, MENSAJE_ERROR, LINEA_ERROR } }
+ *
+ * @param {Object} cabecera  - Datos de la cabecera del expediente
+ * @param {Array}  medidas   - Lista de medidas correctivas
+ * @param {Array}  detalles  - Lista de detalles de sanción
+ * @param {Object} archivo   - Objeto { contenido: bytes, nombre: string } para el PDF
+ */
+export function crearConDetalles(cabecera, medidas, detalles, archivo) {
+  const url    = `${config.baseUrl}/CabeceraInfraccionSancion/CrearConDetalles`;
   const sourceIp = getSourceIp();
+
+  // Construir el payload multipart manualmente con notación de array indexado
+  // que espera el backend ASP.NET (model binding estándar)
+  const formData = {
+    // --- Cabecera ---
+    IdEntidad:            String(cabecera.idEntidad || ''),
+    NumeroExpediente:     String(cabecera.numeroExpediente || ''),
+    NumeroResolucion:     String(cabecera.numeroResolucion || ''),
+    FechaResolucion:      String(cabecera.fechaResolucion || ''),
+    RutaResolucionSancion: String(cabecera.rutaResolucionSancion || archivo.nombre || ''),
+  };
+
+  // --- Archivo PDF (binario) ---
+  formData['ArchivoResolucion'] = http.file(
+    archivo.contenido,
+    archivo.nombre,
+    'application/pdf'
+  );
+
+  // --- Medidas (array indexado) ---
+  medidas.forEach((m, i) => {
+    formData[`Medidas[${i}].DesMedidaCorrectiva`] = String(m.desMedidaCorrectiva || '');
+    formData[`Medidas[${i}].Orden`]               = String(i + 1);
+  });
+
+  // --- Detalles de sanción (array indexado) ---
+  detalles.forEach((d, i) => {
+    formData[`Detalles[${i}].IdInfraccion`]         = String(d.idInfraccion || '');
+    formData[`Detalles[${i}].IdRis`]                = String(d.idRis || '1');
+    formData[`Detalles[${i}].DesSancion`]            = String(d.desSancion || '');
+    formData[`Detalles[${i}].DesHechoInfractor`]     = String(d.desHechoInfractor || '');
+    formData[`Detalles[${i}].NumCorrelativo`]        = String(i + 1);
+    formData[`Detalles[${i}].BitMedida`]             = d.bitMedida !== false ? 'true' : 'false';
+    formData[`Detalles[${i}].DesMedidaCorrectivaGen`]= String(d.desMedidaCorrectivaGen || '');
+    formData[`Detalles[${i}].BitReconsidera`]        = d.bitReconsidera ? 'true' : 'false';
+    formData[`Detalles[${i}].BitReincidente`]        = d.bitReincidente ? 'true' : 'false';
+    formData[`Detalles[${i}].BitPago`]               = d.bitPago ? 'true' : 'false';
+    formData[`Detalles[${i}].BitCancelacion`]        = d.bitCancelacion ? 'true' : 'false';
+    formData[`Detalles[${i}].CanSuspension`]         = String(d.canSuspension ?? 0);
+    formData[`Detalles[${i}].DesSuspension`]         = String(d.desSuspension || '');
+    // TipoMulta: 'S' = Soles, 'U' = UIT (confirmado por captura de red v2.0)
+    formData[`Detalles[${i}].TipoMulta`]             = d.tipoMulta ? String(d.tipoMulta) : '';
+    formData[`Detalles[${i}].NumMonto`]              = String(d.numMonto ?? 0);
+  });
+
   const params = {
     headers: {
-      'Authorization': getAuthHeaders().Authorization
+      'Authorization': getAuthHeaders().Authorization,
+      // NO establecer Content-Type: K6 genera el boundary automáticamente para multipart
     },
-    tags: { name: 'CabeceraInfraccionSancion/Crear', endpoint: 'cabecerainfraccionsancion_crear', source_ip: sourceIp },
+    tags: {
+      name:      'CabeceraInfraccionSancion/CrearConDetalles',
+      endpoint:  'cabecerainfraccionsancion_crearcondetalles',
+      source_ip: sourceIp
+    },
     timeout: config.timeoutMs
   };
 
-  // Asegurar que IdEntidad sea string para form-data
-  const formPayload = {
-    IdEntidad:              String(payload.IdEntidad || payload.idEntidad || ''),
-    NumeroExpediente:       String(payload.NumeroExpediente || payload.numeroExpediente || ''),
-    NumeroResolucion:       String(payload.NumeroResolucion || payload.numeroResolucion || ''),
-    FechaResolucion:        String(payload.FechaResolucion || payload.fechaResolucion || ''),
-    RutaResolucionSancion:  String(payload.RutaResolucionSancion || payload.rutaResolucionSancion || ''),
-    ArchivoResolucion:      String(payload.ArchivoResolucion || payload.archivoResolucion || '')
-  };
-
   let response;
-  const retries = config.maxRetries || 3;
-  let waitSecs = 1.5;
+  const retries  = config.maxRetries || 3;
+  let waitSecs   = 1.5;
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     params.tags.retry = String(attempt);
-    response = http.post(url, formPayload, params);
+    response = http.post(url, formData, params);
     recordResponseMetrics(response, sourceIp, params.tags);
 
-    if (response.status !== 429) {
-      break;
-    }
+    if (response.status !== 429) break;
 
     if (attempt < retries) {
-      console.warn(`[WARN] 429 Rate Limit en CabeceraInfraccionSancion/Crear. Intento ${attempt + 1}/${retries}. Esperando ${waitSecs}s...`);
+      console.warn(`[WARN] 429 Rate Limit en CrearConDetalles. Intento ${attempt + 1}/${retries}. Esperando ${waitSecs}s...`);
       sleep(waitSecs);
       waitSecs *= 2.0;
     }
   }
 
+  // Contabilizar registro si fue exitoso
+  if (response.status === 200 || response.status === 201) {
+    try {
+      const oData = response.json('oData');
+      const idResultado = oData?.RESULTADO || oData?.resultado;
+      if (idResultado) {
+        createdRecordsCounter.add(1, {
+          operation:  'cabecera_con_detalles',
+          endpoint:   'cabecerainfraccionsancion_crearcondetalles',
+          source_ip:  sourceIp,
+        });
+      }
+    } catch (_) {}
+  }
+
   return response;
 }
 
-export function crearMedida(payload) {
-  const response = apiRequest('POST', '/MedidaCorrectiva/Crear', payload, {
-    headers: getAuthHeaders(),
-    tags: { name: 'MedidaCorrectiva/Crear', endpoint: 'medidacorrectiva_crear' }
-  });
-  if (isFunctionalSuccessResponse(response, true)) {
-    createdRecordsCounter.add(1, {
-      operation: 'medida',
-      endpoint: 'medidacorrectiva_crear',
-      source_ip: getSourceIp(),
-    });
-  }
-  return response;
+// ── LEGACY: conservados como stub para no romper imports existentes ──────────
+// Estos endpoints ya NO existen en el backend v2.0.
+// Si algún script los llama, recibirá un warning y retornará null.
+
+export function crearCabecera(_payload) {
+  console.warn('[WARN] crearCabecera() está OBSOLETO en v2.0. Usa crearConDetalles().');
+  return null;
 }
 
-export function crearDetalle(payload) {
-  const response = apiRequest('POST', '/DetalleInfraccionSancion/Crear', payload, {
-    headers: getAuthHeaders(),
-    tags: { name: 'DetalleInfraccionSancion/Crear', endpoint: 'detalleinfraccionsancion_crear' }
-  });
-  if (isFunctionalSuccessResponse(response, true)) {
-    createdRecordsCounter.add(1, {
-      operation: 'detalle_sancion',
-      endpoint: 'detalleinfraccionsancion_crear',
-      source_ip: getSourceIp(),
-    });
-  }
-  return response;
+export function crearMedida(_payload) {
+  console.warn('[WARN] crearMedida() está OBSOLETO en v2.0. Usa crearConDetalles().');
+  return null;
+}
+
+export function crearDetalle(_payload) {
+  console.warn('[WARN] crearDetalle() está OBSOLETO en v2.0. Usa crearConDetalles().');
+  return null;
 }

@@ -262,6 +262,52 @@ function allChecks(data) {
   return checks;
 }
 
+function checkPasses(data, pattern) {
+  return allChecks(data)
+    .filter((check) => pattern.test(check.name || ''))
+    .reduce((sum, check) => sum + num(check.passes, 0), 0);
+}
+
+function recordsAudit(data, endpoints = DEFAULT_ENDPOINTS) {
+  const expected = countMetric(data, 'iterations');
+  const byTag = Object.fromEntries(endpoints.map((ep) => [ep.tag, ep]));
+  const isCaso01 = Boolean(byTag.entidad_crear);
+  const crearConDetallesOk = checkPasses(data, /^CrearConDetalles tiene RESULTADO$/);
+  const isCaso02 = Boolean(byTag.cabecerainfraccionsancion_crearcondetalles) || crearConDetallesOk > 0;
+  const isCaso04 = Boolean(byTag.cabecerainfraccionsancion_actualizar);
+  const globalCounter = countMetric(data, 'reginsa_created_records');
+
+  let created = globalCounter;
+  let source = 'contador global reginsa_created_records';
+
+  if (isCaso02) {
+    const byResultCheck = crearConDetallesOk;
+    const byOperation = creationCount(data, 'cabecera_con_detalles');
+    created = byResultCheck || byOperation || globalCounter;
+    source = byResultCheck
+      ? 'check funcional CrearConDetalles tiene RESULTADO'
+      : (byOperation ? 'contador operation:cabecera_con_detalles' : source);
+  } else if (isCaso01) {
+    const byOperation = creationCount(data, 'administrado');
+    created = byOperation || globalCounter;
+    source = byOperation ? 'contador operation:administrado' : source;
+  } else if (isCaso04) {
+    const byOperation = creationCount(data, 'reconsideracion');
+    created = byOperation || globalCounter;
+    source = byOperation ? 'contador operation:reconsideracion' : source;
+  }
+
+  return {
+    expected,
+    created,
+    missing: Math.max(0, expected - created),
+    extra: Math.max(0, created - expected),
+    match: expected > 0 && expected === created,
+    source,
+    globalCounter,
+  };
+}
+
 function formatBreakdown(breakdown, count) {
   if (count === 0 || !breakdown || Object.keys(breakdown).length === 0) {
     return `${count}`;
@@ -1403,9 +1449,11 @@ function buildGranularAnalysis(ips, endpoints, checks, data, SLO) {
 function buildFunctionalCaseSummary(data, endpoints) {
   const byTag = Object.fromEntries(endpoints.map((ep) => [ep.tag, ep]));
   const isCaso01 = Boolean(byTag.entidad_crear);
+  const isCaso02 = Boolean(byTag.cabecerainfraccionsancion_crearcondetalles);
   const isCaso04 = Boolean(byTag.cabecerainfraccionsancion_actualizar);
   const iterations = metric(data, 'iterations');
   const visualTarget = Number(iterations.count || 0);
+  const audit = recordsAudit(data, endpoints);
   const rows = isCaso01
     ? [
         {
@@ -1447,7 +1495,24 @@ function buildFunctionalCaseSummary(data, endpoints) {
             note: 'Marca/actualiza el detalle para el flujo de reconsideración. Los rechazos funcionales deben revisarse como regla de negocio.',
           },
         ]
-    : [
+    : isCaso02
+      ? [
+          {
+            type: 'Consulta',
+            step: '1. Listar infracciones',
+            endpoint: byTag.infraccion_listar,
+            created: '-',
+            note: 'Precondicion funcional: obtiene catalogo para construir la sancion.',
+          },
+          {
+            type: 'Creacion transaccional',
+            step: '2. Crear cabecera con detalles',
+            endpoint: byTag.cabecerainfraccionsancion_crearcondetalles,
+            created: audit.created,
+            note: 'Endpoint unificado. Una iteracion solo cuenta como registro creado si la respuesta trae RESULTADO valido.',
+          },
+        ]
+      : [
         {
           type: 'Consulta',
           step: '1. Listar infracciones',
@@ -1484,7 +1549,7 @@ function buildFunctionalCaseSummary(data, endpoints) {
     : 'Total de operaciones de creación registradas';
   const totalRows = isCaso04
     ? rows.filter((row) => row.type === 'Actualización' && row.endpoint?.tag === 'cabecerainfraccionsancion_actualizar')
-    : rows.filter((row) => row.type === 'Creación');
+    : rows.filter((row) => row.type === 'Creación' || row.type === 'Creacion transaccional');
 
   const htmlRows = rows
     .map((row) => {
@@ -1507,6 +1572,15 @@ function buildFunctionalCaseSummary(data, endpoints) {
   const totalCreated = totalRows
     .reduce((sum, row) => sum + (Number(row.created) || 0), 0);
 
+  const auditBanner = isCaso02
+    ? `<div class="note" style="background:${audit.match ? '#e8f5e9' : '#ffebee'};border-left:4px solid ${audit.match ? '#2e7d32' : '#c62828'};">
+        <strong>Auditoria de registros Caso 02:</strong>
+        esperados ${audit.expected}, creados ${audit.created}, faltantes ${audit.missing}.
+        Fuente: ${escapeHtml(audit.source)}.
+        ${audit.globalCounter && audit.globalCounter !== audit.created ? ` Contador global observado: ${audit.globalCounter}; no se usa como verdad unica porque puede incluir doble conteo.` : ''}
+      </div>`
+    : '';
+
   return `<details class="section" open>
     <summary>${isCaso01 ? '📌 Lectura Funcional del Caso 01: Creación de Administrado' : (isCaso04 ? '📌 Lectura Funcional del Caso 04: Reconsideración con Sanciones' : '📌 Lectura Funcional del Caso 02: Consulta vs Creación')}</summary>
     <div class="note">
@@ -1514,8 +1588,9 @@ function buildFunctionalCaseSummary(data, endpoints) {
         ? 'Este caso valida la creación de administrados. Para reportarlo, separe las aceptadas 2xx de los rechazos funcionales como duplicados/conflictos y de los errores técnicos.'
         : (isCaso04
           ? 'Este caso combina consulta de precondición, actualización de cabecera con resolución de reconsideración y actualización de detalle. Para reportarlo, separe la salud de las consultas del cierre funcional en CabeceraInfraccionSancion/Actualizar.'
-          : 'Este caso combina una consulta de catálogo con tres operaciones de creación encadenadas. Para reportarlo sin mezclar conceptos, lea primero la salud de la consulta y luego el embudo de creación: cabecera creada, medida creada y detalle de sanción creado. Una iteración solo debe considerarse creación completa cuando llega hasta el detalle.')}
+          : 'Este caso combina una consulta de catálogo con una creación transaccional unificada. Para reportarlo sin mezclar conceptos, lea primero la salud de la consulta y luego la creación en CabeceraInfraccionSancion/CrearConDetalles. Una iteración solo debe considerarse creada cuando la respuesta trae RESULTADO válido.')}
     </div>
+    ${auditBanner}
     <div style="overflow-x:auto">
       <table>
         <thead>
@@ -1538,7 +1613,9 @@ function buildFunctionalCaseSummary(data, endpoints) {
         ? 'Para evidencia de administrados creados, priorice la fila Crear administrado.'
         : (isCaso04
           ? `Objetivo visual esperado: ${visualTarget} registro(s) únicos con reconsideración, equivalente a las iteraciones completadas de la corrida. Este valor cuenta operaciones aceptadas por CabeceraInfraccionSancion/Actualizar; si una misma cabecera se procesa varias veces, la cantidad de registros únicos visibles en la UI puede ser menor.`
-          : 'Para evidencia de sanciones completas, priorice la fila Crear detalle sanción, porque representa el cierre funcional del flujo.')}
+          : (isCaso02
+            ? `Objetivo audit esperado: ${audit.expected} registros creados, equivalente a las iteraciones completadas. Resultado observado: ${audit.created}; faltan ${audit.missing}.`
+            : 'Para evidencia de sanciones completas, priorice la fila Crear detalle sanción, porque representa el cierre funcional del flujo.'))}
     </div>
   </details>`;
 }
@@ -2615,6 +2692,7 @@ function buildStdout(testName, data) {
   const checks = metric(data, 'checks');
   const reqs = metric(data, 'http_reqs');
   const errorRate = effectiveErrorRate(data);
+  const audit = recordsAudit(data);
   const lines = [
     '',
     '============================================================',
@@ -2627,6 +2705,7 @@ function buildStdout(testName, data) {
     `p99      : ${fmtMs(dur['p(99)'])}`,
     `Errores  : ${fmtPct(errorRate)}`,
     `Checks   : ${fmtPct(checks.rate ?? checks.value ?? 0)}`,
+    `Registros: ${audit.created}/${audit.expected}${audit.match ? '' : ` (faltan ${audit.missing})`}`,
     '============================================================',
     '',
   ];

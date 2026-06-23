@@ -6,7 +6,7 @@
 const path = require('node:path');
 const _fs = require('node:fs');
 const ExcelJS = require('exceljs');
-const { K6Reader, fmtMs, fmtPct, resolveTargetJson } = require('./lib/k6-reader');
+const { K6Reader, fmtMs, fmtPct, resolveTargetJson, safeReadJson } = require('./lib/k6-reader');
 
 // ── Estilos reutilizables ────────────────────────────────────────────────────
 const FILL = (argb) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } });
@@ -697,6 +697,93 @@ function buildFlujoCaso02(wb, r) {
   note.getCell(2).alignment = ALIGN('left');
 }
 
+// ── Hoja 9: Matriz de Cambios de API entre Pases ────────────────────────────
+function buildChangelogAPI(wb) {
+  const changelogPath = path.join(__dirname, '../config/release-changelog.json');
+  let changelog = safeReadJson(changelogPath);
+  if (Array.isArray(changelog)) changelog = changelog[0];
+
+  const ws = wb.addWorksheet('9-Cambios de API');
+  ws.columns = [
+    { width: 30 }, // Endpoint
+    { width: 10 }, // Caso
+    { width: 8  }, // Método Antes
+    { width: 44 }, // URL Antes
+    { width: 8  }, // Método Ahora
+    { width: 44 }, // URL Ahora
+    { width: 20 }, // Content-Type Ahora
+    { width: 16 }, // Estado K6
+    { width: 16 }, // Estado PW
+    { width: 48 }, // Impacto
+  ];
+
+  ws.mergeCells('A1:J1');
+  applyHdr(ws.getCell('A1'),
+    `MATRIZ DE CAMBIOS DE API — Pase ${changelog.paseAnterior} → ${changelog.paseActual} | ${changelog.fechaEvaluacion} | QA: ${changelog.responsableQA}`,
+    HDR_FILL
+  );
+  ws.getRow(1).height = 28;
+
+  const hdr = ws.addRow([
+    'ENDPOINT', 'CASO',
+    'MÉTODO ANTES', 'URL ANTES',
+    'MÉTODO AHORA', 'URL AHORA', 'CONTENT-TYPE AHORA',
+    'ESTADO K6', 'ESTADO PLAYWRIGHT', 'IMPACTO / DESCRIPCIÓN'
+  ]);
+  hdr.eachCell((c) => applyHdr(c, c.value, SUB_FILL));
+
+  const stFill = (v) => {
+    if (!v) return GRS_FILL;
+    const u = v.toUpperCase();
+    if (u.includes('CORREGIDO') || u.includes('OK') || u.includes('SIN CAMBIOS')) return VEF_FILL;
+    if (u.includes('PENDIENTE') || u.includes('REVISION') || u.includes('VALIDACION')) return AMF_FILL;
+    if (u.includes('FALLA') || u.includes('ERROR') || u.includes('404')) return ROF_FILL;
+    return GRS_FILL;
+  };
+
+  changelog.endpoints.forEach((ep, i) => {
+    const row = ws.addRow([
+      ep.nombre,
+      ep.caso,
+      ep.antes.metodo,
+      ep.antes.url,
+      ep.ahora.metodo,
+      ep.ahora.url,
+      ep.ahora.contentType,
+      ep.estadoK6,
+      ep.estadoPlaywright,
+      ep.impacto,
+    ]);
+    row.getCell(1).font = FONT({ bold: true, size: 10 });
+    row.getCell(8).fill = stFill(ep.estadoK6);
+    row.getCell(9).fill = stFill(ep.estadoPlaywright);
+    if (i % 2 === 0) {
+      [1,2,3,4,5,6,7,10].forEach((n) => { row.getCell(n).fill = GRS_FILL; });
+    }
+    row.eachCell((c) => {
+      c.border = BORDERS;
+      c.alignment = ALIGN('left', 'middle');
+    });
+    row.height = 28;
+  });
+
+  // Sección de defectos
+  ws.addRow([]);
+  const defHdrRow = ws.addRow(['DEFECTOS FUNCIONALES ENTRE PASES', '', '', '', '', '', '', '', '', '']);
+  defHdrRow.getCell(1).fill = HDR_FILL;
+  defHdrRow.getCell(1).font = FONT({ bold: true, color: 'FFFFFFFF', size: 10 });
+
+  const defHdr = ws.addRow(['ID', 'NOMBRE', 'DESCRIPCIÓN', 'ESTADO UI', 'ESTADO K6', 'PRIORIDAD', 'PASE ANTERIOR', 'PASE ACTUAL', '', '']);
+  defHdr.eachCell((c) => applyHdr(c, c.value, SUB_FILL));
+
+  changelog.defectos.forEach((d) => {
+    const row = ws.addRow([d.id, d.nombre, d.descripcion, d.estadoUI, d.estadoK6, d.prioridad, d.paseAnterior, d.paseActual, '', '']);
+    row.getCell(6).fill = d.prioridad === 'CRITICA' ? ROF_FILL : AMF_FILL;
+    row.eachCell((c) => { c.border = BORDERS; c.alignment = ALIGN('left', 'middle'); });
+    row.height = 36;
+  });
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   const reportsDir = path.join(__dirname, '../reports');
@@ -715,6 +802,7 @@ async function main() {
   buildLeyenda(wb);
   buildHttpSpectrum(wb, r);
   buildFlujoCaso02(wb, r);
+  buildChangelogAPI(wb);
 
   const outPath = path.join(r.outDir, `REGINSA_${r.testName}_AUDITORIA_${r.filenameStamp}.xlsx`);
   await wb.xlsx.writeFile(outPath);

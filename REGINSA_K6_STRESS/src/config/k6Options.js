@@ -17,15 +17,9 @@ const CASE_ENDPOINTS = {
   caso02_registrar_sancion: [
     { tag: 'infraccion_listar', label: 'INFRACCION / LISTAR', title: 'Infraccion/Listar' },
     {
-      tag: 'cabecerainfraccionsancion_crear',
-      label: 'CABECERA INFRACCION SANCION / CREAR',
-      title: 'CabeceraInfraccionSancion/Crear',
-    },
-    { tag: 'medidacorrectiva_crear', label: 'MEDIDA CORRECTIVA / CREAR', title: 'MedidaCorrectiva/Crear' },
-    {
-      tag: 'detalleinfraccionsancion_crear',
-      label: 'DETALLE INFRACCION SANCION / CREAR',
-      title: 'DetalleInfraccionSancion/Crear',
+      tag: 'cabecerainfraccionsancion_crearcondetalles',
+      label: 'CABECERA INFRACCION SANCION / CREAR CON DETALLES',
+      title: 'CabeceraInfraccionSancion/CrearConDetalles',
     },
   ],
   caso04_reconsiderar_con_sanciones: [
@@ -55,7 +49,7 @@ const CASE_ENDPOINTS = {
 const CASE_CREATED_OPERATIONS = {
   caso01_agregar_administrado: ['administrado'],
   caso01_crear: ['administrado'],
-  caso02_registrar_sancion: ['cabecera', 'medida', 'detalle_sancion'],
+  caso02_registrar_sancion: ['cabecera_con_detalles'],
   caso04_reconsiderar_con_sanciones: ['reconsideracion'],
 };
 

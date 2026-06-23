@@ -3,7 +3,7 @@
 
 const path = require('node:path');
 const fs = require('node:fs');
-const { K6Reader, fmtMs, fmtPct } = require('./lib/k6-reader');
+const { K6Reader, fmtMs, fmtPct, safeReadJson } = require('./lib/k6-reader');
 
 // ---- Google Font & premium styles ------------------------------------------------
 const STYLE = `
@@ -129,6 +129,13 @@ function generateHTML(jsonPath, outDir) {
   const budget = r.errorBudget;
   const showMultiIp = true;
 
+  const changelogPath = path.join(__dirname, '../config/release-changelog.json');
+  let changelog = null;
+  if (fs.existsSync(changelogPath)) {
+    changelog = safeReadJson(changelogPath);
+    if (Array.isArray(changelog)) changelog = changelog[0];
+  }
+
   // Extraer checks 
   const allChecksList = [];
   function extractChecksRecursively(group) {
@@ -182,8 +189,9 @@ function generateHTML(jsonPath, outDir) {
     { id: 'http', title: '9. Resumen de Respuestas HTTP' },
     { id: 'diagnostics', title: '10. Diagnóstico SRE y Errores' },
     { id: 'granular', title: '11. Análisis Granular por Nodo' },
-    { id: 'legend', title: '12. Leyenda de Métricas' },
-    { id: 'recommendation', title: '13. Recomendación Técnica' }
+    { id: 'changelog', title: '12. Registro de Auditoría: Cambios API y Defectos QA' },
+    { id: 'legend', title: '13. Leyenda de Métricas' },
+    { id: 'recommendation', title: '14. Recomendación Técnica' }
   ];
 
   const indexHtml = `
@@ -203,16 +211,22 @@ function generateHTML(jsonPath, outDir) {
     </div>
   `;
 
-  // 2. Dashboard Maestro
   const s1_p95 = r.p95 < r.slo.p95Ms ? {cls:'pass', txt:'✔ PASA'} : {cls:'fail', txt:'✖ FALLA'};
   const s1_err = r.errorRate < r.slo.errorRate ? {cls:'pass', txt:'✔ PASA'} : {cls:'fail', txt:'✖ FALLA'};
+  const s_pers = r.functionalPersistenceRatio === 100 ? {cls:'pass', txt:'✔ 100%'} : {cls:'fail', txt:`✖ ${r.functionalPersistenceRatio}%`};
+  const s_tech = r.technicalStatus === 'PASS' ? {cls:'pass', txt:'✔ PASA'} : {cls:'fail', txt:'✖ FALLA'};
+  const s_go = r.goDecision === 'GO' ? {cls:'pass', txt:'GO'} : (r.goDecision === 'GO_CON_RIESGO' ? {cls:'warn', txt:'GO CON RIESGO'} : {cls:'fail', txt:'NO-GO'});
+
   const dashRows = [
     ['Total Requests', r.totalRequests, '—', '🟢'],
     ['RPS (Throughput)', `${r.rps.toFixed(2)} req/s`, '—', '🟢'],
     { cls: s1_p95.cls, cells: ['Latencia p95 ★ SLO', fmtMs(r.p95), `< ${r.slo.p95Ms} ms`, s1_p95.txt] },
     ['Latencia p99 (Cola)', fmtMs(r.p99), `< ${r.slo.p99Ms} ms`, r.p99 < r.slo.p99Ms ? '✔ PASA' : '✖ FALLA'],
     { cls: s1_err.cls, cells: ['Tasa de Errores', fmtPct(r.errorRate), `< ${fmtPct(r.slo.errorRate)}`, s1_err.txt] },
-    { cls: budget.consumedPct > 80 ? 'warn' : 'pass', cells: ['Error Budget Consumido', `${budget.consumedPct}%`, '< 80%', budget.consumedPct <= 80 ? '✔ PASA' : '⚠️ ALERTA'] }
+    { cls: budget.consumedPct > 80 ? 'warn' : 'pass', cells: ['Error Budget Consumido', `${budget.consumedPct}%`, '< 80%', budget.consumedPct <= 80 ? '✔ PASA' : '⚠️ ALERTA'] },
+    { cls: s_pers.cls, cells: ['Ratio Persistencia Funcional', `${r.functionalPersistenceRatio}%`, '100%', s_pers.txt] },
+    { cls: s_tech.cls, cells: ['Estado Técnico Global', r.technicalStatus, 'PASS', s_tech.txt] },
+    { cls: s_go.cls, cells: ['Decisión de Negocio', r.goDecision, 'GO', s_go.txt] }
   ];
   const dashboardHtml = `<h2 id="dashboard">${sections[1].title}</h2>` + table(['KPI', 'Valor Actual', 'Umbral SLO', 'Estado'], dashRows);
 
@@ -292,8 +306,40 @@ function generateHTML(jsonPath, outDir) {
     `;
   });
 
-  // 12. Leyenda
-  const legendHtml = `<h2 id="legend">${sections[11].title}</h2>` + table(['Métrica SRE', 'Definición Técnica'], [
+  // 12. Registro de Auditoría
+  let changelogHtml = '';
+  if (changelog) {
+    changelogHtml = `
+      <h2 id="changelog">${sections[11].title}</h2>
+      <div class="section-body">
+        <p class="note" style="background:#e8eaf6; border-left:4px solid #1a237e; padding: 10px 16px;">
+          <strong>Pase Evaluado:</strong> ${changelog.paseAnterior} → ${changelog.paseActual} &nbsp;|&nbsp; 
+          <strong>Fecha:</strong> ${changelog.fechaEvaluacion} &nbsp;|&nbsp; 
+          <strong>Responsable QA:</strong> ${changelog.responsableQA}
+        </p>
+        
+        <h4>Cambios en Endpoints de API</h4>
+        ${table(['Endpoint', 'Método', 'Impacto / Cambios del Pase'], changelog.endpoints.map(ep => [
+          ep.ahora.url,
+          ep.ahora.metodo,
+          `Antes: ${ep.antes.url || '—'} (${ep.antes.metodo || '—'}). ${ep.impacto || ''}`
+        ]))}
+
+        <h4 style="margin-top:20px;">Seguimiento de Defectos Críticos (QA Tracking)</h4>
+        ${table(['ID', 'Defecto', 'Descripción / Causa Raíz', 'Estado K6', 'Estado Playwright (UI)', 'Prioridad'], changelog.defectos.map(d => [
+          d.id,
+          d.nombre,
+          `${d.descripcion || ''} ${d.causaRaiz ? `(Causa raíz: ${d.causaRaiz})` : ''}`,
+          d.estadoK6,
+          d.estadoUI || '—',
+          d.prioridad
+        ]))}
+      </div>
+    `;
+  }
+
+  // 13. Leyenda
+  const legendHtml = `<h2 id="legend">${sections[12].title}</h2>` + table(['Métrica SRE', 'Definición Técnica'], [
     ['p(50) — Mediana', '50% de usuarios recibe respuesta ≤ este tiempo.'],
     ['p(95) ★ SLO', '95% de usuarios recibe respuesta ≤ este tiempo.'],
     ['p(99) — Cola Larga', 'Para detectar timeouts extremos.'],
@@ -302,11 +348,40 @@ function generateHTML(jsonPath, outDir) {
     ['Error Rate', 'Porcentaje de requests HTTP fallidos.']
   ]);
 
-  // 13. Recomendación
+  // 14. Recomendación
+  let recoDetail = 'Todos los SLO y validaciones funcionales están correctos. Se aprueba la ejecución.';
+  let recoBg = '#e8f5e9';
+  let recoBorder = '#2e7d32';
+  if (r.goDecision === 'NO_GO') {
+    recoDetail = `Se rechaza la ejecución (NO-GO). Estado técnico: ${r.technicalStatus}. `;
+    if (r.functionalPersistenceRatio < 100) {
+      recoDetail += `🚨 Alerta: Persistencia incompleta (${r.functionalPersistenceRatio}%). Se detectaron registros faltantes o huérfanos. `;
+    }
+    if (r.errorRate >= r.slo.errorRate || r.p95 >= r.slo.p95Ms) {
+      recoDetail += `Excesiva tasa de errores o latencias fuera de SLO. `;
+    }
+    recoBg = '#ffebee';
+    recoBorder = '#c62828';
+  } else if (r.goDecision === 'GO_CON_RIESGO') {
+    recoDetail = `Aprobación condicionada (GO CON RIESGO). La persistencia funcional está completa (100%), pero se detectó degradación técnica en la performance (latencias o errores en cola). Se recomienda revisar índices y pool de conexiones.`;
+    recoBg = '#fff8e1';
+    recoBorder = '#f57f00';
+  }
+
   const recommendationHtml = `
     <h2 id="recommendation">${sections[12].title}</h2>
     <div class="section-body">
-      <div class="note strong">Migrar a k6 + Grafana Cloud para tableros en tiempo real y correlación de métricas.</div>
+      <div class="note" style="background:${recoBg}; border-left: 4px solid ${recoBorder}; padding: 12px 16px; border-radius: 4px; color: #172033;">
+        <strong>Diagnóstico Técnico Ejecutivo:</strong> ${recoDetail}
+        <br/><br/>
+        <em>Recomendación base:</em> 
+        ${r.functionalPersistenceRatio < 100 
+          ? 'Revisar logs del backend por registros huérfanos o pérdida de confirmación debido a errores/timeouts transaccionales.' 
+          : 'Monitorear la saturación de CPU y pool de conexiones del servidor de base de datos bajo picos de concurrencia.'}
+      </div>
+      <div style="margin-top: 10px; font-size: 11px; color: #555;">
+        Migrar a k6 + Grafana Cloud para tableros en tiempo real y correlación de métricas.
+      </div>
     </div>
   `;
 
@@ -464,9 +539,48 @@ function generateHTML(jsonPath, outDir) {
       ${indexHtml}
       ${modoHtml}
       ${dashboardHtml}
-      <div class="section-graphics">
+      <div class="section-graphics" style="display: block;">
          <div class="charts-grid">
            <div class="chart-card"><h3>Latencias por Nodo</h3><canvas id="latenciesChart"></canvas></div>
+           <div class="chart-card">
+             <h3>Distribución y Balanceo de Peticiones</h3>
+             <canvas id="balanceChart"></canvas>
+             <div style="margin-top: 15px; border-top: 1px solid #dfe3f5; padding-top: 10px; font-size: 11px;">
+               <strong>Resumen de Balanceo y Carga por Nodo (Estatico para capturas):</strong>
+               <table style="width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 10px;">
+                 <thead>
+                   <tr style="background: #1a237e; color: #fff;">
+                     <th style="padding: 4px; border: 1px solid #c5cae9;">Nodo</th>
+                     <th style="padding: 4px; border: 1px solid #c5cae9;">IP Origen</th>
+                     <th style="padding: 4px; border: 1px solid #c5cae9;">Requests</th>
+                     <th style="padding: 4px; border: 1px solid #c5cae9;">Éxito (2xx)</th>
+                     <th style="padding: 4px; border: 1px solid #c5cae9;">Límite Negocio</th>
+                     <th style="padding: 4px; border: 1px solid #c5cae9;">Rate Limit (429)</th>
+                     <th style="padding: 4px; border: 1px solid #c5cae9;">Errores</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   ${r.ipSummary.map((ip, i) => {
+                     const dist = r.ipResponseDistribution[ip.ip] || { success: 0, business: 0, rate_limited: 0, errors: 0 };
+                     return `
+                       <tr>
+                         <td style="padding: 4px; border: 1px solid #dfe3f5; font-weight: bold;">Nodo ${i + 1}</td>
+                         <td style="padding: 4px; border: 1px solid #dfe3f5; font-family: monospace;">${ip.ip}</td>
+                         <td style="padding: 4px; border: 1px solid #dfe3f5;">${ip.requests}</td>
+                         <td style="padding: 4px; border: 1px solid #dfe3f5; color: #2e7d32; font-weight: bold;">${dist.success}</td>
+                         <td style="padding: 4px; border: 1px solid #dfe3f5; color: #ef6c00; font-weight: bold;">${dist.business}</td>
+                         <td style="padding: 4px; border: 1px solid #dfe3f5; color: #1e88e5;">${dist.rate_limited}</td>
+                         <td style="padding: 4px; border: 1px solid #dfe3f5; color: #c62828;">${dist.errors}</td>
+                       </tr>
+                     `;
+                   }).join('')}
+                 </tbody>
+               </table>
+               <p style="margin: 8px 0 0; font-size: 9.5px; color: #555; line-height: 1.4;">
+                 💡 <strong>Nota sobre Límite de Negocio:</strong> Esta métrica representa respuestas HTTP exitosas controladas por el flujo de negocio (ej. validaciones de reglas o límites transaccionales del backend) y <strong>no es un Rate Limit (HTTP 429)</strong>. El Rate Limit se muestra en azul bajo la columna "Rate Limit (429)".
+               </p>
+             </div>
+           </div>
          </div>
       </div>
       ${multiIpHtml}
@@ -478,6 +592,7 @@ function generateHTML(jsonPath, outDir) {
       ${latencyHtml}
       ${endpointHtml}
       ${networkHtml}
+      ${changelogHtml}
       ${legendHtml}
       ${recommendationHtml}
     </div>

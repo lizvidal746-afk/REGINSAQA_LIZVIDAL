@@ -16,6 +16,13 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# k6 imprime su banner con Unicode. En Windows PowerShell puede verse como
+# mojibake si la consola no usa UTF-8.
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[Console]::OutputEncoding = $utf8NoBom
+$OutputEncoding = $utf8NoBom
+
 $envFile = Join-Path $PSScriptRoot '..\.env'
 $reportsDir = Join-Path $PSScriptRoot '..\reports'
 if (!(Test-Path $reportsDir)) { New-Item -ItemType Directory -Path $reportsDir | Out-Null }
@@ -141,8 +148,22 @@ $k6EnvArgs = @('-e', "SCENARIO=$SCENARIO_NAME", '-e', "K6_SOURCE_IP=$localIp", '
 if ($env:K6_LOCAL_IPS) { $k6EnvArgs += @('-e', "K6_LOCAL_IPS=$($env:K6_LOCAL_IPS)") }
 if ($env:TEST_CASE_ID) { $k6EnvArgs += @('-e', "TEST_CASE_ID=$($env:TEST_CASE_ID)") }
 
-& k6 run @k6EnvArgs --summary-export=$JSON_OUT $ScriptPath @ExtraArgs 2>&1 | Tee-Object -FilePath $K6_LOG_OUT
-$k6ExitCode = $LASTEXITCODE
+$previousErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+try {
+    & k6 run @k6EnvArgs --summary-export=$JSON_OUT $ScriptPath @ExtraArgs 2>&1 |
+        ForEach-Object {
+            if ($_ -is [System.Management.Automation.ErrorRecord]) {
+                $_.ToString()
+            } else {
+                $_
+            }
+        } |
+        Tee-Object -FilePath $K6_LOG_OUT
+    $k6ExitCode = $LASTEXITCODE
+} finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+}
 
 $CASO04_EVIDENCE_OUT = Join-Path $RUN_DIR "caso04-evidencia-jsonl.txt"
 $evidenceLines = @()

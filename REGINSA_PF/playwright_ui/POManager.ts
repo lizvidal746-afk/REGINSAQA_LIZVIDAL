@@ -5,6 +5,8 @@ import { HomePage } from './pages/home.page';
 import { SancionesPage } from './pages/sanciones.page';
 import { FormularioSancionPage } from './pages/formulario-sancion.page';
 import { ModalAgregarSancionPage } from './pages/modal-agregar-sancion.page';
+import { AdministradosPage } from './pages/administrados.page';
+import { ReconsideracionPage } from './pages/reconsideracion.page';
 
 export class POManager {
   private readonly page: Page;
@@ -14,6 +16,8 @@ export class POManager {
   private readonly sancionesPage: SancionesPage;
   private readonly formularioSancionPage: FormularioSancionPage;
   private readonly modalAgregarSancionPage: ModalAgregarSancionPage;
+  private readonly administradosPage: AdministradosPage;
+  private readonly reconsideracionPage: ReconsideracionPage;
 
   constructor(page: Page) {
     this.page = page;
@@ -23,6 +27,8 @@ export class POManager {
     this.sancionesPage = new SancionesPage(page);
     this.formularioSancionPage = new FormularioSancionPage(page);
     this.modalAgregarSancionPage = new ModalAgregarSancionPage(page);
+    this.administradosPage = new AdministradosPage(page);
+    this.reconsideracionPage = new ReconsideracionPage(page);
   }
 
   getBasePage(): BasePage {
@@ -47,5 +53,13 @@ export class POManager {
 
   getModalAgregarSancionPage(): ModalAgregarSancionPage {
     return this.modalAgregarSancionPage;
+  }
+
+  getAdministradosPage(): AdministradosPage {
+    return this.administradosPage;
+  }
+
+  getReconsideracionPage(): ReconsideracionPage {
+    return this.reconsideracionPage;
   }
 }

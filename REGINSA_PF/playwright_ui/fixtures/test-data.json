@@ -3,7 +3,7 @@
     "expediente": "FA 01 Exp N° 1234-2024",
     "resolucion": "FA 01 Res N° 5678-2024",
     "fechaResolucion": "02/06/2024",
-    "rutaDocumento": "REGINSA_APITEST/postman_legacy/PLAN_DE_PRUEBAS_API_REGINSA.xlsx",
+    "rutaDocumento": "fixtures/dummy.pdf",
     "medidasCorrectivas": [
       "Medida correctiva 1",
       "Medida correctiva 2",
@@ -13,9 +13,14 @@
     "tiposMoneda": ["SOLES", "UIT"],
     "tiposTiempo": ["Año", "Mes", "Día"],
     "sanciones": [
-      { "nombre": "Multa simple", "multa": true, "suspension": false, "cancelacion": false, "usarUIT": false, "monto": "1500" },
-      { "nombre": "Suspensión", "multa": false, "suspension": true, "cancelacion": false, "tipoTiempo": "Mes", "cantidadTiempo": 3 },
-      { "nombre": "Multa + Suspensión", "multa": true, "suspension": true, "cancelacion": false, "usarUIT": true, "monto": "5", "tipoTiempo": "Año", "cantidadTiempo": 1 }
+      { "nombre": "Multa SOLES", "multa": true, "suspension": false, "cancelacion": false, "usarUIT": false, "monto": "1500" },
+      { "nombre": "Multa UIT", "multa": true, "suspension": false, "cancelacion": false, "usarUIT": true, "monto": "5" },
+      { "nombre": "Suspension Anio", "multa": false, "suspension": true, "cancelacion": false, "tipoTiempo": "Año", "cantidadTiempo": 1 },
+      { "nombre": "Suspension Mes", "multa": false, "suspension": true, "cancelacion": false, "tipoTiempo": "Mes", "cantidadTiempo": 3 },
+      { "nombre": "Suspension Dia", "multa": false, "suspension": true, "cancelacion": false, "tipoTiempo": "Día", "cantidadTiempo": 15 },
+      { "nombre": "Multa SOLES + Suspension", "multa": true, "suspension": true, "cancelacion": false, "usarUIT": false, "monto": "2500", "tipoTiempo": "Mes", "cantidadTiempo": 6 },
+      { "nombre": "Multa UIT + Suspension", "multa": true, "suspension": true, "cancelacion": false, "usarUIT": true, "monto": "8", "tipoTiempo": "Año", "cantidadTiempo": 1 },
+      { "nombre": "Cancelacion", "multa": false, "suspension": false, "cancelacion": true }
     ]
   }
 }

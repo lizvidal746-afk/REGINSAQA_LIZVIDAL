@@ -453,7 +453,7 @@ test('02-REGISTRAR SANCIÓN: registro robusto por lotes', async ({ page }, testI
   const esScale = executionMode === 'scale' || (executionMode !== 'fast' && process.env.REGINSA_SCALE_MODE === '1');
   const shouldCapture = !esScale && process.env.SKIP_SCREENSHOTS !== '1';
   const repeatIndex = (testInfo as { repeatEachIndex?: number }).repeatEachIndex ?? 0;
-  const repeatEachTotal = Math.max(1, Number(process.env.REGINSA_REPEAT_EACH || ctx.repeatEach || 1));
+  const repeatEachTotal = Math.max(1, Number(process.env.REGINSA_REPEAT_EACH || process.env.PLAYWRIGHT_REPEAT_EACH || 1));
   const sancionesEnCompleto = Math.max(1, Number.parseInt(process.env.REGINSA_CASO02_FULL_COUNT || '8', 10) || 8);
   const sancionesEnLigero = Math.max(1, Number.parseInt(process.env.REGINSA_CASO02_LIGHT_COUNT || '2', 10) || 2);
 
@@ -1057,7 +1057,7 @@ test('02-REGISTRAR SANCIÓN: registro robusto por lotes', async ({ page }, testI
     } else {
       const data = await response.json();
       const encontrado = data.oData?.Results?.some(
-        (cab) => cab.NumeroExpediente === `${prefijoFA} Exp N° ${numExp}-${yearResolucion}`
+        (cab: { NumeroExpediente?: string }) => cab.NumeroExpediente === `${prefijoFA} Exp N° ${numExp}-${yearResolucion}`
       );
       if (!encontrado) {
         if (strictCabeceraPaginada) {

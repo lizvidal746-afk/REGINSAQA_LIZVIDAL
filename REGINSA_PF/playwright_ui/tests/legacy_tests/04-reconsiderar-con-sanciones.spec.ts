@@ -223,7 +223,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
       };
 
       const registrarCabecerasDesdeResponse = async (
-        response: Awaited<ReturnType<typeof page.waitForResponse>>,
+        response: Awaited<ReturnType<typeof page.waitForResponse>> | null,
         motivo: string
       ): Promise<void> => {
         if (!response) return;
@@ -456,7 +456,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
           const apiMatch = apiMatchConfiable || matchPorIndice;
 
           const tresCamposVaciosApi = apiMatchConfiable
-            ? (
+            ? Boolean(
               isEmptyValor(apiMatchConfiable.rutaResolucionReconsideracion)
               && isEmptyValor(apiMatchConfiable.resolucionReconsideracion)
               && isEmptyValor(apiMatchConfiable.fechaResolucionReconsideracion)
@@ -784,7 +784,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
         const presentoBox = page.locator('p-checkbox[inputid="presentoReconsideracion"] .p-checkbox-box').first();
         const presentoChecked = (await presentoInput.isChecked().catch(() => false))
           || (await presentoInput.getAttribute('aria-checked').catch(() => null)) === 'true'
-          || (await presentoBox.getAttribute('class').catch(() => '')).includes('p-highlight');
+          || String(await presentoBox.getAttribute('class').catch(() => '') || '').includes('p-highlight');
 
         const labelRecons = page.locator('label').filter({ hasText: /Resoluci[oó]n de Reconsideraci[oó]n/i }).first();
         const archivoReconsEnBloque = labelRecons
@@ -855,7 +855,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
           apiGuardadoPromise,
           apiGuardadoAmplioPromise,
         ]);
-        const toastCabecera = await capturarToastExito(
+        const toastCabecera = Boolean(await capturarToastExito(
           page,
           '04-RECONSIDERAR-CON-SANCIONES',
           '11_EXITO_CABECERA',
@@ -863,7 +863,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
           '',
           'CABECERA_RECONSIDERACION',
           3000
-        );
+        ));
         toastCabeceraDetectado = toastCabeceraDetectado || toastCabecera;
 
         guardadoCabeceraConfirmado = toastCabecera || apiGuardadoOk || apiGuardadoAmplioOk;
@@ -1056,7 +1056,7 @@ test.describe('04-RECONSIDERAR CON SANCIONES', () => {
             const box = wrapper.locator('.p-checkbox-box').first();
             const inputChecked = await input.isChecked().catch(() => false);
             const ariaChecked = await input.getAttribute('aria-checked').catch(() => null);
-            const className = await box.getAttribute('class').catch(() => '');
+            const className = (await box.getAttribute('class').catch(() => '')) || '';
             const checked = inputChecked || ariaChecked === 'true' || className.includes('p-highlight');
             const disabled = (await input.isDisabled().catch(() => false))
               || (await box.evaluate((el) => (el as HTMLElement).dataset?.pDisabled ?? null).catch(() => null)) === 'true';

@@ -79,6 +79,37 @@ function parseMetricKey(key) {
   return { base: match[1], tags };
 }
 
+function safeReadJson(filePath) {
+  let content = fs.readFileSync(filePath, 'utf8');
+  content = content.replace(/^\uFEFF/, '');
+  const firstBrace = content.indexOf('{');
+  const firstBracket = content.indexOf('[');
+  const lastBrace = content.lastIndexOf('}');
+  const lastBracket = content.lastIndexOf(']');
+  let startIdx = -1;
+  let endIdx = -1;
+  if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+    startIdx = firstBrace;
+    endIdx = lastBrace;
+  } else if (firstBracket !== -1) {
+    startIdx = firstBracket;
+    endIdx = lastBracket;
+  }
+  if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+    content = content.substring(startIdx, endIdx + 1);
+  }
+  content = content.replace(/[\x00-\x1F\x7F-\x9F]/g, (match) => {
+    if (match === '\n' || match === '\r' || match === '\t') return match;
+    return '';
+  });
+  try {
+    return JSON.parse(content);
+  } catch (e) {
+    const snippet = content.substring(0, 200) + '...';
+    throw new Error(`Error parseando JSON en "${path.basename(filePath)}": ${e.message}. Snippet: ${snippet}`);
+  }
+}
+
 // ── Clase principal ──────────────────────────────────────────────────────────
 class K6Reader {
   /**
@@ -97,7 +128,7 @@ class K6Reader {
 
     let raw;
     try {
-      raw = JSON.parse(fs.readFileSync(this.jsonPath, 'utf8'));
+      raw = safeReadJson(this.jsonPath);
     } catch (e) {
       throw new Error(`[K6Reader] JSON inválido en "${path.basename(this.jsonPath)}": ${e.message}`);
     }
@@ -565,9 +596,51 @@ class K6Reader {
     );
   }
 
+  get functionalChecksRate() {
+    return this.checksRate;
+  }
+
+  get performanceThresholdStatus() {
+    const thresholds = this._raw.metrics
+      ? Object.values(this._raw.metrics)
+          .filter((m) => m.thresholds)
+          .flatMap((m) => m.thresholds || [])
+      : [];
+    const breached = thresholds.filter((t) => t.ok === false).length;
+    return breached > 0 ? 'FAIL' : 'PASS';
+  }
+
+  get functionalPersistenceRatio() {
+    const iteracionesExitosas = this.counter('iterations', 'count') || 1;
+    const registrosConfirmados = this.createdCount('detalle_sancion') || 0;
+    return parseFloat(((registrosConfirmados / iteracionesExitosas) * 100).toFixed(2));
+  }
+
+  get technicalStatus() {
+    if (
+      this.errorRate >= this.slo.errorRate ||
+      this.checksRate < this.slo.checksRate ||
+      this.performanceThresholdStatus === 'FAIL'
+    ) {
+      return 'FAIL';
+    }
+    return 'PASS';
+  }
+
+  get goDecision() {
+    if (this.technicalStatus === 'FAIL') {
+      if (this.functionalPersistenceRatio === 100 && this.errorRate < 0.10) {
+        return 'GO_CON_RIESGO';
+      } else {
+        return 'NO_GO';
+      }
+    }
+    return 'GO';
+  }
+
   /** @returns {'PASA'|'DEGRADADO'|'FALLA'} */
   get status() {
-    if (this.errorRate >= this.slo.errorRate || this.checksRate < this.slo.checksRate) return 'FALLA';
+    if (this.technicalStatus === 'FAIL') return 'FALLA';
     if (this.sloPass && this.apdex >= this.slo.apdexMin) return 'PASA';
     if (this.p95 < this.slo.p95Ms * 1.2) return 'DEGRADADO';
     return 'FALLA';
@@ -739,6 +812,11 @@ class K6Reader {
         apdex: parseFloat(this.apdex.toFixed(3)),
         slo_passed: this.sloPass,
         status: this.status,
+        functionalChecksRate: this.functionalChecksRate,
+        performanceThresholdStatus: this.performanceThresholdStatus,
+        functionalPersistenceRatio: this.functionalPersistenceRatio,
+        technicalStatus: this.technicalStatus,
+        goDecision: this.goDecision,
       },
       latency_breakdown: {
         ttfb_avg_ms: Math.round(this.ttfb),
@@ -834,4 +912,4 @@ function resolveTargetJson(reportsDir, arg) {
   return candidates[0];
 }
 
-module.exports = { K6Reader, DEFAULT_SLO, fmtMs, fmtPct, resolveTargetJson };
+module.exports = { K6Reader, DEFAULT_SLO, fmtMs, fmtPct, resolveTargetJson, safeReadJson };

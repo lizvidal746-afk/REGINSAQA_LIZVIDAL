@@ -1,11 +1,26 @@
-import { expect, Page } from '@playwright/test';
+import { expect, Locator, Page } from '@playwright/test';
 import { BasePage } from './base.page';
 
 export class ModalAgregarSancionPage extends BasePage {
-  private readonly modalLocator = this.page.locator('.p-dialog:visible', { hasText: /Agregar\s*Sanci[oó]n/i }).first();
-
   constructor(page: Page) {
     super(page);
+  }
+
+  private async clickRobusto(locator: Locator, timeout = 5000): Promise<void> {
+    await locator.waitFor({ state: 'visible', timeout });
+    await locator.scrollIntoViewIfNeeded().catch(() => {});
+    await locator.click({ timeout }).catch(async () => {
+      await locator.click({ force: true, timeout: 2500 });
+    });
+  }
+
+  // Selector primario: diálogo PrimeNG. Se busca de forma flexible
+  private get modalLocator() {
+    return this.page
+      .locator('.p-dialog:visible')
+      .filter({ hasText: /Agregar\s*(Sanci[oó]n|Detalle)/i })
+      .or(this.page.locator('div[role="dialog"]:visible').filter({ hasText: /Sanci[oó]n/i }))
+      .first();
   }
 
   /**
@@ -13,7 +28,7 @@ export class ModalAgregarSancionPage extends BasePage {
    */
   async seleccionarRIS(): Promise<this> {
     const risDropdown = this.modalLocator.locator('p-dropdown[name="risSeleccionado"]');
-    await expect(risDropdown).toBeVisible({ timeout: 10000 });
+    await expect(risDropdown).toBeVisible({ timeout: this.uiTimeout() });
     const risTrigger = risDropdown.locator('.p-dropdown-trigger');
     await risTrigger.click();
     await this.page.waitForTimeout(1000);
@@ -42,7 +57,7 @@ export class ModalAgregarSancionPage extends BasePage {
     const tipoDropdown = this.modalLocator
       .locator('p-dropdown[name="infraccionSeleccionada"], p-dropdown[formcontrolname="idTipoInfractor"], p-dropdown[optionlabel*="Infractor" i]')
       .first();
-    await expect(tipoDropdown).toBeVisible({ timeout: 10000 });
+    await expect(tipoDropdown).toBeVisible({ timeout: this.uiTimeout() });
     const tipoTrigger = tipoDropdown.locator('.p-dropdown-trigger');
     await tipoTrigger.click();
     await this.page.waitForTimeout(1000);
@@ -69,7 +84,7 @@ export class ModalAgregarSancionPage extends BasePage {
    */
   async llenarHechoInfractor(hecho: string = 'hecho infractor'): Promise<this> {
     const hechoInput = this.modalLocator.getByPlaceholder('Describe el hecho infractor');
-    await expect(hechoInput).toBeVisible({ timeout: 10000 });
+    await expect(hechoInput).toBeVisible({ timeout: this.uiTimeout() });
     await hechoInput.click();
     await hechoInput.fill(hecho);
     await this.page.waitForTimeout(500);
@@ -160,27 +175,37 @@ export class ModalAgregarSancionPage extends BasePage {
    * Llena el tiempo de suspensión
    */
   async llenarTiempoSuspension(tipo: 'Año' | 'Mes' | 'Día', cantidad: number): Promise<this> {
-    const tiempoButton = this.modalLocator
-      .getByRole('combobox', { name: /Tiempo/i })
-      .first()
-      .or(this.modalLocator.locator('p-dropdown .p-dropdown-trigger'));
-    await tiempoButton.click();
-    await this.page.waitForTimeout(500);
-    const opcionesTiempo = this.page.getByRole('option').filter({ hasText: /Año|Mes|Día/i });
-    await opcionesTiempo.first().waitFor({ state: 'visible', timeout: 5000 });
-    for (let i = 0; i < await opcionesTiempo.count(); i++) {
-      const texto = await opcionesTiempo.nth(i).innerText();
-      if (new RegExp(tipo, 'i').test(texto.trim())) {
-        await opcionesTiempo.nth(i).click();
-        break;
-      }
+    const tiempoLabel = this.modalLocator.locator('label', { hasText: /Tiempo/i }).first();
+    let tiempoDropdown = tiempoLabel.locator('..').locator('p-dropdown, .p-dropdown').first();
+    const tiempoCombobox = this.modalLocator.getByRole('combobox', { name: /Tiempo/i }).first();
+    
+    let tiempoButton = tiempoDropdown.locator('.p-dropdown-trigger, [role="button"], [role="combobox"]').first();
+    if (!(await tiempoButton.isVisible({ timeout: 1500 }).catch(() => false))) {
+      tiempoButton = tiempoCombobox;
     }
-    await this.page.waitForTimeout(500);
+
+    await tiempoButton.waitFor({ state: 'visible', timeout: 5000 });
+    await tiempoButton.click();
+
+    const panel = this.page.locator('.p-dropdown-panel:visible').last();
+    await panel.waitFor({ state: 'visible', timeout: 5000 });
+    const opcionesTiempo = panel.locator('.p-dropdown-item, [role="option"]');
+    await opcionesTiempo.first().waitFor({ state: 'visible', timeout: 5000 });
+
+    const opcionExacta = opcionesTiempo.filter({ hasText: new RegExp(`^\\s*${tipo}\\s*$`, 'i') }).first();
+    const opcionPorTexto = opcionesTiempo.filter({ hasText: new RegExp(tipo, 'i') }).first();
+    const opcion = await opcionExacta.isVisible({ timeout: 1000 }).catch(() => false) ? opcionExacta : opcionPorTexto;
+    if (!(await opcion.isVisible({ timeout: 3000 }).catch(() => false))) {
+      throw new Error(`No se encontro la unidad de tiempo de suspension: ${tipo}`);
+    }
+    await this.clickRobusto(opcion, 4000);
+    await panel.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
+
     const cantidadInput = this.modalLocator.getByPlaceholder('Cantidad');
-    if (await cantidadInput.isVisible().catch(() => false)) {
+    if (await cantidadInput.isVisible({ timeout: 3000 }).catch(() => false)) {
       await cantidadInput.click();
       await cantidadInput.fill(cantidad.toString());
-      await this.page.waitForTimeout(500);
+      await this.page.waitForTimeout(600);
     }
     return this;
   }
@@ -189,10 +214,13 @@ export class ModalAgregarSancionPage extends BasePage {
    * Hace clic en el botón de guardar detalle
    */
   async clickGuardarDetalle(): Promise<this> {
-    const btnGuardar = this.page.locator('button[label="Guardar detalle"][icon="pi pi-save"]');
-    await expect(btnGuardar).toBeVisible({ timeout: 10000 });
-    await btnGuardar.click();
-    await this.page.waitForTimeout(1000);
+    // Buscar dentro del modal primero, luego en la página completa como fallback
+    const btnEnModal = this.modalLocator.locator('button').filter({ hasText: /Guardar\s*detalle/i }).first();
+    const btnGlobal = this.page.locator('button[label="Guardar detalle"]').first();
+    const btn = await btnEnModal.isVisible().catch(() => false) ? btnEnModal : btnGlobal;
+    await expect(btn).toBeVisible({ timeout: this.uiTimeout() });
+    await this.clickRobusto(btn, 5000);
+    await this.page.locator('.p-toast-message').waitFor({ state: 'hidden', timeout: 2500 }).catch(() => {});
     return this;
   }
 
@@ -212,10 +240,14 @@ export class ModalAgregarSancionPage extends BasePage {
   }
 
   /**
-   * Valida que el modal esté visible
+   * Valida que el modal esté visible (con reintentos robustos)
    */
   async validarModalVisible(): Promise<this> {
-    await expect(this.modalLocator).toBeVisible({ timeout: 10000 });
+    // Esperar que el modal exista y sea visible
+    await this.modalLocator.waitFor({ state: 'visible', timeout: this.uiTimeout() });
+    // Verificación adicional: asegurar que el header esté accesible
+    const header = this.modalLocator.locator('.p-dialog-header, .p-dialog-title');
+    await header.first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     return this;
   }
 }

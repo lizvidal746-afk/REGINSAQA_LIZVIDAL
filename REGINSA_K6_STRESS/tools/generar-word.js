@@ -26,7 +26,7 @@ const {
   ImageRun,
 } = require('docx');
 
-const { K6Reader, fmtMs, fmtPct, resolveTargetJson } = require('./lib/k6-reader');
+const { K6Reader, fmtMs, fmtPct, resolveTargetJson, safeReadJson } = require('./lib/k6-reader');
 
 // ── Paleta SUNEDU ────────────────────────────────────────────────────────────
 const C = {
@@ -131,6 +131,13 @@ async function main() {
   const epSummary = r.endpointSummary;
   const epIters = r.endpointIterations;
 
+  const changelogPath = path.join(__dirname, '../config/release-changelog.json');
+  let changelog = null;
+  if (fs.existsSync(changelogPath)) {
+    changelog = safeReadJson(changelogPath);
+    if (Array.isArray(changelog)) changelog = changelog[0];
+  }
+
   // Logo SUNEDU (opcional)
   const logoPath = path.join(__dirname, '../assets/sunedu-logo.png');
   let logoImage;
@@ -216,9 +223,10 @@ async function main() {
             '5. Análisis por Endpoint',
             '6. Espectro de Respuestas HTTP',
             '7. Análisis de Carga por Origen IP',
-            '8. Validaciones Funcionales (Checks)',
-            '9. Criterios de Salida y Recomendaciones',
-            '10. Leyenda Técnica y Estándares',
+            '8. Registro de Auditoría: Cambios API y Defectos QA',
+            '9. Validaciones Funcionales (Checks)',
+            '10. Criterios de Salida y Recomendaciones',
+            '11. Leyenda Técnica y Estándares',
           ].map((s) => para([txt(s, { color: C.AZM })], { sb: 40, sa: 40 })),
 
           // ═══════════════════════════════════════════════════════════════════
@@ -619,9 +627,49 @@ async function main() {
           ]),
 
           // ═══════════════════════════════════════════════════════════════════
-          // S8 — VALIDACIONES FUNCIONALES
+          // S8 — AUDITORIA DE CAMBIOS Y DEFECTOS (CHANGELOG)
           // ═══════════════════════════════════════════════════════════════════
-          h2('8. Validaciones Funcionales (Checks)'),
+          ...(changelog ? [
+            h2(`8. Registro de Auditoría: Cambios API y Defectos QA (Pase ${changelog.paseAnterior} a ${changelog.paseActual})`),
+            para([
+              txt(
+                `Esta sección documenta el seguimiento y resolución de defectos entre versiones, y los cambios arquitectónicos de API que justifican el comportamiento actual de las pruebas de carga. (Generado al ${changelog.fechaEvaluacion} por ${changelog.responsableQA})`
+              ),
+            ]),
+            para([txt('8.1 Resolución de Defectos Críticos (QA Tracking)', { bold: true, color: C.AZM })], { sb: 120 }),
+            table([
+              row(['Defecto ID', 'Descripción', 'Estado Playwright (UI)', 'Estado K6 (Backend/Carga)', 'Impacto/Prioridad'], { header: true, ws: [15, 30, 20, 20, 15] }),
+              ...changelog.defectos.map((d) => {
+                const bgSt = d.paseActual.includes('CERRADO') || d.estadoK6.toUpperCase().includes('CORREGIDO') ? C.VEF : C.AMF;
+                return row([
+                  d.id,
+                  d.descripcion,
+                  d.estadoUI,
+                  d.estadoK6,
+                  `${d.prioridad}\n${d.paseAnterior} -> ${d.paseActual}`
+                ], { bg: bgSt, ws: [15, 30, 20, 20, 15] });
+              })
+            ]),
+
+            para([txt('8.2 Matriz de Cambios de API y Arquitectura', { bold: true, color: C.AZM })], { sb: 120 }),
+            table([
+              row(['Endpoint Actual', 'Método', 'Cambio Respecto al Pase Anterior', 'Impacto en Tests K6'], { header: true, ws: [30, 10, 30, 30] }),
+              ...changelog.endpoints.map((ep) => {
+                const bgSt = ep.estadoK6.toUpperCase().includes('CORREGIDO') || ep.estadoK6.toUpperCase().includes('OK') || ep.estadoK6.toUpperCase().includes('SIN CAMBIOS') ? C.VEF : C.AMF;
+                return row([
+                  ep.ahora.url,
+                  ep.ahora.metodo,
+                  `Antes: ${ep.antes.url}\n${ep.impacto}`,
+                  ep.estadoK6
+                ], { bg: bgSt, ws: [30, 10, 30, 30] });
+              })
+            ])
+          ] : []),
+
+          // ═══════════════════════════════════════════════════════════════════
+          // S9 — VALIDACIONES FUNCIONALES
+          // ═══════════════════════════════════════════════════════════════════
+          h2('9. Validaciones Funcionales (Checks)'),
           table([
             row(['Métrica', 'Valor', 'Umbral', 'Estado'], { header: true }),
             row(['Total Checks ejecutados', String(r.checksPasses + r.checksFails), '—', '🟢'], {}),
@@ -641,9 +689,9 @@ async function main() {
           ]),
 
           // ═══════════════════════════════════════════════════════════════════
-          // S9 — CRITERIOS DE SALIDA Y RECOMENDACIONES
+          // S10 — CRITERIOS DE SALIDA Y RECOMENDACIONES
           // ═══════════════════════════════════════════════════════════════════
-          h2('9. Criterios de Salida ISTQB y Recomendaciones'),
+          h2('10. Criterios de Salida ISTQB y Recomendaciones'),
           table([
             row(['Criterio ISTQB PT', 'SLO / Umbral', 'Resultado', 'Estado'], { header: true }),
             row(['Latencia p95 < 1 500 ms', '< 1 500 ms', fmtMs(r.p95), p95ok ? '✅ PASA' : '🔴 FALLA'], {
@@ -682,9 +730,9 @@ async function main() {
           ].map((t) => para([txt(t)], { sb: 60, sa: 60 })),
 
           // ═══════════════════════════════════════════════════════════════════
-          // S10 — LEYENDA TÉCNICA
+          // S11 — LEYENDA TÉCNICA
           // ═══════════════════════════════════════════════════════════════════
-          h2('10. Leyenda Técnica y Estándares Internacionales'),
+          h2('11. Leyenda Técnica y Estándares Internacionales'),
           table([
             row(['Métrica', '¿Qué mide?', 'Umbral', 'Estándar'], { header: true, ws: [22, 48, 12, 18] }),
             ...LEGEND.map((l, i) => row(l, { bg: i % 2 === 0 ? C.GRS : undefined, ws: [22, 48, 12, 18] })),

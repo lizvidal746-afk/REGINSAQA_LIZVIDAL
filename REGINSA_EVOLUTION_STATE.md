@@ -5,9 +5,9 @@ Este archivo es la fuente de verdad unificada para la sincronización de tareas 
 ---
 
 ## 📌 Estado Actual del Proyecto
-* **Fase Actual**: Fase 7 (Estructura completa de pruebas UI con Playwright y POManager.)
-* **IDE en control**: Trae
-* **Última Actualización**: 2026-06-03
+* **Fase Actual**: Fase 9 (Auditoria QA, aprendizaje de recomendaciones y cierre de falsos pendientes en reportes.)
+* **IDE en control**: Codex coordina auditoria/changelog/reportes; Trae mantiene ejecución funcional; Antigravity/browser revisa evidencia visual cuando aplique.
+* **Última Actualización**: 2026-06-10
 
 ---
 
@@ -55,6 +55,37 @@ Este archivo es la fuente de verdad unificada para la sincronización de tareas 
 - [x] Actualizar `POManager` para incluir todas las nuevas páginas.
 - [x] Crear archivo de datos de prueba (`fixtures/test-data.json`).
 - [x] Crear prueba E2E completa de registrar sanción (`tests/sanciones.e2e.spec.ts`).
+- [x] Configurar paralelización con 9 workers (1 por usuario/IP).
+- [x] Ejecutar fase 1: 9 tests en paralelo (1 por IP/usuario).
+- [x] Generar reportes: HTML de Playwright y reporte de K6 (HTML/Word/Excel).
+- [x] Copiar tests legacy y utilidades a la nueva estructura para ejecutar flujo probado.
+- [x] Ajustar test legacy para que funcione en modo rápido y paralelo.
+- [x] Ejecutar tests legacy con éxito en paralelo.
+
+### 8. Reportes funcionales REGINSA_PF y coordinación inter-IDE
+- [x] Definir decisión de reporting: Dashboard/HTML operativo + Excel/Word formal.
+- [x] Crear documento de coordinación `REGINSA_PF/playwright_ui/REGINSA_PF_COORDINACION_INTERIDE.md`.
+- [x] Establecer reparto: Codex reportes, Trae ejecución Caso 02, Antigravity revisión dashboard/evidencia.
+- [x] Corregir scripts de reporte para leer `../playwright-report/results.json`.
+- [x] Enriquecer reader con worker, slot, usuario, IP y modo IP (`host-compartido` o `dedicada-configurada`).
+- [x] Ajustar Caso 02 para listar tests por slot (`[slot 1]` a `[slot 9]`) y habilitar paralelismo real.
+- [ ] Crear `tools/generar-word.js` para reporte Word funcional.
+- [ ] Agregar `report:word` y actualizar `report:all`.
+- [ ] Ejecutar `phase1` y `phase2` en entorno con permisos normales de Playwright.
+- [ ] Validar HTML/Excel/Word finales contra resultados reales.
+
+### 9. Auditoria QA, aprendizaje y recomendaciones tecnicas
+- [x] Crear `PROMPT_MAESTRO_QA.md` como prompt de continuidad y fuente operativa para nuevas sesiones IA.
+- [x] Crear `REGINSA_K6_STRESS/config/release-changelog.json` como fuente unica de auditoria para K6, Word, Excel, HTML, Playwright y Allure.
+- [x] Verificar que K6 HTML renderiza la seccion "13. Registro de Auditoria" con endpoints y defectos.
+- [x] Inyectar auditoria QA en Playwright HTML/JSON mediante `helpers/test-run-metadata.ts`.
+- [x] Inyectar auditoria QA en Allure como attachment `qa-audit-changelog` y parametros `QA Audit` / `QA API`.
+- [x] Corregir CP-REG-01: boton iconografico de Nuevo Administrado y persistencia con `POST /api/Entidad/ListarPaginado`.
+- [x] Cerrar `DEF-UI-01` en `release-changelog.json`.
+- [x] Ajustar `BasePage.esperarCapaCarga()` para evitar ruido de strict mode en reportes Allure.
+- [x] Ajustar `REGINSA_K6_STRESS/tools/run-k6.ps1` para que los logs normales de k6 por stderr no corten la corrida como `NativeCommandError` en PowerShell.
+- [x] Documentar aprendizaje: cuando K6/Playwright detecten registros huerfanos o inconsistencias transaccionales, la IA debe recomendar cambios de arquitectura/API, no solo arreglar selectores o scripts.
+- [ ] Ejecutar bateria completa CP-REG-01, CP-REG-02 y CP-REG-04 en fase seleccionada y clasificar cualquier nuevo hallazgo real.
 
 ---
 
@@ -117,3 +148,23 @@ Este archivo es la fuente de verdad unificada para la sincronización de tareas 
 > 11. La prueba E2E usa `test.use({ storageState: '.auth/user.json' })` para reutilizar la sesión.
 > 12. La prueba usa `test.step()` para segmentar el flujo y hacerla más legible.
 > 13. La prueba usa aserciones web-first (expect(locator).toBeVisible()).
+> 14. **Escalabilidad**: Se configuró paralelización con 9 workers (1 por cada usuario/IP del `.env`).
+> 15. **Ejecución escalada**: Se ejecutó la fase 1 con éxito: 9 tests en paralelo (1 por IP/usuario) usando el test legacy (probado y funcional).
+> 16. **Reportes generados**:
+>     - **Playwright HTML**: `REGINSA_PF/playwright-ui-report/`
+>     - **K6 HTML/Word/Excel**: Los reportes de K6 (ejecutados previamente) están en `REGINSA_K6_STRESS/reports/`
+> 17. **Tests legacy**: Los tests legacy completos y probados se copiaron a `tests/legacy_tests/`, junto con todas las utilidades necesarias (`tests/utilidades/`, `helpers/`, `test-files/`).
+> 18. **Modo rápido y paralelo**: El test legacy se ajustó para que funcione en modo `REGINSA_EXECUTION_MODE=fast` y en paralelo con múltiples workers, reduciendo el mínimo de sanciones requeridas a 1 para que la ejecución sea más rápida y robusta.
+> 19. **Ejecutar fase 2 (4x por IP/usuario)**: Para ejecutar la fase 2 con 4 repeticiones por worker (total 36 tests), usa: `$env:PLAYWRIGHT_WORKERS="9" ; npx playwright test tests/legacy_tests/02-registrar-sancion.spec.ts --repeat-each=4 --headed`.
+> 20. **Nuevo frente Fase 8 - Reportes funcionales**:
+>     - La coordinación activa está en `REGINSA_PF/playwright_ui/REGINSA_PF_COORDINACION_INTERIDE.md`.
+>     - Codex debe continuar con `tools/generar-word.js`, scripts `report:*` y consolidación de métricas.
+>     - Trae debe priorizar ejecución y estabilidad del Caso 02 (`phase1`, `phase2`, datos y credenciales).
+>     - Antigravity debe revisar el dashboard HTML y la utilidad visual/ejecutiva del reporte.
+>     - Si no existen `REGINSA_IP_1..9`, reportar explícitamente "9 slots/usuarios con IP de host compartida"; no declarar multi-IP real.
+> 21. **Nuevo frente Fase 9 - Auditoria y aprendizaje QA**:
+>     - `release-changelog.json` manda: todo reporte debe leer estados, defectos, endpoints y recomendaciones desde ahi.
+>     - `DEF-UI-01` esta cerrado: no debe mostrarse como pendiente abierto en reportes nuevos.
+>     - Si aparecen "temas a corregir", distinguir entre defecto funcional real, cambio de contrato API, ruido tecnico del framework o recomendacion evolutiva.
+>     - Si k6 muestra `NativeCommandError` al imprimir `level=info` o `[OK]`, revisar primero el wrapper PowerShell: k6 escribe logs por stderr y no necesariamente fallo la prueba.
+>     - Hay sub-agentes disponibles en Codex para trabajo paralelo, pero se deben usar solo cuando la tarea lo amerite; el aprendizaje persistente queda documentado en prompts, planes y changelog.
